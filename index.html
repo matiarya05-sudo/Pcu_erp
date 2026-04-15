@@ -1420,10 +1420,9 @@ select option{background:#1a1820}
     <div class="modal-head"><h3>+ مشتری جدید</h3><button class="close-btn" onclick="closeModal('modalAddCust')">✕</button></div>
     <div class="modal-body">
       <div id="ac-msg"></div>
-      <div class="row2">
-        <div class="fg"><label>نام مشتری</label><input id="ac-name" placeholder="نام کامل..."/></div>
-        <div class="fg"><label>ولایت</label><select id="ac-prov"><option>کابل</option><option>غزنی</option><option>کندهار</option><option>هرات</option><option>پلخمری</option><option>کندز</option><option>بدخشان</option><option>تخار</option><option>جلال آباد</option><option>خوست</option><option>سایر</option></select></div>
-      </div>
+      <div class="fg"><label>نام مشتری</label><input id="ac-name" placeholder="نام کامل..."/></div>
+      <div class="fg"><label>ولایت</label><select id="ac-prov" onchange="toggleCustomProv('ac')"><option>کابل</option><option>غزنی</option><option>کندهار</option><option>هرات</option><option>پلخمری</option><option>کندز</option><option>بدخشان</option><option>تخار</option><option>جلال آباد</option><option>خوست</option><option>سایر</option></select></div>
+      <div class="fg" id="ac-prov-custom" style="display:none"><label>نام ولایت (دستی بنویس)</label><input id="ac-prov-text" placeholder="مثال: لوگر، پروان، میدان..."/></div>
       <div class="fg"><label>موجودی افتتاحیه (؋)</label><input type="number" id="ac-ob" value="0" min="0"/></div>
     </div>
     <div class="modal-foot">
@@ -1438,10 +1437,9 @@ select option{background:#1a1820}
     <div class="modal-body">
       <div id="ec-msg"></div>
       <input type="hidden" id="ec-id"/>
-      <div class="row2">
-        <div class="fg"><label>نام مشتری</label><input id="ec-name"/></div>
-        <div class="fg"><label>ولایت</label><select id="ec-prov"><option>کابل</option><option>غزنی</option><option>کندهار</option><option>هرات</option><option>پلخمری</option><option>کندز</option><option>بدخشان</option><option>تخار</option><option>جلال آباد</option><option>خوست</option><option>سایر</option></select></div>
-      </div>
+      <div class="fg"><label>نام مشتری</label><input id="ec-name"/></div>
+      <div class="fg"><label>ولایت</label><select id="ec-prov" onchange="toggleCustomProv('ec')"><option>کابل</option><option>غزنی</option><option>کندهار</option><option>هرات</option><option>پلخمری</option><option>کندز</option><option>بدخشان</option><option>تخار</option><option>جلال آباد</option><option>خوست</option><option>سایر</option></select></div>
+      <div class="fg" id="ec-prov-custom" style="display:none"><label>نام ولایت (دستی بنویس)</label><input id="ec-prov-text" placeholder="مثال: لوگر، پروان، میدان..."/></div>
       <div class="fg"><label>موجودی افتتاحیه (؋)</label><input type="number" id="ec-ob" min="0"/></div>
       <div class="ib warn">⚠️ این موجودی اول — طلب قبل از شروع سیستم</div>
     </div>
@@ -1459,10 +1457,7 @@ select option{background:#1a1820}
     <div class="modal-body">
       <div id="as-msg"></div>
       <div class="fg"><label>نام تامین‌کننده</label><input id="as-name" placeholder="نام کامل..."/></div>
-      <div class="row2">
-        <div class="fg"><label>بدهی افتتاحیه ($)</label><input type="number" id="as-bal" value="0" min="0" step="0.01" oninput="calcSuppBal('as')"/></div>
-        <div class="fg"><label>بدهی افتتاحیه (؋) — اتومات</label><input type="number" id="as-bal-afn" value="0" min="0" step="1" oninput="calcSuppBalAfn('as')"/></div>
-      </div>
+      <div class="fg"><label>بدهی افتتاحیه ($)</label><input type="number" id="as-bal" value="0" min="0" step="0.01"/></div>
     </div>
     <div class="modal-foot">
       <button class="btn bsec" onclick="closeModal('modalAddSupp')">انصراف</button>
@@ -1477,10 +1472,7 @@ select option{background:#1a1820}
       <div id="es-msg"></div>
       <input type="hidden" id="es-id"/>
       <div class="fg"><label>نام تامین‌کننده</label><input id="es-name"/></div>
-      <div class="row2">
-        <div class="fg"><label>بدهی ($)</label><input type="number" id="es-bal" min="0" step="0.01" oninput="calcSuppBal('es')"/></div>
-        <div class="fg"><label>بدهی (؋) — اتومات</label><input type="number" id="es-bal-afn" min="0" step="1" oninput="calcSuppBalAfn('es')"/></div>
-      </div>
+      <div class="fg"><label>بدهی ($)</label><input type="number" id="es-bal" min="0" step="0.01"/></div>
       <div class="ib warn">⚠️ این بدهی افتتاحیه است — بعد از خریدهای جدید اتوماتیک آپدیت می‌شود</div>
     </div>
     <div class="modal-foot">
@@ -3040,7 +3032,7 @@ function openEditCust(id){
 async function saveEditCust(){
   const id=document.getElementById("ec-id").value;
   const name=document.getElementById("ec-name").value.trim();
-  const prov=document.getElementById("ec-prov").value;
+  const prov=getProvValue("ec");
   const ob=+(document.getElementById("ec-ob").value)||0;
   if(!name){document.getElementById("ec-msg").innerHTML='<div class="ib err">نام الزامی</div>';return;}
   document.getElementById("ec-btn").disabled=true;document.getElementById("ec-btn").textContent="در حال ذخیره...";
@@ -3054,9 +3046,26 @@ async function saveEditCust(){
   document.getElementById("ec-msg").innerHTML='<div class="ib ok">✅ ذخیره شد!</div>';
   showSaved();setTimeout(()=>{closeModal("modalEditCust");renderCust();},1000);
 }
+// ── ولایت دستی ──
+function toggleCustomProv(prefix){
+  const sel=document.getElementById(prefix+'-prov');
+  const custom=document.getElementById(prefix+'-prov-custom');
+  if(!custom) return;
+  if(sel.value==='سایر') custom.style.display='block';
+  else {custom.style.display='none';}
+}
+function getProvValue(prefix){
+  const sel=document.getElementById(prefix+'-prov');
+  if(sel.value==='سایر'){
+    const txt=(document.getElementById(prefix+'-prov-text')?.value||'').trim();
+    return txt||'سایر';
+  }
+  return sel.value;
+}
+
 async function saveAddCust(){
   const name=document.getElementById("ac-name").value.trim();
-  const prov=document.getElementById("ac-prov").value;
+  const prov=getProvValue("ac");
   const ob=+(document.getElementById("ac-ob").value)||0;
   if(!name){document.getElementById("ac-msg").innerHTML='<div class="ib err">نام الزامی</div>';return;}
   document.getElementById("ac-btn").disabled=true;document.getElementById("ac-btn").textContent="در حال ذخیره...";
@@ -3096,20 +3105,9 @@ function openEditSupp(id){
   document.getElementById("es-id").value=id;
   document.getElementById("es-name").value=s.n;
   document.getElementById("es-bal").value=S.suppMap[id]?.bal||0;
-  document.getElementById("es-bal-afn").value=Math.round((S.suppMap[id]?.bal||0)*S.usdRate);
   document.getElementById("es-msg").innerHTML="";
   openModal("modalEditSupp");
 }
-// ── محاسبه بدهی تامین‌کننده ──
-function calcSuppBal(prefix){
-  const usdVal=+(document.getElementById(prefix+'-bal').value)||0;
-  document.getElementById(prefix+'-bal-afn').value=Math.round(usdVal*S.usdRate);
-}
-function calcSuppBalAfn(prefix){
-  const afnVal=+(document.getElementById(prefix+'-bal-afn').value)||0;
-  document.getElementById(prefix+'-bal').value=(afnVal/S.usdRate).toFixed(2);
-}
-
 async function saveEditSupp(){
   const id=document.getElementById("es-id").value;
   const name=document.getElementById("es-name").value.trim();
