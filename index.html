@@ -1336,15 +1336,49 @@ select option{background:#1a1820}
 <!-- ══ MODAL ادیت مواد خام ══ -->
 <div class="modal-overlay" id="modalEditStock">
   <div class="modal">
-    <div class="modal-head"><h3>✏️ ادیت موجودی مواد خام</h3><button class="close-btn" onclick="closeModal('modalEditStock')">✕</button></div>
+    <div class="modal-head">
+      <h3>✏️ ادیت موجودی مواد خام</h3>
+      <button class="close-btn" onclick="closeModal('modalEditStock')">✕</button>
+    </div>
     <div class="modal-body">
-      <div class="ib warn">⚠️ این مقادیر مستقیم در Supabase آپدیت می‌شوند</div>
-      <div class="ib info" style="font-size:10.5px">📋 همه مواد موجود در Supabase نشان داده می‌شوند | در پایین ماده جدید اضافه کن</div>
+
+      <!-- بخش ۱: ادیت مواد موجود -->
+      <div class="ib warn" style="font-size:11px">⚠️ این مقادیر مستقیم در Supabase آپدیت می‌شوند</div>
+      <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:8px">📋 مواد موجود در انبار:</div>
       <div id="edit-stock-list"><div class="loading"><div class="spinner"></div>در حال بارگذاری...</div></div>
+
+      <!-- بخش ۲: اضافه کردن ماده جدید -->
+      <div style="height:1px;background:rgba(255,255,255,.08);margin:16px 0"></div>
+      <div style="font-size:12px;font-weight:800;color:var(--gd);margin-bottom:10px">➕ اضافه کردن ماده جدید</div>
+      <div style="background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.2);border-radius:10px;padding:12px">
+        <div class="fg" style="margin-bottom:8px">
+          <label>نام ماده جدید</label>
+          <input id="new_mat_name" placeholder="مثال: رنگ آبی، کرش قرمز، DOP..."
+            style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--tx);font-size:13px;font-family:inherit;outline:none"/>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:10px">
+          <div style="flex:1">
+            <label style="display:block;font-size:11px;color:var(--t2);margin-bottom:4px;font-weight:600">موجودی اولیه (کیلو)</label>
+            <input type="number" id="new_mat_kg" placeholder="0" step="0.1" min="0"
+              style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--tx);font-size:13px;font-family:inherit;outline:none"/>
+          </div>
+          <div style="flex:1">
+            <label style="display:block;font-size:11px;color:var(--t2);margin-bottom:4px;font-weight:600">قیمت فی کیلو (؋)</label>
+            <input type="number" id="new_mat_cost" placeholder="0" step="1" min="0"
+              style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--gd);font-size:13px;font-family:inherit;outline:none"/>
+          </div>
+        </div>
+        <button id="add-mat-btn" onclick="addNewMaterial()"
+          style="width:100%;padding:10px;background:linear-gradient(135deg,var(--gd),var(--g2));color:#000;border:none;border-radius:9px;font-size:13px;font-weight:800;font-family:inherit;cursor:pointer">
+          ➕ اضافه کردن ماده جدید
+        </button>
+        <div id="new-mat-msg" style="margin-top:8px;font-size:11px;text-align:center"></div>
+      </div>
+
     </div>
     <div class="modal-foot">
-      <button class="btn bsec" onclick="closeModal('modalEditStock')">انصراف</button>
-      <button class="btn bpri" onclick="saveStockEdits()" id="edit-stock-btn">ذخیره همه ✓</button>
+      <button class="btn bsec" onclick="closeModal('modalEditStock')">بستن</button>
+      <button class="btn bpri" onclick="saveStockEdits()" id="edit-stock-btn">💾 ذخیره تغییرات ✓</button>
     </div>
   </div>
 </div>
@@ -2132,22 +2166,6 @@ async function sb(table, method="GET", body=null, params=""){
 async function sbGet(table,params=""){ return sb(table,"GET",null,params); }
 async function sbPost(table,body){ return sb(table,"POST",body); }
 async function sbPatch(table,body,params){ return sb(table,"PATCH",body,params); }
-async function sbUpsert(table,body,onConflict){
-  // Upsert = insert or update if conflict
-  const url=`${SB_URL}/rest/v1/${table}`;
-  const opts={method:"POST",headers:{
-    "apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,
-    "Content-Type":"application/json",
-    "Prefer":`return=representation,resolution=merge-duplicates`,
-    ...(onConflict?{"resolution":"merge-duplicates"}:{})
-  }};
-  opts.body=JSON.stringify(Array.isArray(body)?body:[body]);
-  try{
-    const r=await fetch(url,opts);
-    const t=await r.text();
-    return t?JSON.parse(t):[];
-  }catch(e){console.error("Upsert error:",e);return null;}
-}
 
 function setSyncOff(){ document.getElementById("syncDot")?.classList.add("off"); }
 function setSyncOn(){ document.getElementById("syncDot")?.classList.remove("off"); }
@@ -4875,11 +4893,19 @@ function switchStockTab(tab){
 
 // ── STOCK EDIT ──
 async function initEditStockModal(){
-  document.getElementById('edit-stock-list').innerHTML='<div class="loading"><div class="spinner"></div>در حال بارگذاری...</div>';
+  // نشان دادن loading
+  document.getElementById('edit-stock-list').innerHTML='<div class="loading"><div class="spinner"></div>در حال بارگذاری از Supabase...</div>';
+
+  // گرفتن همه مواد از Supabase
   const rows = await sbGet('mat_stock','?order=material.asc')||[];
   window._stockEditRows = rows;
 
-  let html = rows.map(r=>`
+  if(!rows.length){
+    document.getElementById('edit-stock-list').innerHTML='<div style="text-align:center;padding:20px;color:var(--t3)">هنوز ماده‌ای در انبار ثبت نشده</div>';
+    return;
+  }
+
+  document.getElementById('edit-stock-list').innerHTML = rows.map(r=>`
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;padding:8px;background:var(--b3);border-radius:8px;border:1px solid var(--bd)">
       <div style="flex:2;font-size:12px;font-weight:700;color:var(--tx)">${r.material}</div>
       <div style="flex:1">
@@ -4893,100 +4919,86 @@ async function initEditStockModal(){
           style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-size:12px;font-family:inherit"/>
       </div>
     </div>`).join('');
-
-  // ── بخش اضافه کردن ماده جدید ──
-  html += `
-    <div style="height:1px;background:rgba(255,255,255,.08);margin:14px 0"></div>
-    <div style="font-size:11px;font-weight:800;color:var(--gd);margin-bottom:8px">➕ اضافه کردن ماده جدید به انبار</div>
-    <div style="display:flex;gap:6px;align-items:flex-end;padding:10px;background:rgba(212,168,67,.05);border-radius:8px;border:1px solid rgba(212,168,67,.2)">
-      <div style="flex:2">
-        <div style="font-size:10px;color:var(--t2);margin-bottom:2px">نام ماده جدید</div>
-        <input id="new_mat_name" placeholder="مثال: رنگ آبی، کرش قرمز..."
-          style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:inherit"/>
-      </div>
-      <div style="flex:1">
-        <div style="font-size:10px;color:var(--t2);margin-bottom:2px">کیلو</div>
-        <input type="number" id="new_mat_kg" placeholder="0" step="0.1" min="0"
-          style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:inherit"/>
-      </div>
-      <div style="flex:1">
-        <div style="font-size:10px;color:var(--t2);margin-bottom:2px">قیمت/کیلو (؋)</div>
-        <input type="number" id="new_mat_cost" placeholder="0" step="1" min="0"
-          style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-size:12px;font-family:inherit"/>
-      </div>
-    </div>
-    <div id="new-mat-msg" style="margin-top:6px;font-size:11px"></div>`;
-
-  document.getElementById('edit-stock-list').innerHTML = html;
 }
 
 async function saveStockEdits(){
   document.getElementById('edit-stock-btn').disabled=true;
   document.getElementById('edit-stock-btn').textContent='در حال ذخیره...';
-
-  // ── 1. ذخیره مواد موجود ──
   const rows = window._stockEditRows||[];
+  let saved=0;
   for(const r of rows){
     const key = r.material.replace(/[^a-zA-Z0-9]/g,'_');
     const kg = +(document.getElementById('esk_kg_'+key)?.value)||0;
     const cost = +(document.getElementById('esk_cost_'+key)?.value)||0;
-    await sbPatch('mat_stock',{
+    const res = await sbPatch('mat_stock',{
       total_kg:kg, avg_cost:cost,
       total_value_afn:kg*cost,
       updated_at:new Date().toISOString()
     },`?material=eq.${encodeURIComponent(r.material)}`);
+    if(res) saved++;
   }
-
-  // ── 2. اضافه کردن ماده جدید (اگر نام وارد شده) ──
-  const newName = (document.getElementById('new_mat_name')?.value||'').trim();
-  const newKg = +(document.getElementById('new_mat_kg')?.value)||0;
-  const newCost = +(document.getElementById('new_mat_cost')?.value)||0;
-  const msgEl = document.getElementById('new-mat-msg');
-
-  if(newName){
-    // بررسی تکراری نبودن
-    const existInRows = rows.find(r=>r.material===newName);
-    if(existInRows){
-      if(msgEl) msgEl.innerHTML='<span style="color:var(--og)">⚠️ این ماده قبلاً وجود دارد — موجودی آن آپدیت شد</span>';
-      await sbPatch('mat_stock',{
-        total_kg:newKg, avg_cost:newCost,
-        total_value_afn:newKg*newCost,
-        updated_at:new Date().toISOString()
-      },`?material=eq.${encodeURIComponent(newName)}`);
-    } else {
-      // چک در Supabase که نباشد
-      const checkExist = await sbGet('mat_stock',`?material=eq.${encodeURIComponent(newName)}`);
-      if(checkExist && checkExist.length>0){
-        if(msgEl) msgEl.innerHTML='<span style="color:var(--og)">⚠️ این ماده در دیتابیس وجود دارد — آپدیت شد</span>';
-        await sbPatch('mat_stock',{
-          total_kg:newKg, avg_cost:newCost,
-          total_value_afn:newKg*newCost,
-          updated_at:new Date().toISOString()
-        },`?material=eq.${encodeURIComponent(newName)}`);
-      } else {
-        // اضافه کن
-        const addRes = await sbPost('mat_stock',{
-          material:newName,
-          total_kg:newKg,
-          avg_cost:newCost,
-          total_value_afn:newKg*newCost,
-          updated_at:new Date().toISOString()
-        });
-        if(addRes) {
-          if(msgEl) msgEl.innerHTML='<span style="color:var(--gr)">✅ ماده جدید «'+newName+'» اضافه شد!</span>';
-        } else {
-          if(msgEl) msgEl.innerHTML='<span style="color:var(--rd)">❌ خطا در اضافه کردن ماده</span>';
-        }
-      }
-    }
-  }
-
   await refreshStockMap();
   showSaved();
   closeModal('modalEditStock');
   renderStock();
   document.getElementById('edit-stock-btn').disabled=false;
   document.getElementById('edit-stock-btn').textContent='ذخیره همه ✓';
+}
+
+// ── اضافه کردن ماده جدید به mat_stock ──
+async function addNewMaterial(){
+  const nameEl = document.getElementById('new_mat_name');
+  const kgEl = document.getElementById('new_mat_kg');
+  const costEl = document.getElementById('new_mat_cost');
+  const msgEl = document.getElementById('new-mat-msg');
+  const btnEl = document.getElementById('add-mat-btn');
+
+  const newName = (nameEl?.value||'').trim();
+  const newKg = +(kgEl?.value)||0;
+  const newCost = +(costEl?.value)||0;
+
+  if(!newName){
+    if(msgEl) msgEl.innerHTML='<span style="color:var(--rd)">❌ نام ماده را بنویس</span>';
+    return;
+  }
+
+  if(btnEl){ btnEl.disabled=true; btnEl.textContent='در حال اضافه...'; }
+
+  // بررسی که قبلاً وجود نداشته باشد
+  const checkExist = await sbGet('mat_stock',`?material=eq.${encodeURIComponent(newName)}`);
+
+  if(checkExist && checkExist.length>0){
+    // آپدیت
+    await sbPatch('mat_stock',{
+      total_kg:newKg, avg_cost:newCost,
+      total_value_afn:newKg*newCost,
+      updated_at:new Date().toISOString()
+    },`?material=eq.${encodeURIComponent(newName)}`);
+    if(msgEl) msgEl.innerHTML='<span style="color:var(--og)">⚠️ «'+newName+'» قبلاً بود — موجودی آپدیت شد</span>';
+  } else {
+    // اضافه کردن جدید
+    const addRes = await sbPost('mat_stock',{
+      material:newName,
+      total_kg:newKg,
+      avg_cost:newCost,
+      total_value_afn:newKg*newCost,
+      updated_at:new Date().toISOString()
+    });
+    if(addRes && addRes.length>0){
+      if(msgEl) msgEl.innerHTML='<span style="color:var(--gr)">✅ ماده «'+newName+'» با موفقیت اضافه شد!</span>';
+      // پاک کردن فرم
+      if(nameEl) nameEl.value='';
+      if(kgEl) kgEl.value='';
+      if(costEl) costEl.value='';
+      // reload لیست
+      await initEditStockModal();
+    } else {
+      if(msgEl) msgEl.innerHTML='<span style="color:var(--rd)">❌ خطا! دوباره امتحان کن</span>';
+    }
+  }
+
+  await refreshStockMap();
+  if(btnEl){ btnEl.disabled=false; btnEl.textContent='+ اضافه کردن'; }
 }
 
 // ── FINISHED GOODS ──
@@ -5090,17 +5102,16 @@ async function renderStock(){
   const totalFG = fgRows.reduce((a,r)=>a+(+r.total_value||0),0);
   document.getElementById('stock-fg-val').textContent = afn(totalFG);
 
-  // ── همه مواد Supabase + مواد MATS که هنوز در Supabase نیستند ──
+  // همه مواد: Supabase + MATS array (بدون تکرار)
   const supabaseMats = Object.keys(S.stockMap);
-  const allMats = [...new Set([...MATS, ...supabaseMats])];
+  const allMats = [...new Set([...supabaseMats, ...MATS])];
 
   document.getElementById('stock-tbody').innerHTML=allMats.map((m,i)=>{
     const st=S.stockMap[m]||{kg:0,avgCost:0,val:0};
     const sta=st.kg<=0?'🔴 ندارد':st.kg<5?'🟡 کم':'🟢 کافی';
-    const isSupabase = supabaseMats.includes(m);
     return`<tr>
       <td style="color:var(--t3)">${i+1}</td>
-      <td style="font-weight:700">${m}${!isSupabase?'<span style="font-size:9px;color:var(--t3);margin-right:4px">(محلی)</span>':''}</td>
+      <td style="font-weight:700">${m}</td>
       <td style="font-weight:800;color:${st.kg<=0?'var(--rd)':st.kg<5?'var(--gd)':'var(--tx)'}">${n2(st.kg)} کیلو</td>
       <td class="tdr" style="color:var(--tl);font-weight:700">${afn(st.avgCost)}</td>
       <td class="tdr" style="font-weight:700">${afn(st.kg*st.avgCost)}</td>
