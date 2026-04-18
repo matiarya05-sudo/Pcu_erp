@@ -3072,21 +3072,6 @@ async function renderProd(){
 }
 
 // ── STOCK ──
-async function renderStock(){
-  await refreshStockMap();
-  document.getElementById("stock-tbody").innerHTML=MATS.map((m,i)=>{
-    const st=S.stockMap[m]||{kg:0,avgCost:0,val:0};
-    const sta=st.kg<=0?"🔴 ندارد":st.kg<5?"🟡 کم":"🟢 کافی";
-    return`<tr>
-      <td style="color:var(--t3)">${i+1}</td>
-      <td style="font-weight:700">${m}</td>
-      <td style="font-weight:800;color:${st.kg<=0?"var(--rd)":st.kg<5?"var(--gd)":"var(--tx)"}">${n2(st.kg)} کیلو</td>
-      <td class="tdr" style="color:var(--tl);font-weight:700">${afn(st.avgCost)}</td>
-      <td class="tdr" style="font-weight:700">${afn(st.kg*st.avgCost)}</td>
-      <td>${sta}</td></tr>`;
-  }).join("");
-}
-
 // ── CASH ──
 let allCash=[];
 async function renderCash(){
@@ -6685,11 +6670,10 @@ async function submitWaste() {
   setTimeout(()=>{ closeModal('modalAddWaste'); renderBatch(); }, 1000);
   document.getElementById('aw-btn').disabled = false;
 }
-</script>
-</body>
-</html>
-<script>
+
 document.addEventListener("keydown",e=>{
   if(e.key==="Enter"&&document.getElementById("loginPage").style.display!=="none") doLogin();
 });
 </script>
+</body>
+</html>
