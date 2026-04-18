@@ -2813,7 +2813,7 @@ function populateDropdowns(){
   });
 }
 
-function calcهزینه تولید(prod,doz){
+function calcCOGS(prod,doz){
   return(RECIPES[prod]||[]).reduce((s,r)=>{
     const ac=S.stockMap[r.m]?.avgCost||0;
     return s+r.q*ac*doz;
@@ -3258,7 +3258,7 @@ function calcSale(){
   const prc=+(document.getElementById("s-prc").value)||0;
   const paid=+(document.getElementById("s-paid").value)||0;
   const prod=document.getElementById("s-prod").value;
-  const tot=doz*prc,rem=tot-paid,cg=calcهزینه تولید(prod,doz),gp=tot-cg;
+  const tot=doz*prc,rem=tot-paid,cg=calcCOGS(prod,doz),gp=tot-cg;
   document.getElementById("s-tot").value=afn(tot);
   document.getElementById("s-rem").value=afn(rem);
   document.getElementById("s-cogs").textContent=`💡 هزینه تولید: ${afn(cg)} | سود: ${afn(gp)} | حاشیه: ${tot>0?Math.round(gp/tot*100):0}%`;
@@ -3283,7 +3283,7 @@ async function submitSale(){
   if(!doz||!prc){document.getElementById("sale-msg").innerHTML='<div class="ib err">درجن و قیمت الزامی</div>';return;}
   const tot=doz*prc,paid=+(document.getElementById("s-paid").value)||0,rem=tot-paid;
   const prod=document.getElementById("s-prod").value;
-  const cg=calcهزینه تولید(prod,doz),gp=tot-cg;
+  const cg=calcCOGS(prod,doz),gp=tot-cg;
   const wj=+(document.getElementById("s-wage-j").value)||0;
   const ws=+(document.getElementById("s-wage-s").value)||0;
   const totalWageJ=doz*wj, totalWageS=doz*ws;
@@ -3406,7 +3406,7 @@ function calcProd(){
   const rate=+(document.getElementById("p-rate").value)||0;
   const prod=document.getElementById("p-prod").value;
   document.getElementById("p-wage").value=afn(doz*rate);
-  document.getElementById("p-cogs").textContent=`💡 هزینه تولید مواد: ${afn(calcهزینه تولید(prod,doz))} | مواد اتومات کسر می‌شود`;
+  document.getElementById("p-cogs").textContent=`💡 هزینه تولید مواد: ${afn(calcCOGS(prod,doz))} | مواد اتومات کسر می‌شود`;
 }
 async function submitProd(){
   const doz=+(document.getElementById("p-doz").value);
@@ -3414,7 +3414,7 @@ async function submitProd(){
   const worker=document.getElementById("p-worker").value;
   const prod=document.getElementById("p-prod").value;
   const wRate=+(document.getElementById("p-rate").value)||0;
-  const wage=doz*wRate,paid=+(document.getElementById("p-paid").value)||0,cg=calcهزینه تولید(prod,doz);
+  const wage=doz*wRate,paid=+(document.getElementById("p-paid").value)||0,cg=calcCOGS(prod,doz);
   document.getElementById("prod-btn").disabled=true;document.getElementById("prod-btn").textContent="در حال ذخیره...";
   const res=await sbPost("production",{
     date:document.getElementById("p-date").value,worker,product:prod,dozen:doz,
@@ -3798,7 +3798,7 @@ async function renderTax(){
   </tr>`).join(""):'<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--t3)">هنوز سابقه مالیاتی ثبت نشده</td></tr>';
 }
 
-function calcمالیات فروش(totalSales){ return totalSales*0.02; }
+function calcBRT(totalSales){ return totalSales*0.02; }
 function calcIncomeTax(annual){
   if(annual<=60000) return 0;
   if(annual<=150000) return (annual-60000)*0.02;
@@ -4883,7 +4883,7 @@ async function confirmVoiceSale(){
   const paid=p.is_credit?0:(p.paid!=null?p.paid:tot);
   const rem=tot-paid;
   const prod=p.product||"استاندارد";
-  const cg=calcهزینه تولید(prod,p.dozen||0),gp=tot-cg;
+  const cg=calcCOGS(prod,p.dozen||0),gp=tot-cg;
   const wj=22*(p.dozen||0), ws=25*(p.dozen||0);
   const saleDate=today();
 
@@ -5079,7 +5079,7 @@ async function saveEditRecord(){
   if(_editTable==="sales"){
     body.total=(body.dozen||0)*(body.price_per_doz||0);
     body.remaining=body.total-(body.paid||0);
-    body.gross_profit=body.total-calcهزینه تولید(body.product,body.dozen||0);
+    body.gross_profit=body.total-calcCOGS(body.product,body.dozen||0);
     body.margin=body.total>0?body.gross_profit/body.total*100:0;
   }
   if(_editTable==="purchases"){
