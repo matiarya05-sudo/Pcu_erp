@@ -757,6 +757,7 @@ select option{background:#1a1820}
       <div class="nsec">حساب‌ها</div>
       <button class="ni" onclick="goPage('stock')" data-page="stock" data-roles="admin,staff"><span class="em">🏗️</span>انبار مواد</button>
       <button class="ni" onclick="goPage('cust')" data-page="cust" data-roles="admin,staff"><span class="em">👥</span>مشتریان</button>
+      <button class="ni" onclick="goPage('collect')" data-page="collect" data-roles="admin,staff"><span class="em">💰</span>وصول مطالبات</button>
       <button class="ni" onclick="goPage('cheque')" data-page="cheque" data-roles="admin"><span class="em">🏦</span>چک و اقساط</button>
       <button class="ni" onclick="goPage('supp')" data-page="supp" data-roles="admin,staff"><span class="em">🏭</span>تامین‌کنندگان</button>
       <button class="ni" onclick="goPage('cash')" data-page="cash" data-roles="admin"><span class="em">💵</span>صندوق افغانی</button>
@@ -902,6 +903,84 @@ select option{background:#1a1820}
           <thead><tr><th>#</th><th>نام مشتری</th><th>ولایت</th><th>موجودی اول</th><th>فروش جدید</th><th>وصول</th><th>طلب کل</th><th></th></tr></thead>
           <tbody id="cust-tbody"><tr><td colspan="8" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
         </table></div>
+      </div>
+    </div>
+
+    <!-- ══ وصول مطالبات ══ -->
+    <div id="page-collect" class="page">
+      <!-- KPI -->
+      <div class="kg k3">
+        <div class="kc rd"><div class="kl">💰 جمع کل طلبات</div><div class="kv" id="col-total-debt">—</div></div>
+        <div class="kc gr"><div class="kl">✅ وصول شده (این ماه)</div><div class="kv" id="col-month-recv">—</div></div>
+        <div class="kc og"><div class="kl">⏳ هنوز وصول نشده</div><div class="kv" id="col-remaining">—</div></div>
+      </div>
+
+      <!-- فیلتر نوع مدیر -->
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <button onclick="switchCollectView('city')" id="col-btn-city" class="btn bpri" style="flex:1;justify-content:center">🏙️ مدیر شهر</button>
+        <button onclick="switchCollectView('province')" id="col-btn-prov" class="btn bsec" style="flex:1;justify-content:center">🗺️ مدیر ولایت</button>
+      </div>
+
+      <!-- پنل مدیر شهر -->
+      <div id="col-city-panel">
+        <div class="ib info" style="font-size:10.5px">🏙️ مدیر شهر | وصول یکشنبه و چهارشنبه | مشتریان کابل</div>
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+            <div class="ct" style="margin-bottom:0">📋 لیست وصول مطالبات — شهر</div>
+            <div style="display:flex;gap:6px">
+              <button class="btn bpri" onclick="openModal('modalCollectPay')">💵 ثبت پرداخت</button>
+              <button class="btn bsec" onclick="printCollectSheet('city')">🖨️ چاپ کتابچه</button>
+            </div>
+          </div>
+          <input class="search-bar" placeholder="جستجو..." oninput="filterCollect(this.value,'city')" style="margin-bottom:8px"/>
+          <div class="tw"><table>
+            <thead><tr><th>#</th><th>نام مشتری</th><th>ولایت</th><th>طلب کل</th><th>آخرین پرداخت</th><th>تاریخ</th><th>وضعیت</th><th>عملیات</th></tr></thead>
+            <tbody id="col-city-tbody"><tr><td colspan="8" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
+          </table></div>
+        </div>
+        <!-- تاریخچه پرداخت‌های اخیر -->
+        <div class="card">
+          <div class="ct">📜 آخرین پرداخت‌های ثبت شده — شهر</div>
+          <div class="tw"><table>
+            <thead><tr><th>تاریخ</th><th>مشتری</th><th>ولایت</th><th>مبلغ (؋)</th><th>ثبت کننده</th><th>یادداشت</th></tr></thead>
+            <tbody id="col-city-history"><tr><td colspan="6" style="text-align:center;padding:16px;color:var(--t3)">هنوز پرداختی ثبت نشده</td></tr></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- پنل مدیر ولایت -->
+      <div id="col-prov-panel" style="display:none">
+        <div class="ib info" style="font-size:10.5px">🗺️ مدیر ولایت | سفر ماهانه | همه ولایات</div>
+
+        <!-- انتخاب ولایت -->
+        <div class="card">
+          <div class="ct" style="margin-bottom:8px">🗺️ انتخاب ولایت برای سفر</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap" id="col-prov-btns"></div>
+        </div>
+
+        <div class="card" id="col-prov-detail" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+            <div class="ct" style="margin-bottom:0" id="col-prov-title">📋 لیست مشتریان ولایت</div>
+            <div style="display:flex;gap:6px">
+              <button class="btn bpri" onclick="openModal('modalCollectPay')">💵 ثبت پرداخت</button>
+              <button class="btn bsec" onclick="openModal('modalCollectOrder')">📋 ثبت فرمایش جدید</button>
+              <button class="btn bsec" onclick="printCollectSheet('province')">🖨️ چاپ کتابچه</button>
+            </div>
+          </div>
+          <div class="tw"><table>
+            <thead><tr><th>#</th><th>نام مشتری</th><th>طلب کل</th><th>آخرین پرداخت</th><th>تاریخ</th><th>وضعیت</th><th>عملیات</th></tr></thead>
+            <tbody id="col-prov-tbody"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--t3)">یک ولایت را انتخاب کن</td></tr></tbody>
+          </table></div>
+        </div>
+
+        <!-- تاریخچه سفرهای ولایت -->
+        <div class="card">
+          <div class="ct">🗺️ آخرین پرداخت‌های ثبت شده — ولایت</div>
+          <div class="tw"><table>
+            <thead><tr><th>تاریخ</th><th>مشتری</th><th>ولایت</th><th>مبلغ (؋)</th><th>ثبت کننده</th><th>یادداشت</th></tr></thead>
+            <tbody id="col-prov-history"><tr><td colspan="6" style="text-align:center;padding:16px;color:var(--t3)">هنوز پرداختی ثبت نشده</td></tr></tbody>
+          </table></div>
+        </div>
       </div>
     </div>
     <!-- SUPPLIERS -->
@@ -1770,6 +1849,110 @@ select option{background:#1a1820}
   </div>
 </div>
 
+<!-- ══ MODALS وصول مطالبات ══ -->
+
+<!-- ثبت پرداخت مشتری -->
+<div class="modal-overlay" id="modalCollectPay">
+  <div class="modal">
+    <div class="modal-head" style="background:linear-gradient(135deg,rgba(46,204,122,.1),transparent)">
+      <h3>💵 ثبت پرداخت مشتری</h3>
+      <button class="close-btn" onclick="closeModal('modalCollectPay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="cp-msg"></div>
+      <!-- جستجوی مشتری -->
+      <div class="fg">
+        <label>جستجوی مشتری</label>
+        <input id="cp-csrch" placeholder="نام یا ولایت..." oninput="searchCustCollect(this.value)" autocomplete="off"/>
+      </div>
+      <div id="cp-cust-dd" class="ddrop" style="display:none"></div>
+      <div id="cp-cust-sel" class="ib ok" style="display:none"></div>
+
+      <!-- طلب فعلی -->
+      <div id="cp-debt-info" style="display:none;background:rgba(240,90,110,.08);border:1px solid rgba(240,90,110,.2);border-radius:10px;padding:10px 12px;margin-bottom:10px">
+        <div style="font-size:10px;color:var(--t2)">طلب فعلی این مشتری:</div>
+        <div id="cp-debt-amount" style="font-size:18px;font-weight:800;color:var(--rd)"></div>
+      </div>
+
+      <div class="row2">
+        <div class="fg">
+          <label>تاریخ پرداخت</label>
+          <input id="cp-date"/>
+        </div>
+        <div class="fg">
+          <label>نوع وصول</label>
+          <select id="cp-type">
+            <option value="city">🏙️ مدیر شهر</option>
+            <option value="province">🗺️ مدیر ولایت</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg">
+        <label>مبلغ پرداختی (؋)</label>
+        <input type="number" id="cp-amount" min="0" placeholder="0" oninput="calcCollectRemain()"/>
+      </div>
+      <div id="cp-remain-info" style="font-size:11px;color:var(--t2);padding:4px 0;margin-bottom:8px"></div>
+      <div class="fg">
+        <label>شماره رسید (اختیاری)</label>
+        <input id="cp-receipt" placeholder="مثال: R-001"/>
+      </div>
+      <div class="fg">
+        <label>یادداشت</label>
+        <input id="cp-notes" placeholder="توضیح اضافه..."/>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn bsec" onclick="closeModal('modalCollectPay')">انصراف</button>
+      <button class="btn bpri" onclick="submitCollectPay()" id="cp-btn">ثبت پرداخت ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- ثبت فرمایش جدید در سفر ولایت -->
+<div class="modal-overlay" id="modalCollectOrder">
+  <div class="modal">
+    <div class="modal-head" style="background:linear-gradient(135deg,rgba(212,168,67,.1),transparent)">
+      <h3>📋 ثبت فرمایش در سفر ولایت</h3>
+      <button class="close-btn" onclick="closeModal('modalCollectOrder')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="co-msg"></div>
+      <div class="fg">
+        <label>جستجوی مشتری</label>
+        <input id="co-csrch" placeholder="نام یا ولایت..." oninput="searchCustCollectOrder(this.value)" autocomplete="off"/>
+      </div>
+      <div id="co-cust-dd" class="ddrop" style="display:none"></div>
+      <div id="co-cust-sel" class="ib ok" style="display:none"></div>
+      <div class="row2">
+        <div class="fg">
+          <label>تاریخ فرمایش</label>
+          <input id="co-date"/>
+        </div>
+        <div class="fg">
+          <label>مدل</label>
+          <select id="co-prod">
+            <option value="STD">PCU استاندارد ۳۶-۴۲</option>
+            <option value="VIP">PCU ویژه ۴۳-۴۵</option>
+            <option value="KID">PCU کودکانه ۲۴-۳۵</option>
+          </select>
+        </div>
+      </div>
+      <div class="fg">
+        <label>تعداد (درجن)</label>
+        <input type="number" id="co-dozen" min="0.5" step="0.5" placeholder="درجن"/>
+      </div>
+      <div class="fg">
+        <label>یادداشت</label>
+        <input id="co-notes" placeholder="توضیح اضافه..."/>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn bsec" onclick="closeModal('modalCollectOrder')">انصراف</button>
+      <button class="btn bpri" onclick="submitCollectOrder()" id="co-btn">ثبت فرمایش ✓</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ PARTNER MODALS ══ -->
 <!-- اضافه کردن شریک جدید -->
 <div class="modal-overlay" id="modalAddPartner">
@@ -2392,6 +2575,7 @@ function renderPage(id){
   else if(id==="prod") renderProd();
   else if(id==="stock") renderStock();
   else if(id==="cust") renderCust();
+  else if(id==="collect") renderCollect();
   else if(id==="supp") renderSupp();
   else if(id==="cash") renderCash();
   else if(id==="assets") renderAssets();
@@ -2760,7 +2944,8 @@ function initModal(id){
   else if(id==="modalCash") initCashModal();
   else if(id==="modalAddAsset") initAddAsset();
   else if(id==="modalEditStock") initEditStockModal();
-  else if(id==="modalAddFG") initAddFG();
+  else if(id==="modalCollectPay") initCollectPayModal();
+  else if(id==="modalCollectOrder") initCollectOrderModal();
 }
 
 // Order modal init
@@ -5241,6 +5426,442 @@ async function deleteAsset(id){
 }
 
 // ── KEY LISTENER ──
+// ══════════════════════════════════════════════════
+// ══ سیستم وصول مطالبات ══
+// ══════════════════════════════════════════════════
+
+let _collectView='city', _collectProvince='', _collectSelCust=null, _collectOrderSelCust=null;
+
+// ── تغییر نمای مدیر شهر / ولایت ──
+function switchCollectView(view){
+  _collectView=view;
+  document.getElementById('col-city-panel').style.display=view==='city'?'block':'none';
+  document.getElementById('col-prov-panel').style.display=view==='province'?'block':'none';
+  document.getElementById('col-btn-city').className='btn '+(view==='city'?'bpri':'bsec');
+  document.getElementById('col-btn-prov').className='btn '+(view==='province'?'bpri':'bsec');
+  if(view==='city') renderCollectCity();
+  else renderCollectProvince();
+}
+
+// ── render صفحه وصول مطالبات ──
+async function renderCollect(){
+  // KPI ها
+  const salesRows=await sbGet('sales','?select=cust_id,total,paid,remaining')||[];
+  const custOB=CUSTOMERS.reduce((a,c)=>a+(c.ob||0),0);
+  const totalDebt=custOB+salesRows.reduce((a,r)=>a+(+r.remaining||0),0);
+
+  const now=new Date();
+  const monthStart=`${now.getFullYear()-621}/${String(now.getMonth()+1).padStart(2,'0')}/01`;
+  const payments=await sbGet('collection_payments','?order=id.desc')||[];
+  const monthPay=payments.filter(p=>p.date>=monthStart).reduce((a,r)=>a+(+r.amount||0),0);
+
+  document.getElementById('col-total-debt').textContent=afn(totalDebt);
+  document.getElementById('col-month-recv').textContent=afn(monthPay);
+  document.getElementById('col-remaining').textContent=afn(Math.max(0,totalDebt-monthPay));
+
+  // دکمه‌های ولایت
+  const provs=[...new Set(CUSTOMERS.map(c=>c.p))].sort();
+  document.getElementById('col-prov-btns').innerHTML=provs.map(p=>
+    `<button onclick="selectCollectProvince('${p}')"
+      class="bb ${_collectProvince===p?'by2':'bbl'}"
+      style="cursor:pointer;padding:6px 12px;font-size:12px">${p}</button>`
+  ).join('');
+
+  // نمای پیش‌فرض
+  switchCollectView(_collectView);
+}
+
+// ── لیست مشتریان شهر ──
+async function renderCollectCity(){
+  const tbody=document.getElementById('col-city-tbody');
+  tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr>';
+
+  const salesMap=await buildSalesMap();
+  const payments=await sbGet('collection_payments','?order=date.desc')||[];
+  const payMap={};
+  payments.forEach(p=>{
+    if(!payMap[p.cust_id]){payMap[p.cust_id]={last:p.amount,date:p.date};}
+  });
+
+  // مشتریان کابل + شهرهای نزدیک
+  const cityProvs=['کابل'];
+  const list=CUSTOMERS.filter(c=>cityProvs.includes(c.p));
+
+  tbody.innerHTML=list.map((c,i)=>{
+    const sm=salesMap[c.id]||{rem:0};
+    const debt=(c.ob||0)+sm.rem;
+    const lastPay=payMap[c.id];
+    const status=debt<=0?'<span class="bb bg2">تسویه</span>':
+      lastPay?`<span class="bb by2">جزئی</span>`:
+      `<span class="bb br2">پرداخت نشده</span>`;
+    return`<tr>
+      <td style="color:var(--t3)">${i+1}</td>
+      <td style="font-weight:700">${c.n}</td>
+      <td><span class="bb bbl">${c.p}</span></td>
+      <td class="tdr" style="font-weight:800;color:${debt>0?'var(--rd)':'var(--gr)'}">${afn(debt)}</td>
+      <td class="tdr" style="color:var(--gr)">${lastPay?afn(lastPay.last):'—'}</td>
+      <td style="font-size:11px;color:var(--t2)">${lastPay?.date||'—'}</td>
+      <td>${status}</td>
+      <td><button onclick="quickCollectPay('${c.id}','${c.n.replace(/'/g,'')}',${debt})"
+        style="background:var(--gr2);border:1px solid rgba(46,204,122,.3);color:var(--gr);border-radius:6px;padding:4px 10px;cursor:pointer;font-size:11px;font-family:inherit"
+        ${debt<=0?'disabled':''}>💵 پرداخت</button></td>
+    </tr>`;
+  }).join('');
+
+  // تاریخچه
+  renderCollectHistory('city');
+}
+
+// ── انتخاب ولایت ──
+function selectCollectProvince(prov){
+  _collectProvince=prov;
+  // آپدیت دکمه‌ها
+  document.querySelectorAll('#col-prov-btns .bb').forEach(b=>{
+    b.className='bb bbl';
+    if(b.textContent===prov) b.className='bb by2';
+  });
+  document.getElementById('col-prov-detail').style.display='block';
+  document.getElementById('col-prov-title').textContent=`📋 مشتریان ${prov}`;
+  renderCollectProvList(prov);
+}
+
+async function renderCollectProvince(){
+  renderCollectHistory('province');
+}
+
+async function renderCollectProvList(prov){
+  const tbody=document.getElementById('col-prov-tbody');
+  tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr>';
+
+  const salesMap=await buildSalesMap();
+  const payments=await sbGet('collection_payments','?order=date.desc')||[];
+  const payMap={};
+  payments.forEach(p=>{if(!payMap[p.cust_id])payMap[p.cust_id]={last:p.amount,date:p.date};});
+
+  const list=CUSTOMERS.filter(c=>c.p===prov);
+  tbody.innerHTML=list.map((c,i)=>{
+    const sm=salesMap[c.id]||{rem:0};
+    const debt=(c.ob||0)+sm.rem;
+    const lastPay=payMap[c.id];
+    const status=debt<=0?'<span class="bb bg2">تسویه</span>':
+      lastPay?'<span class="bb by2">جزئی</span>':
+      '<span class="bb br2">پرداخت نشده</span>';
+    return`<tr>
+      <td style="color:var(--t3)">${i+1}</td>
+      <td style="font-weight:700">${c.n}</td>
+      <td class="tdr" style="font-weight:800;color:${debt>0?'var(--rd)':'var(--gr)'}">${afn(debt)}</td>
+      <td class="tdr" style="color:var(--gr)">${lastPay?afn(lastPay.last):'—'}</td>
+      <td style="font-size:11px;color:var(--t2)">${lastPay?.date||'—'}</td>
+      <td>${status}</td>
+      <td style="display:flex;gap:4px">
+        <button onclick="quickCollectPay('${c.id}','${c.n.replace(/'/g,'')}',${debt})"
+          style="background:var(--gr2);border:1px solid rgba(46,204,122,.3);color:var(--gr);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit"
+          ${debt<=0?'disabled':''}>💵 پول</button>
+        <button onclick="quickCollectOrder('${c.id}','${c.n.replace(/'/g,'')}')"
+          style="background:var(--g3);border:1px solid rgba(212,168,67,.3);color:var(--gd);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit">📋 فرمایش</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ── تاریخچه پرداخت‌ها ──
+async function renderCollectHistory(type){
+  const payments=await sbGet('collection_payments',`?order=id.desc&limit=20&type=eq.${type}`)||[];
+  const tbodyId=type==='city'?'col-city-history':'col-prov-history';
+  const tbody=document.getElementById(tbodyId);
+  if(!tbody) return;
+  tbody.innerHTML=payments.length?payments.map(p=>`<tr>
+    <td style="color:var(--t2)">${p.date}</td>
+    <td style="font-weight:700">${p.cust_name}</td>
+    <td><span class="bb bbl">${p.province||'—'}</span></td>
+    <td class="tdr" style="font-weight:800;color:var(--gr)">${afn(p.amount)}</td>
+    <td style="font-size:10px;color:var(--t3)">${p.collector||'—'}</td>
+    <td style="font-size:10px;color:var(--t2)">${p.notes||'—'}</td>
+  </tr>`).join(''):'<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--t3)">هنوز پرداختی ثبت نشده</td></tr>';
+}
+
+// ── helper: salesMap ──
+async function buildSalesMap(){
+  const salesRows=await sbGet('sales','?select=cust_id,total,paid,remaining')||[];
+  const map={};
+  salesRows.forEach(s=>{
+    if(!map[s.cust_id])map[s.cust_id]={tot:0,paid:0,rem:0};
+    map[s.cust_id].tot+=+s.total||0;
+    map[s.cust_id].paid+=+s.paid||0;
+    map[s.cust_id].rem+=+s.remaining||0;
+  });
+  return map;
+}
+
+// ── باز کردن modal پرداخت با مشتری از قبل انتخاب شده ──
+function quickCollectPay(custId,custName,debt){
+  _collectSelCust={id:custId,n:custName,debt};
+  document.getElementById('cp-csrch').value=custName;
+  document.getElementById('cp-cust-dd').style.display='none';
+  document.getElementById('cp-cust-sel').style.display='flex';
+  document.getElementById('cp-cust-sel').textContent=`✅ ${custName}`;
+  document.getElementById('cp-debt-info').style.display='block';
+  document.getElementById('cp-debt-amount').textContent=afn(debt);
+  document.getElementById('cp-remain-info').textContent='';
+  document.getElementById('cp-msg').innerHTML='';
+  document.getElementById('cp-type').value=_collectView;
+  openModal('modalCollectPay');
+}
+
+function quickCollectOrder(custId,custName){
+  _collectOrderSelCust={id:custId,n:custName};
+  document.getElementById('co-csrch').value=custName;
+  document.getElementById('co-cust-dd').style.display='none';
+  document.getElementById('co-cust-sel').style.display='flex';
+  document.getElementById('co-cust-sel').textContent=`✅ ${custName}`;
+  document.getElementById('co-msg').innerHTML='';
+  openModal('modalCollectOrder');
+}
+
+// ── جستجوی مشتری در modal پرداخت ──
+function searchCustCollect(q){
+  const dd=document.getElementById('cp-cust-dd');
+  if(!q){dd.style.display='none';return;}
+  const res=CUSTOMERS.filter(c=>c.n.includes(q)||c.p.includes(q)).slice(0,12);
+  dd.style.display=res.length?'block':'none';
+  dd.innerHTML=res.map(c=>`<div class="ddi" onclick="pickCustCollect('${c.id}')">
+    <span style="font-weight:700">${c.n}</span>
+    <span class="bb bbl">${c.p}</span>
+  </div>`).join('');
+}
+
+async function pickCustCollect(id){
+  const c=CUSTOMERS.find(x=>x.id===id);
+  const salesMap=await buildSalesMap();
+  const sm=salesMap[id]||{rem:0};
+  const debt=(c.ob||0)+sm.rem;
+  _collectSelCust={id:c.id,n:c.n,debt};
+  document.getElementById('cp-csrch').value=c.n;
+  document.getElementById('cp-cust-dd').style.display='none';
+  document.getElementById('cp-cust-sel').style.display='flex';
+  document.getElementById('cp-cust-sel').textContent=`✅ ${c.n} | ${c.p}`;
+  document.getElementById('cp-debt-info').style.display='block';
+  document.getElementById('cp-debt-amount').textContent=afn(debt);
+  calcCollectRemain();
+}
+
+function calcCollectRemain(){
+  if(!_collectSelCust) return;
+  const amt=+(document.getElementById('cp-amount').value)||0;
+  const remain=(_collectSelCust.debt||0)-amt;
+  const el=document.getElementById('cp-remain-info');
+  if(amt>0){
+    el.innerHTML=`باقی طلب بعد از پرداخت: <strong style="color:${remain>0?'var(--rd)':'var(--gr)'}">${afn(Math.max(0,remain))}</strong>`;
+  }
+}
+
+// ── جستجوی مشتری در modal فرمایش ──
+function searchCustCollectOrder(q){
+  const dd=document.getElementById('co-cust-dd');
+  if(!q){dd.style.display='none';return;}
+  const res=CUSTOMERS.filter(c=>c.n.includes(q)||c.p.includes(q)).slice(0,12);
+  dd.style.display=res.length?'block':'none';
+  dd.innerHTML=res.map(c=>`<div class="ddi" onclick="pickCustCollectOrder('${c.id}')">
+    <span style="font-weight:700">${c.n}</span>
+    <span class="bb bbl">${c.p}</span>
+  </div>`).join('');
+}
+
+function pickCustCollectOrder(id){
+  const c=CUSTOMERS.find(x=>x.id===id);
+  _collectOrderSelCust={id:c.id,n:c.n,p:c.p};
+  document.getElementById('co-csrch').value=c.n;
+  document.getElementById('co-cust-dd').style.display='none';
+  document.getElementById('co-cust-sel').style.display='flex';
+  document.getElementById('co-cust-sel').textContent=`✅ ${c.n} | ${c.p}`;
+}
+
+// ── ثبت پرداخت ──
+async function submitCollectPay(){
+  if(!_collectSelCust){document.getElementById('cp-msg').innerHTML='<div class="ib err">مشتری را انتخاب کن</div>';return;}
+  const amt=+(document.getElementById('cp-amount').value)||0;
+  if(!amt){document.getElementById('cp-msg').innerHTML='<div class="ib err">مبلغ را بنویس</div>';return;}
+
+  document.getElementById('cp-btn').disabled=true;
+  document.getElementById('cp-btn').textContent='در حال ذخیره...';
+
+  const cust=CUSTOMERS.find(c=>c.id===_collectSelCust.id);
+  const type=document.getElementById('cp-type').value;
+
+  // ثبت پرداخت در collection_payments
+  const res=await sbPost('collection_payments',{
+    cust_id:_collectSelCust.id,
+    cust_name:_collectSelCust.n,
+    province:cust?.p||'',
+    date:document.getElementById('cp-date').value||today(),
+    amount:amt,
+    type:type,
+    receipt_no:document.getElementById('cp-receipt').value||'',
+    collector:currentUser?.name||'',
+    notes:document.getElementById('cp-notes').value||''
+  });
+
+  // آپدیت فروش‌های مشتری (کم کردن از باقی طلب)
+  if(res){
+    // پیدا کردن فروش‌های باقی‌دار این مشتری
+    const custSales=await sbGet('sales',`?cust_id=eq.${_collectSelCust.id}&remaining=gt.0&order=id.asc`)||[];
+    let remaining=amt;
+    for(const sale of custSales){
+      if(remaining<=0) break;
+      const payNow=Math.min(remaining,+sale.remaining);
+      const newPaid=(+sale.paid||0)+payNow;
+      const newRem=(+sale.remaining||0)-payNow;
+      await sbPatch('sales',{paid:newPaid,remaining:Math.max(0,newRem)},`?id=eq.${sale.id}`);
+      remaining-=payNow;
+    }
+
+    // ثبت در صندوق نقد
+    await sbPost('cash_ledger',{
+      date:document.getElementById('cp-date').value||today(),
+      category:'in',
+      type:'وصول از مشتری',
+      description:`وصول از ${_collectSelCust.n} | ${type==='city'?'مدیر شهر':'مدیر ولایت'}`,
+      amount_in:amt,
+      amount_out:0
+    });
+
+    document.getElementById('cp-msg').innerHTML='<div class="ib ok">✅ پرداخت ثبت شد!</div>';
+    showSaved();
+    setTimeout(()=>{
+      closeModal('modalCollectPay');
+      renderCollect();
+    },1000);
+  } else {
+    document.getElementById('cp-msg').innerHTML='<div class="ib err">❌ خطا! دوباره امتحان کن</div>';
+  }
+  document.getElementById('cp-btn').disabled=false;
+  document.getElementById('cp-btn').textContent='ثبت پرداخت ✓';
+}
+
+// ── ثبت فرمایش در سفر ولایت ──
+async function submitCollectOrder(){
+  if(!_collectOrderSelCust){document.getElementById('co-msg').innerHTML='<div class="ib err">مشتری را انتخاب کن</div>';return;}
+  const dozen=+(document.getElementById('co-dozen').value)||0;
+  if(!dozen){document.getElementById('co-msg').innerHTML='<div class="ib err">تعداد درجن را بنویس</div>';return;}
+
+  document.getElementById('co-btn').disabled=true;
+  document.getElementById('co-btn').textContent='در حال ذخیره...';
+
+  const orderRes=await sbPost('orders',{
+    date:document.getElementById('co-date').value||today(),
+    cust_id:_collectOrderSelCust.id,
+    cust_name:_collectOrderSelCust.n,
+    province:_collectOrderSelCust.p||_collectProvince||'',
+    status:'pending',
+    note:`فرمایش سفر ولایت | ${document.getElementById('co-notes').value||''}`
+  });
+
+  if(orderRes&&orderRes[0]){
+    await sbPost('order_items',{
+      order_id:orderRes[0].id,
+      product:document.getElementById('co-prod').value,
+      dozen_ordered:dozen,
+      dozen_delivered:0,
+      dozen_remaining:dozen,
+      status:'pending'
+    });
+    document.getElementById('co-msg').innerHTML='<div class="ib ok">✅ فرمایش ثبت شد!</div>';
+    showSaved();
+    setTimeout(()=>{closeModal('modalCollectOrder');renderCollect();},1000);
+  } else {
+    document.getElementById('co-msg').innerHTML='<div class="ib err">❌ خطا!</div>';
+  }
+  document.getElementById('co-btn').disabled=false;
+  document.getElementById('co-btn').textContent='ثبت فرمایش ✓';
+}
+
+// ── چاپ کتابچه وصول ──
+function printCollectSheet(type){
+  const rows=type==='city'?
+    document.getElementById('col-city-tbody')?.innerHTML:
+    document.getElementById('col-prov-tbody')?.innerHTML;
+  const title=type==='city'?'کتابچه وصول — مدیر شهر':'کتابچه وصول — مدیر ولایت '+_collectProvince;
+  const w=window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html dir="rtl"><head>
+    <meta charset="UTF-8"><title>${title}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+      *{box-sizing:border-box;margin:0;padding:0}
+      body{font-family:'Vazirmatn',sans-serif;padding:20px;font-size:12px;color:#000}
+      .header{border-bottom:3px solid #c8922a;margin-bottom:16px;padding-bottom:12px;display:flex;justify-content:space-between;align-items:flex-start}
+      h1{font-size:18px;font-weight:900;color:#c8922a}
+      table{width:100%;border-collapse:collapse;margin-top:8px}
+      th{background:#c8922a;color:#fff;padding:8px;text-align:right;font-size:11px}
+      td{padding:8px;border-bottom:1px solid #eee;font-size:11px}
+      tr:nth-child(even) td{background:#fafafa}
+      .bb{border:1px solid #999;border-radius:10px;padding:1px 6px;font-size:10px}
+      @media print{body{padding:10px}}
+    </style></head><body>
+    <div class="header">
+      <div>
+        <h1>فابریکه حیات‌زاده | ${title}</h1>
+        <div style="font-size:10px;color:#666;margin-top:4px">تاریخ چاپ: ${today()} | کابل، افغانستان 🇦🇫</div>
+      </div>
+      <div style="text-align:left;font-size:11px">
+        <div>امضای مدیر: ___________</div>
+        <div style="margin-top:8px">تایید: ___________</div>
+      </div>
+    </div>
+    <table><thead><tr>
+      ${type==='city'?
+        '<th>#</th><th>نام مشتری</th><th>ولایت</th><th>طلب کل</th><th>آخرین پرداخت</th><th>تاریخ</th><th>وضعیت</th><th>امضاء</th>':
+        '<th>#</th><th>نام مشتری</th><th>طلب کل</th><th>آخرین پرداخت</th><th>تاریخ</th><th>وضعیت</th><th>امضاء</th>'}
+    </tr></thead>
+    <tbody>${rows||''}</tbody></table>
+    <div style="margin-top:30px;display:flex;justify-content:space-between;font-size:11px;border-top:1px solid #ccc;padding-top:12px">
+      <div>جمع وصول شده: ___________</div>
+      <div>جمع باقی: ___________</div>
+      <div>امضای مدیر: ___________</div>
+    </div>
+    </body></html>`);
+  w.document.close();
+  w.focus();
+  setTimeout(()=>w.print(),600);
+}
+
+// ── init modal های وصول ──
+function initCollectPayModal(){
+  _collectSelCust=null;
+  document.getElementById('cp-csrch').value='';
+  document.getElementById('cp-cust-dd').style.display='none';
+  document.getElementById('cp-cust-sel').style.display='none';
+  document.getElementById('cp-debt-info').style.display='none';
+  document.getElementById('cp-amount').value='';
+  document.getElementById('cp-receipt').value='';
+  document.getElementById('cp-notes').value='';
+  document.getElementById('cp-remain-info').textContent='';
+  document.getElementById('cp-msg').innerHTML='';
+  document.getElementById('cp-date').value=today();
+  document.getElementById('cp-type').value=_collectView;
+}
+
+function initCollectOrderModal(){
+  _collectOrderSelCust=null;
+  document.getElementById('co-csrch').value='';
+  document.getElementById('co-cust-dd').style.display='none';
+  document.getElementById('co-cust-sel').style.display='none';
+  document.getElementById('co-dozen').value='';
+  document.getElementById('co-notes').value='';
+  document.getElementById('co-msg').innerHTML='';
+  document.getElementById('co-date').value=today();
+}
+
+// ── filter collect ──
+function filterCollect(q,type){
+  const tbody=document.getElementById(type==='city'?'col-city-tbody':'col-prov-tbody');
+  if(!tbody) return;
+  const rows=tbody.querySelectorAll('tr');
+  rows.forEach(r=>{
+    const txt=r.textContent||'';
+    r.style.display=(!q||txt.includes(q))?'':'none';
+  });
+}
+
 document.addEventListener("keydown",e=>{
   if(e.key==="Enter"&&document.getElementById("loginPage").style.display!=="none") doLogin();
 });
