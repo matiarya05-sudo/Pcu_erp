@@ -1339,7 +1339,8 @@ select option{background:#1a1820}
     <div class="modal-head"><h3>✏️ ادیت موجودی مواد خام</h3><button class="close-btn" onclick="closeModal('modalEditStock')">✕</button></div>
     <div class="modal-body">
       <div class="ib warn">⚠️ این مقادیر مستقیم در Supabase آپدیت می‌شوند</div>
-      <div id="edit-stock-list"></div>
+      <div class="ib info" style="font-size:10.5px">📋 همه مواد موجود در Supabase نشان داده می‌شوند | در پایین ماده جدید اضافه کن</div>
+      <div id="edit-stock-list"><div class="loading"><div class="spinner"></div>در حال بارگذاری...</div></div>
     </div>
     <div class="modal-foot">
       <button class="btn bsec" onclick="closeModal('modalEditStock')">انصراف</button>
@@ -1420,9 +1421,10 @@ select option{background:#1a1820}
     <div class="modal-head"><h3>+ مشتری جدید</h3><button class="close-btn" onclick="closeModal('modalAddCust')">✕</button></div>
     <div class="modal-body">
       <div id="ac-msg"></div>
-      <div class="fg"><label>نام مشتری</label><input id="ac-name" placeholder="نام کامل..."/></div>
-      <div class="fg"><label>ولایت</label><select id="ac-prov" onchange="toggleCustomProv('ac')"><option>کابل</option><option>غزنی</option><option>کندهار</option><option>هرات</option><option>پلخمری</option><option>کندز</option><option>بدخشان</option><option>تخار</option><option>جلال آباد</option><option>خوست</option><option>سایر</option></select></div>
-      <div class="fg" id="ac-prov-custom" style="display:none"><label>نام ولایت (دستی بنویس)</label><input id="ac-prov-text" placeholder="مثال: لوگر، پروان، میدان..."/></div>
+      <div class="row2">
+        <div class="fg"><label>نام مشتری</label><input id="ac-name" placeholder="نام کامل..."/></div>
+        <div class="fg"><label>ولایت</label><select id="ac-prov"><option>کابل</option><option>غزنی</option><option>کندهار</option><option>هرات</option><option>پلخمری</option><option>کندز</option><option>بدخشان</option><option>تخار</option><option>جلال آباد</option><option>خوست</option><option>سایر</option></select></div>
+      </div>
       <div class="fg"><label>موجودی افتتاحیه (؋)</label><input type="number" id="ac-ob" value="0" min="0"/></div>
     </div>
     <div class="modal-foot">
@@ -1437,9 +1439,10 @@ select option{background:#1a1820}
     <div class="modal-body">
       <div id="ec-msg"></div>
       <input type="hidden" id="ec-id"/>
-      <div class="fg"><label>نام مشتری</label><input id="ec-name"/></div>
-      <div class="fg"><label>ولایت</label><select id="ec-prov" onchange="toggleCustomProv('ec')"><option>کابل</option><option>غزنی</option><option>کندهار</option><option>هرات</option><option>پلخمری</option><option>کندز</option><option>بدخشان</option><option>تخار</option><option>جلال آباد</option><option>خوست</option><option>سایر</option></select></div>
-      <div class="fg" id="ec-prov-custom" style="display:none"><label>نام ولایت (دستی بنویس)</label><input id="ec-prov-text" placeholder="مثال: لوگر، پروان، میدان..."/></div>
+      <div class="row2">
+        <div class="fg"><label>نام مشتری</label><input id="ec-name"/></div>
+        <div class="fg"><label>ولایت</label><select id="ec-prov"><option>کابل</option><option>غزنی</option><option>کندهار</option><option>هرات</option><option>پلخمری</option><option>کندز</option><option>بدخشان</option><option>تخار</option><option>جلال آباد</option><option>خوست</option><option>سایر</option></select></div>
+      </div>
       <div class="fg"><label>موجودی افتتاحیه (؋)</label><input type="number" id="ec-ob" min="0"/></div>
       <div class="ib warn">⚠️ این موجودی اول — طلب قبل از شروع سیستم</div>
     </div>
@@ -2129,6 +2132,22 @@ async function sb(table, method="GET", body=null, params=""){
 async function sbGet(table,params=""){ return sb(table,"GET",null,params); }
 async function sbPost(table,body){ return sb(table,"POST",body); }
 async function sbPatch(table,body,params){ return sb(table,"PATCH",body,params); }
+async function sbUpsert(table,body,onConflict){
+  // Upsert = insert or update if conflict
+  const url=`${SB_URL}/rest/v1/${table}`;
+  const opts={method:"POST",headers:{
+    "apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,
+    "Content-Type":"application/json",
+    "Prefer":`return=representation,resolution=merge-duplicates`,
+    ...(onConflict?{"resolution":"merge-duplicates"}:{})
+  }};
+  opts.body=JSON.stringify(Array.isArray(body)?body:[body]);
+  try{
+    const r=await fetch(url,opts);
+    const t=await r.text();
+    return t?JSON.parse(t):[];
+  }catch(e){console.error("Upsert error:",e);return null;}
+}
 
 function setSyncOff(){ document.getElementById("syncDot")?.classList.add("off"); }
 function setSyncOn(){ document.getElementById("syncDot")?.classList.remove("off"); }
@@ -3032,7 +3051,7 @@ function openEditCust(id){
 async function saveEditCust(){
   const id=document.getElementById("ec-id").value;
   const name=document.getElementById("ec-name").value.trim();
-  const prov=getProvValue("ec");
+  const prov=document.getElementById("ec-prov").value;
   const ob=+(document.getElementById("ec-ob").value)||0;
   if(!name){document.getElementById("ec-msg").innerHTML='<div class="ib err">نام الزامی</div>';return;}
   document.getElementById("ec-btn").disabled=true;document.getElementById("ec-btn").textContent="در حال ذخیره...";
@@ -3046,26 +3065,9 @@ async function saveEditCust(){
   document.getElementById("ec-msg").innerHTML='<div class="ib ok">✅ ذخیره شد!</div>';
   showSaved();setTimeout(()=>{closeModal("modalEditCust");renderCust();},1000);
 }
-// ── ولایت دستی ──
-function toggleCustomProv(prefix){
-  const sel=document.getElementById(prefix+'-prov');
-  const custom=document.getElementById(prefix+'-prov-custom');
-  if(!custom) return;
-  if(sel.value==='سایر') custom.style.display='block';
-  else {custom.style.display='none';}
-}
-function getProvValue(prefix){
-  const sel=document.getElementById(prefix+'-prov');
-  if(sel.value==='سایر'){
-    const txt=(document.getElementById(prefix+'-prov-text')?.value||'').trim();
-    return txt||'سایر';
-  }
-  return sel.value;
-}
-
 async function saveAddCust(){
   const name=document.getElementById("ac-name").value.trim();
-  const prov=getProvValue("ac");
+  const prov=document.getElementById("ac-prov").value;
   const ob=+(document.getElementById("ac-ob").value)||0;
   if(!name){document.getElementById("ac-msg").innerHTML='<div class="ib err">نام الزامی</div>';return;}
   document.getElementById("ac-btn").disabled=true;document.getElementById("ac-btn").textContent="در حال ذخیره...";
@@ -4873,10 +4875,13 @@ function switchStockTab(tab){
 
 // ── STOCK EDIT ──
 async function initEditStockModal(){
+  document.getElementById('edit-stock-list').innerHTML='<div class="loading"><div class="spinner"></div>در حال بارگذاری...</div>';
   const rows = await sbGet('mat_stock','?order=material.asc')||[];
-  document.getElementById('edit-stock-list').innerHTML = rows.map(r=>`
+  window._stockEditRows = rows;
+
+  let html = rows.map(r=>`
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;padding:8px;background:var(--b3);border-radius:8px;border:1px solid var(--bd)">
-      <div style="flex:2;font-size:12px;font-weight:700">${r.material}</div>
+      <div style="flex:2;font-size:12px;font-weight:700;color:var(--tx)">${r.material}</div>
       <div style="flex:1">
         <div style="font-size:10px;color:var(--t2);margin-bottom:2px">کیلو</div>
         <input type="number" id="esk_kg_${r.material.replace(/[^a-zA-Z0-9]/g,'_')}" value="${r.total_kg||0}" step="0.1"
@@ -4888,12 +4893,38 @@ async function initEditStockModal(){
           style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-size:12px;font-family:inherit"/>
       </div>
     </div>`).join('');
-  window._stockEditRows = rows;
+
+  // ── بخش اضافه کردن ماده جدید ──
+  html += `
+    <div style="height:1px;background:rgba(255,255,255,.08);margin:14px 0"></div>
+    <div style="font-size:11px;font-weight:800;color:var(--gd);margin-bottom:8px">➕ اضافه کردن ماده جدید به انبار</div>
+    <div style="display:flex;gap:6px;align-items:flex-end;padding:10px;background:rgba(212,168,67,.05);border-radius:8px;border:1px solid rgba(212,168,67,.2)">
+      <div style="flex:2">
+        <div style="font-size:10px;color:var(--t2);margin-bottom:2px">نام ماده جدید</div>
+        <input id="new_mat_name" placeholder="مثال: رنگ آبی، کرش قرمز..."
+          style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:inherit"/>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:10px;color:var(--t2);margin-bottom:2px">کیلو</div>
+        <input type="number" id="new_mat_kg" placeholder="0" step="0.1" min="0"
+          style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:inherit"/>
+      </div>
+      <div style="flex:1">
+        <div style="font-size:10px;color:var(--t2);margin-bottom:2px">قیمت/کیلو (؋)</div>
+        <input type="number" id="new_mat_cost" placeholder="0" step="1" min="0"
+          style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-size:12px;font-family:inherit"/>
+      </div>
+    </div>
+    <div id="new-mat-msg" style="margin-top:6px;font-size:11px"></div>`;
+
+  document.getElementById('edit-stock-list').innerHTML = html;
 }
 
 async function saveStockEdits(){
   document.getElementById('edit-stock-btn').disabled=true;
   document.getElementById('edit-stock-btn').textContent='در حال ذخیره...';
+
+  // ── 1. ذخیره مواد موجود ──
   const rows = window._stockEditRows||[];
   for(const r of rows){
     const key = r.material.replace(/[^a-zA-Z0-9]/g,'_');
@@ -4905,6 +4936,51 @@ async function saveStockEdits(){
       updated_at:new Date().toISOString()
     },`?material=eq.${encodeURIComponent(r.material)}`);
   }
+
+  // ── 2. اضافه کردن ماده جدید (اگر نام وارد شده) ──
+  const newName = (document.getElementById('new_mat_name')?.value||'').trim();
+  const newKg = +(document.getElementById('new_mat_kg')?.value)||0;
+  const newCost = +(document.getElementById('new_mat_cost')?.value)||0;
+  const msgEl = document.getElementById('new-mat-msg');
+
+  if(newName){
+    // بررسی تکراری نبودن
+    const existInRows = rows.find(r=>r.material===newName);
+    if(existInRows){
+      if(msgEl) msgEl.innerHTML='<span style="color:var(--og)">⚠️ این ماده قبلاً وجود دارد — موجودی آن آپدیت شد</span>';
+      await sbPatch('mat_stock',{
+        total_kg:newKg, avg_cost:newCost,
+        total_value_afn:newKg*newCost,
+        updated_at:new Date().toISOString()
+      },`?material=eq.${encodeURIComponent(newName)}`);
+    } else {
+      // چک در Supabase که نباشد
+      const checkExist = await sbGet('mat_stock',`?material=eq.${encodeURIComponent(newName)}`);
+      if(checkExist && checkExist.length>0){
+        if(msgEl) msgEl.innerHTML='<span style="color:var(--og)">⚠️ این ماده در دیتابیس وجود دارد — آپدیت شد</span>';
+        await sbPatch('mat_stock',{
+          total_kg:newKg, avg_cost:newCost,
+          total_value_afn:newKg*newCost,
+          updated_at:new Date().toISOString()
+        },`?material=eq.${encodeURIComponent(newName)}`);
+      } else {
+        // اضافه کن
+        const addRes = await sbPost('mat_stock',{
+          material:newName,
+          total_kg:newKg,
+          avg_cost:newCost,
+          total_value_afn:newKg*newCost,
+          updated_at:new Date().toISOString()
+        });
+        if(addRes) {
+          if(msgEl) msgEl.innerHTML='<span style="color:var(--gr)">✅ ماده جدید «'+newName+'» اضافه شد!</span>';
+        } else {
+          if(msgEl) msgEl.innerHTML='<span style="color:var(--rd)">❌ خطا در اضافه کردن ماده</span>';
+        }
+      }
+    }
+  }
+
   await refreshStockMap();
   showSaved();
   closeModal('modalEditStock');
@@ -4959,6 +5035,9 @@ async function editFG(id){
   const rows = await sbGet('finished_goods',`?id=eq.${id}`)||[];
   if(!rows[0]) return;
   const r=rows[0];
+  // اول modal را باز کن بدون init
+  document.getElementById('modalAddFG').classList.add('open');
+  // بعد فیلدها را پر کن
   document.getElementById('fg-modal-title').textContent='✏️ ادیت جنس';
   document.getElementById('fg-edit-id').value=id;
   document.getElementById('fg-name').value=r.product_name||'';
@@ -4967,7 +5046,7 @@ async function editFG(id){
   document.getElementById('fg-price').value=r.unit_price||0;
   document.getElementById('fg-total').value=afn(r.total_value||0);
   document.getElementById('fg-note').value=r.note||'';
-  openModal('modalAddFG');
+  document.getElementById('fg-msg').innerHTML='';
 }
 
 async function submitFG(){
@@ -5010,12 +5089,18 @@ async function renderStock(){
   const fgRows = await sbGet('finished_goods','?select=total_value')||[];
   const totalFG = fgRows.reduce((a,r)=>a+(+r.total_value||0),0);
   document.getElementById('stock-fg-val').textContent = afn(totalFG);
-  document.getElementById('stock-tbody').innerHTML=MATS.map((m,i)=>{
+
+  // ── همه مواد Supabase + مواد MATS که هنوز در Supabase نیستند ──
+  const supabaseMats = Object.keys(S.stockMap);
+  const allMats = [...new Set([...MATS, ...supabaseMats])];
+
+  document.getElementById('stock-tbody').innerHTML=allMats.map((m,i)=>{
     const st=S.stockMap[m]||{kg:0,avgCost:0,val:0};
     const sta=st.kg<=0?'🔴 ندارد':st.kg<5?'🟡 کم':'🟢 کافی';
+    const isSupabase = supabaseMats.includes(m);
     return`<tr>
       <td style="color:var(--t3)">${i+1}</td>
-      <td style="font-weight:700">${m}</td>
+      <td style="font-weight:700">${m}${!isSupabase?'<span style="font-size:9px;color:var(--t3);margin-right:4px">(محلی)</span>':''}</td>
       <td style="font-weight:800;color:${st.kg<=0?'var(--rd)':st.kg<5?'var(--gd)':'var(--tx)'}">${n2(st.kg)} کیلو</td>
       <td class="tdr" style="color:var(--tl);font-weight:700">${afn(st.avgCost)}</td>
       <td class="tdr" style="font-weight:700">${afn(st.kg*st.avgCost)}</td>
