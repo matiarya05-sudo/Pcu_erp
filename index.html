@@ -767,7 +767,7 @@ select option{background:#1a1820}
       <button class="ni" onclick="goPage('partners')" data-page="partners" data-roles="admin"><span class="em">🤝</span>شریکان / سهام‌داران</button>
       <div class="nsec">مالی و گزارش</div>
       <button class="ni" onclick="goPage('assets')" data-page="assets" data-roles="admin"><span class="em">🏭</span>دارایی‌های ثابت</button>
-      <button class="ni" onclick="goPage('report')" data-page="report" data-roles="admin"><span class="em">📈</span>گزارشات & P&L</button>
+      <button class="ni" onclick="goPage('report')" data-page="report" data-roles="admin"><span class="em">📈</span>گزارشات & سود و زیان</button>
       <button class="ni" onclick="goPage('reports_more')" data-page="reports_more" data-roles="admin"><span class="em">📊</span>گزارش‌های تفصیلی</button>
       <button class="ni" onclick="goPage('tax')" data-page="tax" data-roles="admin"><span class="em">🧾</span>مالیات</button>
       <button class="ni" onclick="goPage('settings')" data-page="settings" data-roles="admin"><span class="em">⚙️</span>تنظیمات</button>
@@ -788,7 +788,7 @@ select option{background:#1a1820}
       <div class="kg" id="dash-kpis"><div class="loading"><div class="spinner"></div>در حال بارگذاری...</div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
         <div class="card"><div class="ct">🗺️ طلبات به تفکیک ولایت</div><div id="prov-chart"><div class="loading"><div class="spinner"></div></div></div></div>
-        <div class="card"><div class="ct">📊 P&L خلاصه</div><div id="pl-summary"><div class="loading"><div class="spinner"></div></div></div></div>
+        <div class="card"><div class="ct">📊 سود و زیان خلاصه</div><div id="pl-summary"><div class="loading"><div class="spinner"></div></div></div></div>
       </div>
     </div>
     <!-- SALES -->
@@ -826,7 +826,7 @@ select option{background:#1a1820}
       </div>
     </div>
     <div id="page-buy" class="page">
-      <div class="ib info">☁️ خرید به دالر | Moving Average Cost اتومات | Supabase</div>
+      <div class="ib info">☁️ خرید به دالر | قیمت میانگین متحرک اتومات | Supabase</div>
       <div class="card">
         <div class="ct">📦 خرید مواد | <span id="buy-count" style="color:var(--gd)">—</span></div>
         <div class="tw"><table>
@@ -851,23 +851,23 @@ select option{background:#1a1820}
     <div id="page-batch" class="page">
       <!-- KPI -->
       <div class="kg k3">
-        <div class="kc tl"><div class="kl">⚗️ batch های امروز</div><div class="kv" id="bat-today">—</div></div>
+        <div class="kc tl"><div class="kl">⚗️ نوبت‌های امروز</div><div class="kv" id="bat-today">—</div></div>
         <div class="kc gr"><div class="kl">👟 درجن تولیدشده (این ماه)</div><div class="kv" id="bat-month-doz">—</div></div>
         <div class="kc gd"><div class="kl">💰 بهای تمام‌شده میانگین</div><div class="kv" id="bat-avg-cost">—</div></div>
       </div>
 
       <!-- تب‌ها -->
       <div style="display:flex;gap:8px;margin-bottom:12px">
-        <button onclick="switchBatchTab('list')" id="bat-tab-list" class="btn bpri" style="flex:1;justify-content:center">📋 لیست batch ها</button>
+        <button onclick="switchBatchTab('list')" id="bat-tab-list" class="btn bpri" style="flex:1;justify-content:center">📋 لیست نوبت‌ها</button>
         <button onclick="switchBatchTab('waste')" id="bat-tab-waste" class="btn bsec" style="flex:1;justify-content:center">♻️ کچره</button>
         <button onclick="switchBatchTab('report')" id="bat-tab-report" class="btn bsec" style="flex:1;justify-content:center">📊 گزارش مفاد</button>
       </div>
 
-      <!-- پنل لیست batch ها -->
+      <!-- پنل لیست نوبت‌ها -->
       <div id="bat-list-panel">
         <div class="card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">
-            <div class="ct" style="margin-bottom:0">⚗️ دفتر مکسچر و تولید</div>
+            <div class="ct" style="margin-bottom:0">⚗️ دفتر نوبت‌های مکسچر</div>
             <div style="display:flex;gap:6px">
               <select id="bat-filter" onchange="renderBatchList()" style="padding:6px 10px;background:var(--b3);border:1px solid var(--bd);border-radius:7px;color:var(--tx);font-family:inherit;font-size:11px">
                 <option value="all">همه</option>
@@ -883,7 +883,7 @@ select option{background:#1a1820}
 
       <!-- پنل کچره -->
       <div id="bat-waste-panel" style="display:none">
-        <div class="ib info" style="font-size:10.5px">♻️ کچره وزن می‌شود و به batch بعدی اضافه می‌گردد — هزینه آن به بهای تمام‌شده منتقل می‌شود</div>
+        <div class="ib info" style="font-size:10.5px">♻️ کچره وزن می‌شود و به نوبت بعدی اضافه می‌گردد — هزینه آن به بهای تمام‌شده منتقل می‌شود</div>
         <div class="card">
           <div class="ct">♻️ موجودی کچره آماده برای بازیافت</div>
           <div id="waste-stock-display" style="padding:12px;text-align:center">
@@ -896,7 +896,7 @@ select option{background:#1a1820}
         <div class="card">
           <div class="ct">📋 تاریخچه کچره</div>
           <div class="tw"><table>
-            <thead><tr><th>تاریخ</th><th>batch</th><th>کیلو</th><th>وضعیت</th><th>batch بازیافت</th></tr></thead>
+            <thead><tr><th>تاریخ</th><th>نوبت</th><th>کیلو</th><th>وضعیت</th><th>نوبت بازیافت</th></tr></thead>
             <tbody id="waste-history-tbody"><tr><td colspan="5" style="text-align:center;padding:16px;color:var(--t3)">در حال بارگذاری...</td></tr></tbody>
           </table></div>
         </div>
@@ -911,9 +911,9 @@ select option{background:#1a1820}
           <div class="kc gr"><div class="kl">مفاد فی درجن</div><div class="kv" id="rpt-profit-doz">—</div></div>
         </div>
         <div class="card">
-          <div class="ct">📊 تحلیل مفاد به تفکیک batch</div>
+          <div class="ct">📊 تحلیل مفاد به تفکیک نوبت</div>
           <div class="tw"><table>
-            <thead><tr><th>#</th><th>batch</th><th>تاریخ</th><th>درجن</th><th>هزینه مواد</th><th>اجرت</th><th>بهای تمام‌شده/درجن</th><th>مفاد تخمینی/درجن</th></tr></thead>
+            <thead><tr><th>#</th><th>نوبت</th><th>تاریخ</th><th>درجن</th><th>هزینه مواد</th><th>اجرت</th><th>بهای تمام‌شده/درجن</th><th>مفاد تخمینی/درجن</th></tr></thead>
             <tbody id="bat-report-tbody"><tr><td colspan="8" style="text-align:center;padding:16px;color:var(--t3)">در حال بارگذاری...</td></tr></tbody>
           </table></div>
         </div>
@@ -933,7 +933,7 @@ select option{background:#1a1820}
       </div>
       <!-- مواد خام -->
       <div id="stock-raw-panel">
-        <div class="ib info" style="font-size:10.5px">☁️ Moving Avg Cost | ✏️ Admin می‌تواند موجودی را ادیت کند</div>
+        <div class="ib info" style="font-size:10.5px">☁️ قیمت میانگین متحرک | ✏️ Admin می‌تواند موجودی را ادیت کند</div>
         <div class="card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
             <div class="ct" style="margin-bottom:0">🏗️ انبار مواد خام</div>
@@ -1113,7 +1113,7 @@ select option{background:#1a1820}
     <div id="page-report" class="page">
       <div class="kg k4" id="report-kpis"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="card"><div class="ct">📊 سود و زیان | P&L</div><div id="pl-detail"></div></div>
+        <div class="card"><div class="ct">📊 سود و زیان | سود و زیان</div><div id="pl-detail"></div></div>
         <div class="card"><div class="ct">⚖️ ترازنامه</div><div id="bs-detail"></div></div>
       </div>
     </div>
@@ -1183,13 +1183,13 @@ select option{background:#1a1820}
     <!-- TAX -->
     <div id="page-tax" class="page">
       <div class="kg k3">
-        <div class="kc rd"><div class="kl">BRT این سه‌ماهه (2%)</div><div class="kv" id="tax-brt">—</div><div class="ks">از فروش کل</div></div>
+        <div class="kc rd"><div class="kl">مالیات فروش این سه‌ماهه (2%)</div><div class="kv" id="tax-brt">—</div><div class="ks">از فروش کل</div></div>
         <div class="kc gd"><div class="kl">مالیات کارمندان</div><div class="kv" id="tax-emp">—</div><div class="ks">این ماه</div></div>
         <div class="kc pp"><div class="kl">مجموع مالیات</div><div class="kv" id="tax-total">—</div></div>
       </div>
       <div class="card">
         <div class="ct">🧾 محاسبه مالیات — قانون افغانستان</div>
-        <div class="ib warn" style="margin-bottom:12px">📋 نرخ BRT برای تولیدکننده: ۲٪ | معافیت کارمند: تا ۶۰,۰۰۰ افغانی/سال</div>
+        <div class="ib warn" style="margin-bottom:12px">📋 نرخ مالیات فروش برای تولیدکننده: ۲٪ | معافیت کارمند: تا ۶۰,۰۰۰ افغانی/سال</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="tax-calc"></div>
       </div>
       <div class="card">
@@ -1763,7 +1763,7 @@ select option{background:#1a1820}
         <div class="fg"><label>دوره</label><input id="tx-period" placeholder="مثال: ۱۴۰۴-Q1"/></div>
         <div class="fg"><label>نوع مالیات</label>
           <select id="tx-type">
-            <option value="BRT">BRT (مالیات فروش ۲٪)</option>
+            <option value="مالیات فروش">مالیات فروش (مالیات فروش ۲٪)</option>
             <option value="income_tax">مالیات بر عایدات کارمند</option>
             <option value="customs">گمرک</option>
           </select>
@@ -1835,7 +1835,7 @@ select option{background:#1a1820}
         <div style="font-size:11px;font-weight:700;color:#c084fc;margin-bottom:8px">💡 مثال‌های صحبت:</div>
         <div style="font-size:11px;color:var(--t2);line-height:2">
           🗣 <strong style="color:var(--tx)">"قربان، پنج درجن استاندارد، ده هزار افغانی"</strong><br>
-          🗣 <strong style="color:var(--tx)">"حاجی زمریالی، سه درجن VIP، قرضه"</strong><br>
+          🗣 <strong style="color:var(--tx)">"حاجی زمریالی، سه درجن ویژه، قرضه"</strong><br>
           🗣 <strong style="color:var(--tx)">"فدا محمد، ده درجن کودکانه، پنج هزار دادم"</strong>
         </div>
       </div>
@@ -2036,18 +2036,18 @@ select option{background:#1a1820}
 
 <!-- ══ MODALS مکسچر و تولید ══ -->
 
-<!-- modal ثبت batch جدید -->
+<!-- modal ثبت نوبت جدید -->
 <div class="modal-overlay" id="modalNewBatch">
   <div class="modal">
     <div class="modal-head" style="background:linear-gradient(135deg,rgba(46,196,212,.1),transparent)">
-      <h3>⚗️ شروع مکسچر جدید</h3>
+      <h3>⚗️ شروع یک نوبت مکسچر</h3>
       <button class="close-btn" onclick="closeModal('modalNewBatch')">✕</button>
     </div>
     <div class="modal-body">
       <div id="nb-msg"></div>
       <div class="row2">
         <div class="fg"><label>تاریخ</label><input id="nb-date"/></div>
-        <div class="fg"><label>شماره batch</label><input id="nb-no" placeholder="مثال: B-001"/></div>
+        <div class="fg"><label>شماره نوبت</label><input id="nb-no" placeholder="مثال: ن-۰۰۱"/></div>
       </div>
 
       <!-- کچره موجود -->
@@ -2057,7 +2057,7 @@ select option{background:#1a1820}
           <div id="nb-waste-kg" style="font-size:16px;font-weight:800;color:var(--og)">0 کیلو</div>
           <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer">
             <input type="checkbox" id="nb-use-waste" onchange="calcBatchCost()"/>
-            اضافه کردن به این batch
+            اضافه کردن به این نوبت
           </label>
         </div>
         <div class="fg" id="nb-waste-amount-wrap" style="display:none;margin-top:8px;margin-bottom:0">
@@ -2097,7 +2097,7 @@ select option{background:#1a1820}
 <div class="modal-overlay" id="modalBatchResult">
   <div class="modal">
     <div class="modal-head" style="background:linear-gradient(135deg,rgba(46,204,122,.1),transparent)">
-      <h3>🏭 ثبت نتیجه تولید</h3>
+      <h3>🏭 ثبت نتیجه این نوبت</h3>
       <button class="close-btn" onclick="closeModal('modalBatchResult')">✕</button>
     </div>
     <div class="modal-body">
@@ -2176,8 +2176,8 @@ select option{background:#1a1820}
     </div>
     <div class="modal-body">
       <div id="aw-msg"></div>
-      <div class="ib warn" style="font-size:10.5px">⚠️ کچره وزن شود و ثبت شود — بعداً به batch بعدی اضافه می‌شود</div>
-      <div class="fg"><label>از کدام batch؟</label><select id="aw-batch"></select></div>
+      <div class="ib warn" style="font-size:10.5px">⚠️ کچره وزن شود و ثبت شود — بعداً به نوبت بعدی اضافه می‌شود</div>
+      <div class="fg"><label>از کدام نوبت؟</label><select id="aw-batch"></select></div>
       <div class="fg">
         <label>وزن کچره (کیلو)</label>
         <input type="number" id="aw-kg" placeholder="0" step="0.1"/>
@@ -2285,8 +2285,8 @@ select option{background:#1a1820}
 
 <script>
 // ══ ORDERS v2 — چند آیتم ══
-const PRD_NAMES={STD:"PCU استاندارد ۳۶-۴۲",VIP:"PCU ویژه ۴۳-۴۵",KID:"PCU کودکانه ۲۴-۳۵"};
-const PRD_SHORT={STD:"استاندارد",VIP:"ویژه",KID:"کودکانه"};
+const PRD_NAMES={استاندارد:"PCU استاندارد ۳۶-۴۲",ویژه:"PCU ویژه ۴۳-۴۵",کودکانه:"PCU کودکانه ۲۴-۳۵"};
+const PRD_SHORT={استاندارد:"استاندارد",ویژه:"ویژه",کودکانه:"کودکانه"};
 const STATUS_BADGE={
   pending:'<span class="bb bog">⏳ جدید</span>',
   partial:'<span class="bb bbl">🔄 ناقص</span>',
@@ -2316,7 +2316,7 @@ function pickCustOrd(id){
 
 // اضافه کردن ردیف جنس جدید
 function addOrderItem(){
-  _orderItems.push({prod:"STD",doz:""});
+  _orderItems.push({prod:"استاندارد",doz:""});
   renderOrderItemInputs();
 }
 function removeOrderItem(i){
@@ -2339,9 +2339,9 @@ function renderOrderItemInputs(){
       <div style="flex:2">
         <div style="font-size:10px;color:var(--t2);margin-bottom:3px">نوع جنس</div>
         <select onchange="updateOrderItem(${i},'prod',this.value)" style="width:100%;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-family:inherit;font-size:12px">
-          <option value="STD" ${it.prod==="STD"?"selected":""}>PCU استاندارد ۳۶-۴۲</option>
-          <option value="VIP" ${it.prod==="VIP"?"selected":""}>PCU ویژه ۴۳-۴۵</option>
-          <option value="KID" ${it.prod==="KID"?"selected":""}>PCU کودکانه ۲۴-۳۵</option>
+          <option value="استاندارد" ${it.prod==="استاندارد"?"selected":""}>PCU استاندارد ۳۶-۴۲</option>
+          <option value="ویژه" ${it.prod==="ویژه"?"selected":""}>PCU ویژه ۴۳-۴۵</option>
+          <option value="کودکانه" ${it.prod==="کودکانه"?"selected":""}>PCU کودکانه ۲۴-۳۵</option>
         </select>
       </div>
       <div style="flex:1">
@@ -2505,7 +2505,7 @@ function openDeliverItem(itemId, rem, prod, custName){
   document.getElementById("d-doz").max=rem;
   document.getElementById("d-rem-info").textContent=`حداکثر ${rem} درجن می‌توانی ارسال کنی`;
   // قیمت پیش‌فرض بر اساس مدل
-  const defPrice=prod==='VIP'?1800:prod==='KID'?1200:1500;
+  const defPrice=prod==='ویژه'?1800:prod==='کودکانه'?1200:1500;
   document.getElementById("d-price").value=defPrice;
   document.getElementById("d-total-info").textContent='';
   openModal("modalDeliver");
@@ -2715,9 +2715,9 @@ const SUPPLIERS=[
 ];
 const MATS=["دی‌اوپی (DOP)","ریزن","کرش سیاه","کرش آبی","کرش چاکلیتی","کرش براون","کرش سفید","اشترک","تیتانیوم","لایت","ای سی (AC)","پلاستیک (۹/۱۲)","پلاستیک (۱۱/۱۴)","پلاستیک (۱۲/۱۴)","بکل","نگینه"];
 const RECIPES={
-  STD:[{m:"دی‌اوپی (DOP)",q:0.8},{m:"ریزن",q:0.3},{m:"تیتانیوم",q:0.05},{m:"ای سی (AC)",q:0.1},{m:"کرش سیاه",q:0.2}],
-  VIP:[{m:"دی‌اوپی (DOP)",q:0.9},{m:"ریزن",q:0.35},{m:"تیتانیوم",q:0.06},{m:"ای سی (AC)",q:0.12},{m:"کرش سیاه",q:0.25}],
-  KID:[{m:"دی‌اوپی (DOP)",q:0.6},{m:"ریزن",q:0.2},{m:"تیتانیوم",q:0.04},{m:"ای سی (AC)",q:0.08},{m:"کرش سیاه",q:0.15}],
+  استاندارد:[{m:"دی‌اوپی (DOP)",q:0.8},{m:"ریزن",q:0.3},{m:"تیتانیوم",q:0.05},{m:"ای سی (AC)",q:0.1},{m:"کرش سیاه",q:0.2}],
+  ویژه:[{m:"دی‌اوپی (DOP)",q:0.9},{m:"ریزن",q:0.35},{m:"تیتانیوم",q:0.06},{m:"ای سی (AC)",q:0.12},{m:"کرش سیاه",q:0.25}],
+  کودکانه:[{m:"دی‌اوپی (DOP)",q:0.6},{m:"ریزن",q:0.2},{m:"تیتانیوم",q:0.04},{m:"ای سی (AC)",q:0.08},{m:"کرش سیاه",q:0.15}],
 };
 const CASH_IN=["وصول از مشتری","سرمایه شریک","قرض دریافتی","سایر ورودی"];
 const CASH_OUT=["خرید مواد (افغانی)","اجرت جمشید","اجرت سمیع‌الله","کرایه","برق","مصارف اداری","سایر خروجی"];
@@ -2813,7 +2813,7 @@ function populateDropdowns(){
   });
 }
 
-function calcCOGS(prod,doz){
+function calcهزینه تولید(prod,doz){
   return(RECIPES[prod]||[]).reduce((s,r)=>{
     const ac=S.stockMap[r.m]?.avgCost||0;
     return s+r.q*ac*doz;
@@ -2823,7 +2823,7 @@ function calcCOGS(prod,doz){
 // ── Navigation ──
 const PAGE_TITLES={dash:"داشبورد",sales:"فروش",orders:"فرمایشات",buy:"خرید مواد",prod:"تولید",
   stock:"انبار مواد",cust:"مشتریان",supp:"تامین‌کنندگان",cash:"صندوق افغانی",
-  assets:"دارایی‌های ثابت",report:"گزارشات & P&L",settings:"تنظیمات"};
+  assets:"دارایی‌های ثابت",report:"گزارشات & سود و زیان",settings:"تنظیمات"};
 
 function goPage(id){
   const adminOnlyPages=["cash","report","reports_more","settings","emp","tax","cheque","partners"];
@@ -2838,7 +2838,7 @@ function goPage(id){
   document.querySelector(`.tab-item[data-tab="${id}"]`)?.classList.add("on");
   const allTitles={dash:"داشبورد",sales:"فروش",orders:"فرمایشات",buy:"خرید مواد",prod:"تولید",
     stock:"انبار مواد",cust:"مشتریان",supp:"تامین‌کنندگان",cash:"صندوق افغانی",
-    report:"گزارشات & P&L",reports_more:"گزارش‌های تفصیلی",
+    report:"گزارشات & سود و زیان",reports_more:"گزارش‌های تفصیلی",
     emp:"کارمندان و شاگردان",tax:"مالیات",cheque:"چک و اقساط",
     partners:"شریکان / سهام‌داران",settings:"تنظیمات",batch:"مکسچر و تولید",collect:"وصول مطالبات"};
   document.getElementById("pageTitle").textContent=allTitles[id]||id;
@@ -2910,7 +2910,7 @@ async function renderDash(){
     document.getElementById("dash-kpis").innerHTML=[
       {l:"فروش امروز",v:afn(todayAmt),s:todayDoz+" درجن",c:"gr",e:"🛒"},
       {l:"تولید امروز",v:myDoz+" درجن",s:"",c:"pp",e:"🏭"},
-      {l:"ارزش انبار مواد",v:afn(invVal),s:"Moving Avg",c:"tl",e:"📦"},
+      {l:"ارزش انبار مواد",v:afn(invVal),s:"میانگین متحرک",c:"tl",e:"📦"},
       {l:"نقش شما",v:"کارمند فابریکه",s:"فروش | انبار | تولید",c:"bl",e:"👷"},
     ].map(k=>`<div class="kc ${k.c}"><div class="ke">${k.e}</div><div class="kl">${k.l}</div><div class="kv">${k.v}</div>${k.s?`<div class="ks">${k.s}</div>`:""}</div>`).join("");
 
@@ -2967,7 +2967,7 @@ async function renderDash(){
     {l:"سود ناخالص",v:afn(gp),s:ts>0?Math.round(gp/ts*100)+"% حاشیه":"—",c:"gr",e:"💹"},
     {l:"بدهی تامین‌کنندگان",v:usd(suppUSD),s:"≈ "+afn(suppUSD*S.usdRate),c:"rd",e:"🏭"},
     {l:"سود خالص",v:afn(np),s:"",c:np>=0?"gr":"rd",e:"📊"},
-    {l:"ارزش موجودی",v:afn(invVal),s:"Moving Avg",c:"tl",e:"📦"},
+    {l:"ارزش موجودی",v:afn(invVal),s:"میانگین متحرک",c:"tl",e:"📦"},
   ].map(k=>`<div class="kc ${k.c}"><div class="ke">${k.e}</div><div class="kl">${k.l}</div><div class="kv">${k.v}</div>${k.s?`<div class="ks">${k.s}</div>`:""}</div>`).join("");
 
   const pm={};
@@ -2984,7 +2984,7 @@ async function renderDash(){
     </div>`).join("");
 
   document.getElementById("pl-summary").innerHTML=[
-    {l:"درآمد فروش",v:afn(ts),c:"var(--bl)"},{l:"(−) COGS",v:afn(tc),c:"var(--rd)"},
+    {l:"درآمد فروش",v:afn(ts),c:"var(--bl)"},{l:"(−) هزینه تولید",v:afn(tc),c:"var(--rd)"},
     {l:"= سود ناخالص",v:afn(gp),c:"var(--gr)",b:true},{l:"(−) دستمزد",v:afn(tw),c:"var(--rd)"},
     {l:"= سود خالص",v:afn(np),c:"var(--g2)",b:true},
   ].map(r=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bd);font-size:12px">
@@ -3137,13 +3137,13 @@ async function renderReport(){
   const invVal=Object.values(S.stockMap).reduce((a,m)=>a+(m.kg*m.avgCost),0);
 
   document.getElementById("report-kpis").innerHTML=[
-    {l:"کل فروش",v:afn(ts),c:"bl"},{l:"COGS",v:afn(tc),c:"rd"},
+    {l:"کل فروش",v:afn(ts),c:"bl"},{l:"هزینه تولید",v:afn(tc),c:"rd"},
     {l:"سود ناخالص",v:afn(gp),c:"gr"},{l:"سود خالص",v:afn(np),c:"gd"},
   ].map(k=>`<div class="kc ${k.c}"><div class="kl">${k.l}</div><div class="kv" style="font-size:13px">${k.v}</div></div>`).join("");
 
   document.getElementById("pl-detail").innerHTML=[
     {l:"درآمد فروش خالص",v:afn(ts),c:"var(--bl)"},
-    {l:"(−) COGS مواد",v:afn(tc),c:"var(--rd)"},
+    {l:"(−) هزینه تولید مواد",v:afn(tc),c:"var(--rd)"},
     {l:"= سود ناخالص",v:afn(gp),c:"var(--gr)",b:true},
     {l:"(−) دستمزد",v:afn(tw),c:"var(--rd)"},
     {l:"= سود خالص",v:afn(np),c:"var(--g2)",b:true},
@@ -3273,10 +3273,10 @@ function calcSale(){
   const prc=+(document.getElementById("s-prc").value)||0;
   const paid=+(document.getElementById("s-paid").value)||0;
   const prod=document.getElementById("s-prod").value;
-  const tot=doz*prc,rem=tot-paid,cg=calcCOGS(prod,doz),gp=tot-cg;
+  const tot=doz*prc,rem=tot-paid,cg=calcهزینه تولید(prod,doz),gp=tot-cg;
   document.getElementById("s-tot").value=afn(tot);
   document.getElementById("s-rem").value=afn(rem);
-  document.getElementById("s-cogs").textContent=`💡 COGS: ${afn(cg)} | سود: ${afn(gp)} | حاشیه: ${tot>0?Math.round(gp/tot*100):0}%`;
+  document.getElementById("s-cogs").textContent=`💡 هزینه تولید: ${afn(cg)} | سود: ${afn(gp)} | حاشیه: ${tot>0?Math.round(gp/tot*100):0}%`;
   calcSaleWage();
 }
 function calcSaleWage(){
@@ -3298,7 +3298,7 @@ async function submitSale(){
   if(!doz||!prc){document.getElementById("sale-msg").innerHTML='<div class="ib err">درجن و قیمت الزامی</div>';return;}
   const tot=doz*prc,paid=+(document.getElementById("s-paid").value)||0,rem=tot-paid;
   const prod=document.getElementById("s-prod").value;
-  const cg=calcCOGS(prod,doz),gp=tot-cg;
+  const cg=calcهزینه تولید(prod,doz),gp=tot-cg;
   const wj=+(document.getElementById("s-wage-j").value)||0;
   const ws=+(document.getElementById("s-wage-s").value)||0;
   const totalWageJ=doz*wj, totalWageS=doz*ws;
@@ -3372,7 +3372,7 @@ function calcBuy(){
   const tAfn=usdAmt*rate,upm=kg>0?tAfn/kg:0,rem=usdAmt-pAfn/rate;
   document.getElementById("b-afn").value=afn(tAfn);
   document.getElementById("b-upm").value=afn(upm);
-  document.getElementById("b-rem").textContent=`⚡ Moving Avg اتومات آپدیت | باقی: ${usd(rem)}`;
+  document.getElementById("b-rem").textContent=`⚡ میانگین متحرک اتومات آپدیت | باقی: ${usd(rem)}`;
 }
 async function submitBuy(){
   const sid=document.getElementById("b-supp").value;
@@ -3421,7 +3421,7 @@ function calcProd(){
   const rate=+(document.getElementById("p-rate").value)||0;
   const prod=document.getElementById("p-prod").value;
   document.getElementById("p-wage").value=afn(doz*rate);
-  document.getElementById("p-cogs").textContent=`💡 COGS مواد: ${afn(calcCOGS(prod,doz))} | مواد اتومات کسر می‌شود`;
+  document.getElementById("p-cogs").textContent=`💡 هزینه تولید مواد: ${afn(calcهزینه تولید(prod,doz))} | مواد اتومات کسر می‌شود`;
 }
 async function submitProd(){
   const doz=+(document.getElementById("p-doz").value);
@@ -3429,7 +3429,7 @@ async function submitProd(){
   const worker=document.getElementById("p-worker").value;
   const prod=document.getElementById("p-prod").value;
   const wRate=+(document.getElementById("p-rate").value)||0;
-  const wage=doz*wRate,paid=+(document.getElementById("p-paid").value)||0,cg=calcCOGS(prod,doz);
+  const wage=doz*wRate,paid=+(document.getElementById("p-paid").value)||0,cg=calcهزینه تولید(prod,doz);
   document.getElementById("prod-btn").disabled=true;document.getElementById("prod-btn").textContent="در حال ذخیره...";
   const res=await sbPost("production",{
     date:document.getElementById("p-date").value,worker,product:prod,dozen:doz,
@@ -3785,9 +3785,9 @@ async function renderTax(){
   const q1=Math.floor((new Date().getMonth())/3)+1;
   document.getElementById("tax-calc").innerHTML=`
     <div class="card" style="margin:0">
-      <div class="ct">📊 BRT این سه‌ماهه (Q${q1})</div>
+      <div class="ct">📊 مالیات فروش این سه‌ماهه (Q${q1})</div>
       <div style="font-size:11px;color:var(--t2);margin-bottom:6px">کل فروش: <span style="color:var(--gd);font-weight:700">${afn(ts)}</span></div>
-      <div style="font-size:11px;color:var(--t2);margin-bottom:6px">نرخ BRT: <span style="color:var(--rd)">۲٪</span></div>
+      <div style="font-size:11px;color:var(--t2);margin-bottom:6px">نرخ مالیات فروش: <span style="color:var(--rd)">۲٪</span></div>
       <div style="font-size:16px;font-weight:800;color:var(--rd)">${afn(brt)}</div>
       <div class="ib warn" style="margin-top:8px;font-size:10px">⚠️ مهلت پرداخت: آخر سه‌ماه جاری</div>
     </div>
@@ -3813,7 +3813,7 @@ async function renderTax(){
   </tr>`).join(""):'<tr><td colspan="6" style="text-align:center;padding:16px;color:var(--t3)">هنوز سابقه مالیاتی ثبت نشده</td></tr>';
 }
 
-function calcBRT(totalSales){ return totalSales*0.02; }
+function calcمالیات فروش(totalSales){ return totalSales*0.02; }
 function calcIncomeTax(annual){
   if(annual<=60000) return 0;
   if(annual<=150000) return (annual-60000)*0.02;
@@ -4050,7 +4050,7 @@ async function runReport(type){
       <button class="btn bsec" onclick="printReport()" style="font-size:11px">🖨️ چاپ</button>
     </div>
     <div class="tw"><table>
-      <thead><tr><th>مدل</th><th>درجن فروش</th><th>کل فروش</th><th>COGS</th><th>سود ناخالص</th><th>حاشیه سود</th></tr></thead>
+      <thead><tr><th>مدل</th><th>درجن فروش</th><th>کل فروش</th><th>هزینه تولید</th><th>سود ناخالص</th><th>حاشیه سود</th></tr></thead>
       <tbody>${arr.map(r=>`<tr>
         <td><span class="bb bpp">${r.prod}</span></td>
         <td style="color:var(--gd);font-weight:700">${r.doz}</td>
@@ -4121,7 +4121,7 @@ async function runReport(type){
     _lastRptData=arr;
     const total=arr.reduce((a,r)=>a+r.val,0);
     out.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-      <div class="ct" style="margin:0">📦 ارزش موجودی انبار (Moving Avg)</div>
+      <div class="ct" style="margin:0">📦 ارزش موجودی انبار (میانگین متحرک)</div>
       <button class="btn bsec" onclick="printReport()" style="font-size:11px">🖨️ چاپ</button>
     </div>
     <div class="ib info" style="margin-bottom:10px">جمع ارزش موجودی: <strong style="color:var(--gd)">${afn(total)}</strong></div>
@@ -4141,12 +4141,12 @@ async function runReport(type){
   else if(type==="profit_margin"){
     _lastRptTitle="حاشیه سود هر مدل";
     const rows=await sbGet("sales","?select=product,total,cogs,gross_profit,dozen")||[];
-    const pm={STD:{prod:"PCU استاندارد",total:0,cogs:0,gp:0,doz:0},VIP:{prod:"PCU ویژه",total:0,cogs:0,gp:0,doz:0},KID:{prod:"PCU کودکانه",total:0,cogs:0,gp:0,doz:0}};
+    const pm={استاندارد:{prod:"PCU استاندارد",total:0,cogs:0,gp:0,doz:0},ویژه:{prod:"PCU ویژه",total:0,cogs:0,gp:0,doz:0},کودکانه:{prod:"PCU کودکانه",total:0,cogs:0,gp:0,doz:0}};
     rows.forEach(r=>{if(pm[r.product]){pm[r.product].total+=+r.total||0;pm[r.product].cogs+=+r.cogs||0;pm[r.product].gp+=+r.gross_profit||0;pm[r.product].doz+=+r.dozen||0;}});
     _lastRptData=Object.values(pm);
     out.innerHTML=`<div class="ct" style="margin-bottom:10px">💰 حاشیه سود هر مدل</div>
     <div class="tw"><table>
-      <thead><tr><th>مدل</th><th>درجن فروش</th><th>فروش فی درجن (Avg)</th><th>COGS فی درجن</th><th>سود فی درجن</th><th>حاشیه سود</th></tr></thead>
+      <thead><tr><th>مدل</th><th>درجن فروش</th><th>فروش فی درجن (Avg)</th><th>هزینه تولید فی درجن</th><th>سود فی درجن</th><th>حاشیه سود</th></tr></thead>
       <tbody>${Object.values(pm).map(r=>{
         const fpd=r.doz>0?r.total/r.doz:0;
         const cpd=r.doz>0?r.cogs/r.doz:0;
@@ -4303,7 +4303,7 @@ function printInvoice(saleId){
       <table>
         <thead><tr><th>#</th><th>محصول</th><th>تعداد (درجن)</th><th>قیمت فی درجن (؋)</th><th>مجموع (؋)</th></tr></thead>
         <tbody>
-          <tr><td>۱</td><td>${s.product==="STD"?"PCU استاندارد ۳۶-۴۲":s.product==="VIP"?"PCU ویژه ۴۳-۴۵":"PCU کودکانه ۲۴-۳۵"}</td>
+          <tr><td>۱</td><td>${s.product==="استاندارد"?"PCU استاندارد ۳۶-۴۲":s.product==="ویژه"?"PCU ویژه ۴۳-۴۵":"PCU کودکانه ۲۴-۳۵"}</td>
           <td style="text-align:center;font-weight:700">${s.dozen}</td>
           <td style="text-align:left">${Math.round(s.price_per_doz||s.total/s.dozen).toLocaleString()}</td>
           <td style="text-align:left;font-weight:800">${Math.round(s.total).toLocaleString()}</td></tr>
@@ -4676,7 +4676,7 @@ async function processAudioWithWhisper(audioBlob){
   "transcript": "متن کامل صدا",
   "customer_name": "نام مشتری",
   "customer_id": "id یا null",
-  "product": "STD یا VIP یا KID",
+  "product": "استاندارد یا ویژه یا کودکانه",
   "dozen": عدد,
   "price_per_dozen": عدد یا null,
   "paid": عدد یا null,
@@ -4772,7 +4772,7 @@ Return ONLY valid JSON, no other text:
 {
   "customer_name": "exact name from list or closest match",
   "customer_id": "c-number if found, else null",
-  "product": "STD or VIP or KID (STD=استاندارد/عادی, VIP=ویژه/خاص/گران, KID=کودک/بچه)",
+  "product": "استاندارد or ویژه or کودکانه (استاندارد=استاندارد/عادی, ویژه=ویژه/خاص/گران, کودکانه=کودک/بچه)",
   "dozen": number,
   "price_per_dozen": number or null,
   "paid": number or null,
@@ -4809,9 +4809,9 @@ Return ONLY valid JSON, no other text:
 function simpleVoiceParse(text){
   // Simple fallback parser
   const t=text.toLowerCase();
-  let product="STD";
-  if(t.includes("ویژه")||t.includes("vip")||t.includes("خاص")) product="VIP";
-  if(t.includes("کودک")||t.includes("بچه")||t.includes("kid")) product="KID";
+  let product="استاندارد";
+  if(t.includes("ویژه")||t.includes("vip")||t.includes("خاص")) product="ویژه";
+  if(t.includes("کودک")||t.includes("بچه")||t.includes("kid")) product="کودکانه";
 
   const dozMatch=text.match(/(\d+)\s*(درجن|دزن)/);
   const dozen=dozMatch?+dozMatch[1]:0;
@@ -4845,7 +4845,7 @@ function showParsedResult(p,originalText){
   document.getElementById("voiceRetryBtn").style.display="inline-flex";
 
   const conf={high:"🟢 بالا",medium:"🟡 متوسط",low:"🔴 پایین"};
-  const prdNames={STD:"PCU استاندارد",VIP:"PCU ویژه",KID:"PCU کودکانه"};
+  const prdNames={استاندارد:"PCU استاندارد",ویژه:"PCU ویژه",کودکانه:"PCU کودکانه"};
 
   document.getElementById("parsedFields").innerHTML=`
     <div style="background:rgba(255,255,255,.04);border-radius:10px;padding:10px;border:1px solid rgba(255,255,255,.08)">
@@ -4897,8 +4897,8 @@ async function confirmVoiceSale(){
   const tot=(p.dozen||0)*(p.price_per_dozen||0);
   const paid=p.is_credit?0:(p.paid!=null?p.paid:tot);
   const rem=tot-paid;
-  const prod=p.product||"STD";
-  const cg=calcCOGS(prod,p.dozen||0),gp=tot-cg;
+  const prod=p.product||"استاندارد";
+  const cg=calcهزینه تولید(prod,p.dozen||0),gp=tot-cg;
   const wj=22*(p.dozen||0), ws=25*(p.dozen||0);
   const saleDate=today();
 
@@ -4991,9 +4991,9 @@ async function openEditRecord(table,id){
       <div class="row2">
         <div class="fg"><label>مدل</label>
           <select id="ef-product">
-            <option ${r.product==="STD"?"selected":""}>STD</option>
-            <option ${r.product==="VIP"?"selected":""}>VIP</option>
-            <option ${r.product==="KID"?"selected":""}>KID</option>
+            <option ${r.product==="استاندارد"?"selected":""}>استاندارد</option>
+            <option ${r.product==="ویژه"?"selected":""}>ویژه</option>
+            <option ${r.product==="کودکانه"?"selected":""}>کودکانه</option>
           </select>
         </div>
         <div class="fg"><label>درجن</label><input type="number" id="ef-dozen" value="${r.dozen||0}"/></div>
@@ -5027,9 +5027,9 @@ async function openEditRecord(table,id){
       <div class="row2">
         <div class="fg"><label>مدل</label>
           <select id="ef-product">
-            <option ${r.product==="STD"?"selected":""}>STD</option>
-            <option ${r.product==="VIP"?"selected":""}>VIP</option>
-            <option ${r.product==="KID"?"selected":""}>KID</option>
+            <option ${r.product==="استاندارد"?"selected":""}>استاندارد</option>
+            <option ${r.product==="ویژه"?"selected":""}>ویژه</option>
+            <option ${r.product==="کودکانه"?"selected":""}>کودکانه</option>
           </select>
         </div>
         <div class="fg"><label>درجن</label><input type="number" id="ef-dozen" value="${r.dozen||0}"/></div>
@@ -5094,7 +5094,7 @@ async function saveEditRecord(){
   if(_editTable==="sales"){
     body.total=(body.dozen||0)*(body.price_per_doz||0);
     body.remaining=body.total-(body.paid||0);
-    body.gross_profit=body.total-calcCOGS(body.product,body.dozen||0);
+    body.gross_profit=body.total-calcهزینه تولید(body.product,body.dozen||0);
     body.margin=body.total>0?body.gross_profit/body.total*100:0;
   }
   if(_editTable==="purchases"){
@@ -6189,7 +6189,7 @@ async function renderBatch() {
   const batches = await sbGet('production_batches','?order=id.desc') || [];
   const todayStr = today();
   const todayBatches = batches.filter(b => b.date === todayStr);
-  document.getElementById('bat-today').textContent = todayBatches.length + ' batch';
+  document.getElementById('bat-today').textContent = todayBatches.length + ' نوبت';
 
   const now = new Date();
   const monthStart = `${now.getFullYear()-621}/${String(now.getMonth()+1).padStart(2,'0')}/01`;
@@ -6206,7 +6206,7 @@ async function renderBatch() {
   switchBatchTab(_currentBatchTab);
 }
 
-// ── لیست batch ها ──
+// ── لیست نوبت‌ها ──
 async function renderBatchList() {
   const content = document.getElementById('batch-list-content');
   content.innerHTML = '<div class="loading"><div class="spinner"></div>در حال بارگذاری...</div>';
@@ -6221,8 +6221,8 @@ async function renderBatchList() {
     content.innerHTML = `
       <div style="text-align:center;padding:30px;color:var(--t3)">
         <div style="font-size:36px;margin-bottom:8px">⚗️</div>
-        <div>هنوز batch ای ثبت نشده</div>
-        <div style="font-size:11px;margin-top:4px">روی دکمه + بزن تا مکسچر جدید شروع کنی</div>
+        <div>هنوز نوبتی ثبت نشده</div>
+        <div style="font-size:11px;margin-top:4px">روی دکمه + بزن تا نوبت جدید شروع شود</div>
       </div>`;
     return;
   }
@@ -6238,10 +6238,10 @@ async function renderBatchList() {
     const mats = await sbGet('batch_materials', `?batch_id=eq.${b.id}`) || [];
     html += `
     <div style="background:var(--b3);border:1px solid var(--bd);border-radius:12px;margin-bottom:12px;overflow:hidden">
-      <!-- سر batch -->
+      <!-- سر نوبت -->
       <div style="padding:12px 14px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <div style="flex:1">
-          <div style="font-size:13px;font-weight:800">⚗️ Batch ${b.batch_no || '#'+b.id}</div>
+          <div style="font-size:13px;font-weight:800">⚗️ نوبت ${b.batch_no || '#'+b.id}</div>
           <div style="font-size:10px;color:var(--t3);margin-top:2px">📅 ${b.date} | ${STATUS[b.status]||b.status}</div>
         </div>
         <div style="text-align:left">
@@ -6307,7 +6307,7 @@ async function renderWastePanel() {
     const rem = Math.max(0, (+b.waste_kg||0) - (+b.waste_recycled_kg||0));
     return `<tr>
       <td>${b.date}</td>
-      <td style="font-weight:700">Batch ${b.batch_no||'#'+b.id}</td>
+      <td style="font-weight:700">نوبت ${b.batch_no||'#'+b.id}</td>
       <td style="color:var(--og);font-weight:700">${b.waste_kg} کیلو</td>
       <td>${rem>0 ? `<span class="bb bog">⏳ ${rem.toFixed(2)} کیلو مانده</span>` : '<span class="bb bg2">✅ همه بازیافت شد</span>'}</td>
       <td style="color:var(--t2)">${+b.waste_recycled_kg>0 ? b.waste_recycled_kg+' کیلو بازیافت' : '—'}</td>
@@ -6339,7 +6339,7 @@ async function renderBatchReport() {
     const profitDoz = avgPrice - (+b.cost_per_dozen||0);
     return `<tr>
       <td style="color:var(--t3)">${i+1}</td>
-      <td style="font-weight:700">Batch ${b.batch_no||'#'+b.id}</td>
+      <td style="font-weight:700">نوبت ${b.batch_no||'#'+b.id}</td>
       <td>${b.date}</td>
       <td style="color:var(--gd);font-weight:700">${b.dozens_produced||0} درجن</td>
       <td class="tdr" style="color:var(--rd)">${afn(b.total_material_cost||0)}</td>
@@ -6350,7 +6350,7 @@ async function renderBatchReport() {
         <div style="font-size:9px;color:var(--t3)">${+b.dozens_produced>0?afn(profitDoz*(+b.dozens_produced)):''}</div>
       </td>
     </tr>`;
-  }).join('') : '<tr><td colspan="8" style="text-align:center;padding:16px;color:var(--t3)">هنوز batch تکمیل شده‌ای نیست</td></tr>';
+  }).join('') : '<tr><td colspan="8" style="text-align:center;padding:16px;color:var(--t3)">هنوز نوبت تکمیل شده‌ای نیست</td></tr>';
 }
 
 // ── اضافه کردن ماده در modal ──
@@ -6421,7 +6421,7 @@ function calcBatchCost() {
 async function initNewBatchModal() {
   _batchMatIdx = 0;
   document.getElementById('nb-date').value = today();
-  // شماره batch اتومات
+  // شماره نوبت اتومات
   const batches = await sbGet('production_batches','?order=id.desc&limit=1') || [];
   const lastNo = batches[0]?.batch_no || 'B-000';
   const nextNum = parseInt(lastNo.replace(/\D/g,''))+1 || 1;
@@ -6553,7 +6553,7 @@ async function moveBatchToProduction(batchId) {
 function openBatchResult(batchId, batchNo, matCost) {
   document.getElementById('br-batch-id').value = batchId;
   document.getElementById('br-mat-cost-val').value = matCost;
-  document.getElementById('br-batch-info').textContent = `⚗️ Batch ${batchNo} | هزینه مواد: ${afn(matCost)}`;
+  document.getElementById('br-batch-info').textContent = `⚗️ نوبت ${batchNo} | هزینه مواد: ${afn(matCost)}`;
   document.getElementById('br-dozens').value = '';
   document.getElementById('br-waste').value = '0';
   document.getElementById('br-notes').value = '';
@@ -6617,7 +6617,7 @@ async function submitBatchResult() {
   }, `?id=eq.${batchId}`);
 
   // اضافه کردن به هنگر جنس تولیدشده
-  const existFG = await sbGet('finished_goods', `?product_name=eq.PCU ${product === 'STD' ? 'استاندارد' : product === 'VIP' ? 'ویژه' : 'کودکانه'}&select=id,dozen,unit_price,total_value`);
+  const existFG = await sbGet('finished_goods', `?product_name=eq.PCU ${product === 'استاندارد' ? 'استاندارد' : product === 'ویژه' ? 'ویژه' : 'کودکانه'}&select=id,dozen,unit_price,total_value`);
   if(existFG && existFG.length > 0) {
     const fg = existFG[0];
     const newDoz = (+fg.dozen||0) + dozens;
@@ -6634,12 +6634,12 @@ async function submitBatchResult() {
   } else {
     // ایجاد جدید
     await sbPost('finished_goods', {
-      product_name: `PCU ${product === 'STD' ? 'استاندارد' : product === 'VIP' ? 'ویژه' : 'کودکانه'}`,
-      size_range: product === 'STD' ? '۳۶-۴۲' : product === 'VIP' ? '۴۳-۴۵' : '۲۴-۳۵',
+      product_name: `PCU ${product === 'استاندارد' ? 'استاندارد' : product === 'ویژه' ? 'ویژه' : 'کودکانه'}`,
+      size_range: product === 'استاندارد' ? '۳۶-۴۲' : product === 'ویژه' ? '۴۳-۴۵' : '۲۴-۳۵',
       dozen: dozens,
       unit_price: costPerDoz,
       total_value: totalCogs,
-      note: `از Batch #${batchId}`
+      note: `از نوبت #${batchId}`
     });
   }
 
@@ -6660,8 +6660,8 @@ async function initAddWasteModal() {
   // لود batch های در تولید
   const batches = await sbGet('production_batches','?status=in.(producing,done)&order=id.desc&limit=20') || [];
   const sel = document.getElementById('aw-batch');
-  sel.innerHTML = batches.map(b=>`<option value="${b.id}">Batch ${b.batch_no||'#'+b.id} | ${b.date}</option>`).join('') ||
-    '<option value="">هنوز batch ای نیست</option>';
+  sel.innerHTML = batches.map(b=>`<option value="${b.id}">نوبت ${b.batch_no||'#'+b.id} | ${b.date}</option>`).join('') ||
+    '<option value="">هنوز نوبتی نیست</option>';
 }
 
 async function submitWaste() {
