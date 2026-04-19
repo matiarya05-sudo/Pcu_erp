@@ -3592,7 +3592,9 @@ function renderCustTable(salesMap){
   document.getElementById("cust-tbody").innerHTML=list.map((c,i)=>{
     const sm=salesMap[c.id]||{tot:0,paid:0,rem:0};
     const collected=collectMap[c.id]||0;
-    const tot=Math.max(0,(c.ob||0)+sm.tot-sm.paid-collected);
+    // طلب کل = موجودی اول + باقی فروش‌های جدید - وصول مستقیم
+    // sm.rem = sales.remaining که خودش total - paid است
+    const tot=Math.max(0,(c.ob||0)+sm.rem-collected);
     const phoneBtn=c.ph?`<a href="tel:${c.ph}" style="background:rgba(46,204,122,.1);border:1px solid rgba(46,204,122,.3);color:var(--gr);border-radius:6px;padding:3px 7px;cursor:pointer;font-size:10px;text-decoration:none">📞</a>
       <a href="https://wa.me/93${c.ph.replace(/^0/,'')}" target="_blank" style="background:rgba(37,211,102,.15);border:1px solid rgba(37,211,102,.3);color:#25d366;border-radius:6px;padding:3px 7px;cursor:pointer;font-size:10px;text-decoration:none">💬</a>`
       :`<span style="color:var(--t3);font-size:10px">—</span>`;
