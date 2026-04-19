@@ -2674,7 +2674,7 @@ async function sb(table, method="GET", body=null, params=""){
   if(body) opts.body=JSON.stringify(body);
   try{
     const r=await fetch(url,opts);
-    if(!r.ok){const e=await r.text();console.error("SB Error:",e);return null;}
+    if(!r.ok){const e=await r.text();console.error("SB Error:",e);window._lastSBError=e;return null;}
     const t=await r.text();
     return t?JSON.parse(t):[];
   }catch(e){console.error("Network error:",e);setSyncOff();return null;}
@@ -3802,7 +3802,16 @@ async function saveAddEmp(){
   if(res){
     document.getElementById("ae-msg").innerHTML='<div class="ib ok">✅ کارمند ثبت شد!</div>';
     showSaved();setTimeout(()=>{closeModal("modalAddEmp");renderEmp();},1000);
-  } else document.getElementById("ae-msg").innerHTML='<div class="ib err">خطا — دوباره امتحان کن</div>';
+  } else {
+    // نشان دادن خطای واقعی Supabase
+    let errMsg = 'خطا — دوباره امتحان کن';
+    try {
+      const errObj = JSON.parse(window._lastSBError||'{}');
+      if(errObj.message) errMsg = 'خطا: ' + errObj.message;
+      else if(errObj.details) errMsg = 'خطا: ' + errObj.details;
+    } catch(e) {}
+    document.getElementById("ae-msg").innerHTML=`<div class="ib err">${errMsg}</div>`;
+  }
 }
 
 function openEmpPay(id,name){
