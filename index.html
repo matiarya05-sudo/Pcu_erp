@@ -759,7 +759,7 @@ select option{background:#1a1820}
       <button class="ni" onclick="goPage('stock')" data-page="stock" data-roles="admin,staff"><span class="em">🏗️</span>انبار مواد</button>
       <button class="ni" onclick="goPage('cust')" data-page="cust" data-roles="admin,staff"><span class="em">👥</span>مشتریان</button>
       <button class="ni" onclick="goPage('collect')" data-page="collect" data-roles="admin,staff"><span class="em">💰</span>وصول مطالبات</button>
-      <button class="ni" onclick="goPage('cheque')" data-page="cheque" data-roles="admin"><span class="em">🏦</span>چک و اقساط</button>
+      <button class="ni" onclick="goPage('collect')" data-page="collect" data-roles="admin"><span class="em">💚</span>قرض حسنه</button>
       <button class="ni" onclick="goPage('supp')" data-page="supp" data-roles="admin,staff"><span class="em">🏭</span>تامین‌کنندگان</button>
       <button class="ni" onclick="goPage('cash')" data-page="cash" data-roles="admin"><span class="em">💵</span>صندوق افغانی</button>
       <div class="nsec">منابع انسانی</div>
@@ -808,7 +808,7 @@ select option{background:#1a1820}
     <!-- ORDERS (فرمایشات) -->
     <div id="page-orders" class="page">
       <div class="kg k3">
-        <div class="kc og"><div class="kl">⏳ در انتظار</div><div class="kv" id="ord-pending">—</div></div>
+        <div class="kc og"><div class="kl">⏳ ⏳ باقی</div><div class="kv" id="ord-pending">—</div></div>
         <div class="kc bl"><div class="kl">🔄 ناقص</div><div class="kv" id="ord-partial">—</div></div>
         <div class="kc gr"><div class="kl">✅ تکمیل</div><div class="kv" id="ord-done">—</div></div>
       </div>
@@ -974,8 +974,8 @@ select option{background:#1a1820}
         <div style="display:flex;gap:5px;margin-bottom:10px;flex-wrap:wrap" id="prov-btns"></div>
         <div class="ib info" style="font-size:10.5px;margin-bottom:8px">✏️ Admin می‌تواند موجودی اول و اطلاعات مشتریان را ویرایش کند</div>
         <div class="tw"><table>
-          <thead><tr><th>#</th><th>نام مشتری</th><th>ولایت</th><th>موجودی اول</th><th>فروش جدید</th><th>وصول</th><th>طلب کل</th><th></th></tr></thead>
-          <tbody id="cust-tbody"><tr><td colspan="8" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
+          <thead><tr><th>#</th><th>نام مشتری</th><th>ولایت</th><th>📞 تماس</th><th>موجودی اول</th><th>فروش جدید</th><th>وصول</th><th>طلب کل</th><th></th></tr></thead>
+          <tbody id="cust-tbody"><tr><td colspan="9" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
         </table></div>
       </div>
     </div>
@@ -985,7 +985,7 @@ select option{background:#1a1820}
       <!-- KPI -->
       <div class="kg k3">
         <div class="kc rd"><div class="kl">💰 جمع کل طلبات</div><div class="kv" id="col-total-debt">—</div></div>
-        <div class="kc gr"><div class="kl">✅ وصول شده (این ماه)</div><div class="kv" id="col-month-recv">—</div></div>
+        <div class="kc gr"><div class="kl">✅ ✅ برگشت شد (این ماه)</div><div class="kv" id="col-month-recv">—</div></div>
         <div class="kc og"><div class="kl">⏳ هنوز وصول نشده</div><div class="kv" id="col-remaining">—</div></div>
       </div>
 
@@ -1070,8 +1070,8 @@ select option{background:#1a1820}
         </div>
         <div class="ib info" style="font-size:10.5px;margin-bottom:8px">✏️ Admin می‌تواند بدهی و اطلاعات تامین‌کنندگان را ویرایش کند</div>
         <div class="tw"><table>
-          <thead><tr><th>#</th><th>نام</th><th>بدهی ($)</th><th>معادل (؋)</th><th>وضعیت</th><th></th></tr></thead>
-          <tbody id="supp-tbody"><tr><td colspan="6" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
+          <thead><tr><th>#</th><th>نام</th><th>📞 تماس</th><th>بدهی ($)</th><th>معادل (؋)</th><th>وضعیت</th><th></th></tr></thead>
+          <tbody id="supp-tbody"><tr><td colspan="7" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
         </table></div>
       </div>
     </div>
@@ -1137,8 +1137,8 @@ select option{background:#1a1820}
           <button onclick="filterEmp('apprentice')" class="bb bbl" id="ef-apprentice" style="cursor:pointer;padding:4px 10px">👦 شاگرد</button>
         </div>
         <div class="tw"><table>
-          <thead><tr><th>#</th><th>نام</th><th>وظیفه</th><th>بخش</th><th>نوع معاش</th><th>معاش</th><th>پرداخت شده</th><th>باقی</th><th></th></tr></thead>
-          <tbody id="emp-tbody"><tr><td colspan="9" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
+          <thead><tr><th>#</th><th>نام</th><th>وظیفه</th><th>بخش</th><th>📞 تماس</th><th>نوع معاش</th><th>معاش</th><th>پرداخت شده</th><th>باقی</th><th></th></tr></thead>
+          <tbody id="emp-tbody"><tr><td colspan="10" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
         </table></div>
       </div>
       <div class="card" id="emp-pay-section" style="display:none">
@@ -1204,27 +1204,27 @@ select option{background:#1a1820}
       </div>
     </div>
 
-    <!-- CHEQUE / چک و اقساط -->
-    <div id="page-cheque" class="page">
+    <!-- CHEQUE / قرض حسنه -->
+    <div id="page-collect" class="page">
       <div class="kg k3">
-        <div class="kc bl"><div class="kl">🏦 چک‌های دریافتی</div><div class="kv" id="chq-in-cnt">—</div><div class="ks" id="chq-in-amt">—</div></div>
-        <div class="kc rd"><div class="kl">💸 چک‌های پرداختی</div><div class="kv" id="chq-out-cnt">—</div><div class="ks" id="chq-out-amt">—</div></div>
-        <div class="kc og"><div class="kl">⏳ سررسید این هفته</div><div class="kv" id="chq-due">—</div></div>
+        <div class="kc bl"><div class="kl">🏦 قرض گرفتیم</div><div class="kv" id="chq-in-cnt">—</div><div class="ks" id="chq-in-amt">—</div></div>
+        <div class="kc rd"><div class="kl">💸 قرض دادیم</div><div class="kv" id="chq-out-cnt">—</div><div class="ks" id="chq-out-amt">—</div></div>
+        <div class="kc og"><div class="kl">⏳ پرداخت این هفته</div><div class="kv" id="chq-due">—</div></div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-        <button class="btn bpri" onclick="openModal('modalAddCheque')">+ ثبت چک جدید</button>
+        <button class="btn bpri" onclick="openModal('modalAddCheque')">+ ثبت قرض جدید</button>
         <button class="btn bsec" onclick="filterCheque('all')" id="cf-all">همه</button>
         <button class="btn bsec" onclick="filterCheque('receive')" id="cf-receive">دریافتی</button>
         <button class="btn bsec" onclick="filterCheque('pay')" id="cf-pay">پرداختی</button>
-        <button class="btn bsec" onclick="filterCheque('pending')" id="cf-pending">⏳ در انتظار</button>
-        <button class="btn bsec" onclick="filterCheque('cleared')" id="cf-cleared">✅ وصول شده</button>
-        <button class="btn bsec" onclick="filterCheque('bounced')" id="cf-bounced">❌ برگشتی</button>
+        <button class="btn bsec" onclick="filterCheque('pending')" id="cf-pending">⏳ ⏳ باقی</button>
+        <button class="btn bsec" onclick="filterCheque('cleared')" id="cf-cleared">✅ ✅ برگشت شد</button>
+        <button class="btn bsec" onclick="filterCheque('bounced')" id="cf-bounced">❌ ❌ پس نداد</button>
       </div>
       <div class="card">
-        <div class="ct">🏦 دفتر چک‌ها و اقساط</div>
+        <div class="ct">💚 دفتر قرض‌های حسنه</div>
         <div class="tw"><table>
           <thead><tr><th>#</th><th>تاریخ ثبت</th><th>سررسید</th><th>نوع</th><th>شخص</th><th>شرح</th><th>مبلغ (؋)</th><th>وضعیت</th><th>عملیات</th></tr></thead>
-          <tbody id="chq-tbody"><tr><td colspan="9" style="text-align:center;padding:20px;color:var(--t3)">هنوز چکی ثبت نشده</td></tr></tbody>
+          <tbody id="chq-tbody"><tr><td colspan="9" style="text-align:center;padding:20px;color:var(--t3)">هنوز قرضی ثبت نشده</td></tr></tbody>
         </table></div>
       </div>
     </div>
@@ -1287,6 +1287,59 @@ select option{background:#1a1820}
       <div class="card">
         <div class="ct">📋 تاریخچه نرخ دالر</div>
         <div id="rate-log-tbl"></div>
+      </div>
+
+      <!-- ══ ویرایش واژه‌ها ══ -->
+      <div class="card">
+        <div class="ct">✏️ ویرایش واژه‌ها و متن‌های سیستم</div>
+        <div class="ib info" style="font-size:10.5px;margin-bottom:12px">
+          💡 اینجا می‌توانی هر واژه یا متن سیستم را تغییر بدهی — بعد از ذخیره فوری اعمال می‌شود
+        </div>
+
+        <!-- تب‌ها -->
+        <div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
+          <button onclick="switchVocabTab('menu')" id="vt-menu" class="btn bpri" style="font-size:11px;padding:6px 12px">📋 منو</button>
+          <button onclick="switchVocabTab('cheque')" id="vt-cheque" class="btn bsec" style="font-size:11px;padding:6px 12px">💚 قرض حسنه</button>
+          <button onclick="switchVocabTab('product')" id="vt-product" class="btn bsec" style="font-size:11px;padding:6px 12px">👟 محصولات</button>
+          <button onclick="switchVocabTab('status')" id="vt-status" class="btn bsec" style="font-size:11px;padding:6px 12px">🏷️ وضعیت‌ها</button>
+          <button onclick="switchVocabTab('batch')" id="vt-batch" class="btn bsec" style="font-size:11px;padding:6px 12px">⚗️ مکسچر</button>
+        </div>
+
+        <!-- تب منو -->
+        <div id="vocab-menu" class="vocab-panel">
+          <div style="font-size:10px;color:var(--t3);margin-bottom:10px;font-weight:700">📋 نام‌های منو و صفحات</div>
+          <div id="vocab-menu-fields"></div>
+        </div>
+
+        <!-- تب قرض حسنه -->
+        <div id="vocab-cheque" class="vocab-panel" style="display:none">
+          <div style="font-size:10px;color:var(--t3);margin-bottom:10px;font-weight:700">💚 واژه‌های قرض حسنه</div>
+          <div id="vocab-cheque-fields"></div>
+        </div>
+
+        <!-- تب محصولات -->
+        <div id="vocab-product" class="vocab-panel" style="display:none">
+          <div style="font-size:10px;color:var(--t3);margin-bottom:10px;font-weight:700">👟 نام محصولات</div>
+          <div id="vocab-product-fields"></div>
+        </div>
+
+        <!-- تب وضعیت‌ها -->
+        <div id="vocab-status" class="vocab-panel" style="display:none">
+          <div style="font-size:10px;color:var(--t3);margin-bottom:10px;font-weight:700">🏷️ واژه‌های وضعیت</div>
+          <div id="vocab-status-fields"></div>
+        </div>
+
+        <!-- تب مکسچر -->
+        <div id="vocab-batch" class="vocab-panel" style="display:none">
+          <div style="font-size:10px;color:var(--t3);margin-bottom:10px;font-weight:700">⚗️ واژه‌های مکسچر و تولید</div>
+          <div id="vocab-batch-fields"></div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn bpri" style="flex:1;justify-content:center" onclick="saveVocab()">💾 ذخیره تغییرات ✓</button>
+          <button class="btn bsec" onclick="resetVocab()">🔄 بازگشت به پیش‌فرض</button>
+        </div>
+        <div id="vocab-msg" style="margin-top:8px"></div>
       </div>
     </div>
   </div><!-- /content -->
@@ -1619,6 +1672,7 @@ select option{background:#1a1820}
         <div class="fg"><label>نام مشتری</label><input id="ac-name" placeholder="نام کامل..."/></div>
         <div class="fg"><label>ولایت</label><select id="ac-prov"><option>کابل</option><option>غزنی</option><option>کندهار</option><option>هرات</option><option>پلخمری</option><option>کندز</option><option>بدخشان</option><option>تخار</option><option>جلال آباد</option><option>خوست</option><option>سایر</option></select></div>
       </div>
+      <div class="fg"><label>📞 شماره تماس</label><input id="ac-phone" placeholder="مثال: 0700000000" type="tel"/></div>
       <div class="fg"><label>موجودی افتتاحیه (؋)</label><input type="number" id="ac-ob" value="0" min="0"/></div>
     </div>
     <div class="modal-foot">
@@ -1637,6 +1691,7 @@ select option{background:#1a1820}
         <div class="fg"><label>نام مشتری</label><input id="ec-name"/></div>
         <div class="fg"><label>ولایت</label><select id="ec-prov"><option>کابل</option><option>غزنی</option><option>کندهار</option><option>هرات</option><option>پلخمری</option><option>کندز</option><option>بدخشان</option><option>تخار</option><option>جلال آباد</option><option>خوست</option><option>سایر</option></select></div>
       </div>
+      <div class="fg"><label>📞 شماره تماس</label><input id="ec-phone" placeholder="0700000000" type="tel"/></div>
       <div class="fg"><label>موجودی افتتاحیه (؋)</label><input type="number" id="ec-ob" min="0"/></div>
       <div class="ib warn">⚠️ این موجودی اول — طلب قبل از شروع سیستم</div>
     </div>
@@ -1654,6 +1709,7 @@ select option{background:#1a1820}
     <div class="modal-body">
       <div id="as-msg"></div>
       <div class="fg"><label>نام تامین‌کننده</label><input id="as-name" placeholder="نام کامل..."/></div>
+      <div class="fg"><label>📞 شماره تماس</label><input id="as-phone" placeholder="0700000000" type="tel"/></div>
       <div class="fg"><label>بدهی افتتاحیه ($)</label><input type="number" id="as-bal" value="0" min="0" step="0.01"/></div>
     </div>
     <div class="modal-foot">
@@ -1669,6 +1725,7 @@ select option{background:#1a1820}
       <div id="es-msg"></div>
       <input type="hidden" id="es-id"/>
       <div class="fg"><label>نام تامین‌کننده</label><input id="es-name"/></div>
+      <div class="fg"><label>📞 شماره تماس</label><input id="es-phone" placeholder="0700000000" type="tel"/></div>
       <div class="fg"><label>بدهی ($)</label><input type="number" id="es-bal" min="0" step="0.01"/></div>
       <div class="ib warn">⚠️ این بدهی افتتاحیه است — بعد از خریدهای جدید اتوماتیک آپدیت می‌شود</div>
     </div>
@@ -1786,34 +1843,34 @@ select option{background:#1a1820}
 <!-- ══ CHEQUE MODAL ══ -->
 <div class="modal-overlay" id="modalAddCheque">
   <div class="modal">
-    <div class="modal-head"><h3>🏦 ثبت چک جدید</h3><button class="close-btn" onclick="closeModal('modalAddCheque')">✕</button></div>
+    <div class="modal-head"><h3>🏦 ثبت قرض جدید</h3><button class="close-btn" onclick="closeModal('modalAddCheque')">✕</button></div>
     <div class="modal-body">
       <div id="chq-msg"></div>
       <div class="row2">
-        <div class="fg"><label>نوع چک</label>
+        <div class="fg"><label>نوع قرض</label>
           <select id="chq-type">
-            <option value="receive">دریافتی از مشتری</option>
-            <option value="pay">پرداختی به تامین‌کننده</option>
+            <option value="receive">💚 قرض گرفتیم</option>
+            <option value="pay">💸 قرض دادیم</option>
           </select>
         </div>
-        <div class="fg"><label>شخص (مشتری/تامین‌کننده)</label>
-          <input id="chq-person" placeholder="نام شخص..."/>
+        <div class="fg"><label>نام شخص (از کی یا به کی)</label>
+          <input id="chq-person" placeholder="مثال: احمد جان، دوست..."/>
         </div>
       </div>
       <div class="row2">
-        <div class="fg"><label>تاریخ ثبت</label><input id="chq-date"/></div>
-        <div class="fg"><label>تاریخ سررسید</label><input id="chq-due-date" placeholder="۱۴۰۴/۰۱/۳۰"/></div>
+        <div class="fg"><label>تاریخ قرض</label><input id="chq-date"/></div>
+        <div class="fg"><label>تاریخ پرداخت/برگشت</label><input id="chq-due-date" placeholder="۱۴۰۴/۰۱/۳۰"/></div>
       </div>
       <div class="row2">
-        <div class="fg"><label>شماره چک</label><input id="chq-no" placeholder="شماره چک..."/></div>
-        <div class="fg"><label>نام بانک</label><input id="chq-bank" placeholder="بانک ملی / کابل بانک..."/></div>
+        <div class="fg"><label>شماره رسید</label><input id="chq-no" placeholder="شماره رسید..."/></div>
+        <div class="fg"><label>از /به کی</label><input id="chq-bank" placeholder="بانک ملی / کابل بانک..."/></div>
       </div>
       <div class="fg"><label>مبلغ (؋)</label><input type="number" id="chq-amt" min="0"/></div>
-      <div class="fg"><label>شرح</label><input id="chq-desc" placeholder="بابت چه..."/></div>
+      <div class="fg"><label>شرح</label><input id="chq-desc" placeholder="دلیل قرض..."/></div>
     </div>
     <div class="modal-foot">
       <button class="btn bsec" onclick="closeModal('modalAddCheque')">انصراف</button>
-      <button class="btn bpri" onclick="saveCheque()" id="chq-btn">ثبت چک ✓</button>
+      <button class="btn bpri" onclick="saveCheque()" id="chq-btn">ثبت قرض ✓</button>
     </div>
   </div>
 </div>
@@ -2826,7 +2883,7 @@ const PAGE_TITLES={dash:"داشبورد",sales:"فروش",orders:"فرمایشا
   assets:"دارایی‌های ثابت",report:"گزارشات & سود و زیان",settings:"تنظیمات"};
 
 function goPage(id){
-  const adminOnlyPages=["cash","report","reports_more","settings","emp","tax","cheque","partners"];
+  const adminOnlyPages=["cash","report","reports_more","settings","emp","tax","collect","partners"];
   if(adminOnlyPages.includes(id)&&currentUser?.role!=="admin"){goPage("dash");return;}
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   const pg=document.getElementById("page-"+id);
@@ -2839,7 +2896,7 @@ function goPage(id){
   const allTitles={dash:"داشبورد",sales:"فروش",orders:"فرمایشات",buy:"خرید مواد",prod:"تولید",
     stock:"انبار مواد",cust:"مشتریان",supp:"تامین‌کنندگان",cash:"صندوق افغانی",
     report:"گزارشات & سود و زیان",reports_more:"گزارش‌های تفصیلی",
-    emp:"کارمندان و شاگردان",tax:"مالیات",cheque:"چک و اقساط",
+    emp:"کارمندان و شاگردان",tax:"مالیات",collect:"قرض حسنه",
     partners:"شریکان / سهام‌داران",settings:"تنظیمات",batch:"مکسچر و تولید",collect:"وصول مطالبات"};
   document.getElementById("pageTitle").textContent=allTitles[id]||id;
   toggleDrawer(false);
@@ -2862,7 +2919,7 @@ function renderPage(id){
   else if(id==="reports_more") renderReportsMore();
   else if(id==="emp") renderEmp();
   else if(id==="tax") renderTax();
-  else if(id==="cheque") renderCheque();
+  else if(id==="collect") renderCheque();
   else if(id==="partners") renderPartners();
   else if(id==="settings") renderSettings();
 }
@@ -3152,6 +3209,8 @@ async function renderReport(){
 // ── SETTINGS ──
 async function renderSettings(){
   document.getElementById("rateInput").value=S.usdRate;
+  // init vocab tab
+  switchVocabTab('menu');
   const pRows=await sbGet("production","?select=worker,total_wage,paid_wage")||[];
   const staffMap={جمشید:{e:0,p:0},"سمیع‌الله":{e:0,p:0}};
   pRows.forEach(r=>{if(staffMap[r.worker]){staffMap[r.worker].e+=+r.total_wage||0;staffMap[r.worker].p+=+r.paid_wage||0;}});
@@ -3326,9 +3385,30 @@ async function submitSale(){
         });
       }
     }
-    document.getElementById("sale-msg").innerHTML='<div class="ib ok">✅ فروش ثبت شد! اجرت سرکاریگران هم ثبت شد.</div>';
+    // ── پیام واتساپ ──
+    const custPhone=_selCust?.ph||"";
+    const billNo=document.getElementById("s-bill").value||"—";
+    const prodNames={STD:"PCU استاندارد",VIP:"PCU ویژه",KID:"PCU کودکانه"};
+    const waMsg=`سلام ${_selCust?.n||"مشتری گرامی"} 🌹\nبل شماره ${billNo}\n📦 ${doz} درجن ${prodNames[prod]||prod}\n💰 مجموع: ${afn(tot)}\n✅ رسید: ${afn(paid)}\n⏳ باقی: ${afn(rem)}\nتشکر — فابریکه حیات‌زاده`;
+    const waPhone=custPhone?"93"+custPhone.replace(/^0/,""):"";
+    const waUrl=waPhone
+      ?`https://wa.me/${waPhone}?text=${encodeURIComponent(waMsg)}`
+      :`https://wa.me/?text=${encodeURIComponent(waMsg)}`;
+    document.getElementById("sale-msg").innerHTML=`<div class="ib ok" style="flex-direction:column;align-items:flex-start">
+      <div>✅ فروش ثبت شد!</div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <a href="${waUrl}" target="_blank"
+          style="display:inline-flex;align-items:center;gap:6px;background:#25d366;color:#000;border:none;border-radius:9px;padding:8px 16px;font-size:13px;font-weight:800;text-decoration:none">
+          💬 ارسال واتساپ${custPhone?' به '+custPhone:''}
+        </a>
+        <button onclick="navigator.clipboard.writeText(${JSON.stringify(waMsg)}).then(()=>this.textContent='✅ کاپی شد!')"
+          style="background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);color:#25d366;border-radius:9px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">
+          📋 کاپی متن
+        </button>
+      </div>
+    </div>`;
     showSaved();
-    setTimeout(()=>{closeModal("modalSale");renderSales();},1300);
+    setTimeout(()=>{closeModal("modalSale");renderSales();},4000);
   } else {
     document.getElementById("sale-msg").innerHTML='<div class="ib err">خطا در اتصال! دوباره امتحان کن</div>';
   }
@@ -3472,7 +3552,7 @@ async function renderCust(){
   const salesRows=await sbGet("sales","?select=cust_id,total,paid,remaining")||[];
   const payments=await sbGet("collection_payments","?select=cust_id,amount")||[];
 
-  // جمع پرداخت‌های وصول شده برای هر مشتری
+  // جمع پرداخت‌های ✅ برگشت شد برای هر مشتری
   const collectMap={};
   payments.forEach(p=>{
     if(!collectMap[p.cust_id]) collectMap[p.cust_id]=0;
@@ -3508,18 +3588,21 @@ function filterCust(q){_custSrch=q;renderCustTable(window._lastSalesMap||{});}
 function renderCustTable(salesMap){
   let list=CUSTOMERS;
   if(_provF!=="همه") list=list.filter(c=>c.p===_provF);
-  if(_custSrch) list=list.filter(c=>c.n.includes(_custSrch)||c.p.includes(_custSrch));
+  if(_custSrch) list=list.filter(c=>c.n.includes(_custSrch)||c.p.includes(_custSrch)||( c.ph&&c.ph.includes(_custSrch)));
   const isAdmin=currentUser?.role==="admin";
   const collectMap=window._collectMap||{};
   document.getElementById("cust-tbody").innerHTML=list.map((c,i)=>{
     const sm=salesMap[c.id]||{tot:0,paid:0,rem:0};
     const collected=collectMap[c.id]||0;
-    // طلب کل = موجودی اول + فروش جدید - وصول از فروش - وصول مستقیم
     const tot=Math.max(0,(c.ob||0)+sm.tot-sm.paid-collected);
+    const phoneBtn=c.ph?`<a href="tel:${c.ph}" style="background:rgba(46,204,122,.1);border:1px solid rgba(46,204,122,.3);color:var(--gr);border-radius:6px;padding:3px 7px;cursor:pointer;font-size:10px;text-decoration:none">📞</a>
+      <a href="https://wa.me/93${c.ph.replace(/^0/,'')}" target="_blank" style="background:rgba(37,211,102,.15);border:1px solid rgba(37,211,102,.3);color:#25d366;border-radius:6px;padding:3px 7px;cursor:pointer;font-size:10px;text-decoration:none">💬</a>`
+      :`<span style="color:var(--t3);font-size:10px">—</span>`;
     return`<tr>
       <td style="color:var(--t3)">${i+1}</td>
       <td style="font-weight:700">${c.n}</td>
       <td><span class="bb bbl">${c.p}</span></td>
+      <td style="font-size:11px">${phoneBtn}</td>
       <td class="tdr" style="color:var(--t2)">${afn(c.ob)}</td>
       <td class="tdr" style="color:var(--bl)">${afn(sm.tot)}</td>
       <td class="tdr" style="color:var(--gr)">${afn(sm.paid+collected)}</td>
@@ -3534,6 +3617,7 @@ function openEditCust(id){
   document.getElementById("ec-id").value=c.id;
   document.getElementById("ec-name").value=c.n;
   document.getElementById("ec-prov").value=c.p;
+  document.getElementById("ec-phone").value=c.ph||"";
   document.getElementById("ec-ob").value=c.ob||0;
   document.getElementById("ec-msg").innerHTML="";
   openModal("modalEditCust");
@@ -3542,12 +3626,13 @@ async function saveEditCust(){
   const id=document.getElementById("ec-id").value;
   const name=document.getElementById("ec-name").value.trim();
   const prov=document.getElementById("ec-prov").value;
+  const phone=document.getElementById("ec-phone").value.trim();
   const ob=+(document.getElementById("ec-ob").value)||0;
   if(!name){document.getElementById("ec-msg").innerHTML='<div class="ib err">نام الزامی</div>';return;}
   document.getElementById("ec-btn").disabled=true;document.getElementById("ec-btn").textContent="در حال ذخیره...";
   const idx=CUSTOMERS.findIndex(c=>c.id===id);
-  if(idx>=0){CUSTOMERS[idx].n=name;CUSTOMERS[idx].p=prov;CUSTOMERS[idx].ob=ob;}
-  const custData=JSON.stringify(CUSTOMERS.map(c=>({id:c.id,n:c.n,p:c.p,ob:c.ob})));
+  if(idx>=0){CUSTOMERS[idx].n=name;CUSTOMERS[idx].p=prov;CUSTOMERS[idx].ob=ob;CUSTOMERS[idx].ph=phone;}
+  const custData=JSON.stringify(CUSTOMERS.map(c=>({id:c.id,n:c.n,p:c.p,ob:c.ob,ph:c.ph||""})));
   const existing=await sbGet("settings","?key=eq.customers_data");
   if(existing&&existing.length>0) await sbPatch("settings",{value:custData,updated_at:new Date().toISOString()},"?key=eq.customers_data");
   else await sbPost("settings",{key:"customers_data",value:custData});
@@ -3558,12 +3643,13 @@ async function saveEditCust(){
 async function saveAddCust(){
   const name=document.getElementById("ac-name").value.trim();
   const prov=document.getElementById("ac-prov").value;
+  const phone=document.getElementById("ac-phone").value.trim();
   const ob=+(document.getElementById("ac-ob").value)||0;
   if(!name){document.getElementById("ac-msg").innerHTML='<div class="ib err">نام الزامی</div>';return;}
   document.getElementById("ac-btn").disabled=true;document.getElementById("ac-btn").textContent="در حال ذخیره...";
   const newId="c"+(CUSTOMERS.length+1)+"x"+Date.now().toString().slice(-4);
-  CUSTOMERS.push({id:newId,n:name,p:prov,ob});
-  const custData=JSON.stringify(CUSTOMERS.map(c=>({id:c.id,n:c.n,p:c.p,ob:c.ob})));
+  CUSTOMERS.push({id:newId,n:name,p:prov,ob,ph:phone});
+  const custData=JSON.stringify(CUSTOMERS.map(c=>({id:c.id,n:c.n,p:c.p,ob:c.ob,ph:c.ph||""})));
   const existing=await sbGet("settings","?key=eq.customers_data");
   if(existing&&existing.length>0) await sbPatch("settings",{value:custData,updated_at:new Date().toISOString()},"?key=eq.customers_data");
   else await sbPost("settings",{key:"customers_data",value:custData});
@@ -3582,9 +3668,14 @@ async function renderSupp(){
   const isAdmin=currentUser?.role==="admin";
   document.getElementById("supp-tbody").innerHTML=SUPPLIERS.map((s,i)=>{
     const b=S.suppMap[s.id]?.bal||0;
+    const phoneBtn=s.ph?`<div style="display:flex;gap:4px">
+      <a href="tel:${s.ph}" style="background:rgba(46,204,122,.1);border:1px solid rgba(46,204,122,.3);color:var(--gr);border-radius:6px;padding:3px 7px;font-size:10px;text-decoration:none">📞</a>
+      <a href="https://wa.me/93${s.ph.replace(/^0/,'')}" target="_blank" style="background:rgba(37,211,102,.15);border:1px solid rgba(37,211,102,.3);color:#25d366;border-radius:6px;padding:3px 7px;font-size:10px;text-decoration:none">💬</a>
+    </div>`:`<span style="color:var(--t3);font-size:10px">—</span>`;
     return`<tr>
       <td style="color:var(--t3)">${i+1}</td>
       <td style="font-weight:700">${s.n}</td>
+      <td>${phoneBtn}</td>
       <td class="tdr" style="color:var(--bl);font-weight:700">${usd(b)}</td>
       <td class="tdr" style="color:var(--gd)">${afn(b*S.usdRate)}</td>
       <td>${b>0?'<span class="bb br2">بدهکار</span>':'<span class="bb bg2">تسویه</span>'}</td>
@@ -3596,6 +3687,7 @@ function openEditSupp(id){
   const s=SUPPLIERS.find(x=>x.id===id);if(!s)return;
   document.getElementById("es-id").value=id;
   document.getElementById("es-name").value=s.n;
+  document.getElementById("es-phone").value=s.ph||"";
   document.getElementById("es-bal").value=S.suppMap[id]?.bal||0;
   document.getElementById("es-msg").innerHTML="";
   openModal("modalEditSupp");
@@ -3603,12 +3695,13 @@ function openEditSupp(id){
 async function saveEditSupp(){
   const id=document.getElementById("es-id").value;
   const name=document.getElementById("es-name").value.trim();
+  const phone=document.getElementById("es-phone").value.trim();
   const bal=+(document.getElementById("es-bal").value)||0;
   if(!name){document.getElementById("es-msg").innerHTML='<div class="ib err">نام الزامی</div>';return;}
   document.getElementById("es-btn").disabled=true;document.getElementById("es-btn").textContent="در حال ذخیره...";
   const idx=SUPPLIERS.findIndex(s=>s.id===id);
-  if(idx>=0) SUPPLIERS[idx].n=name;
-  await sbPatch("supplier_balances",{balance_usd:bal,supplier_name:name,updated_at:new Date().toISOString()},`?supplier_id=eq.${id}`);
+  if(idx>=0){SUPPLIERS[idx].n=name;SUPPLIERS[idx].ph=phone;}
+  await sbPatch("supplier_balances",{balance_usd:bal,supplier_name:name,phone,updated_at:new Date().toISOString()},`?supplier_id=eq.${id}`);
   await refreshSuppMap();
   document.getElementById("es-btn").disabled=false;document.getElementById("es-btn").textContent="ذخیره ✓";
   document.getElementById("es-msg").innerHTML='<div class="ib ok">✅ ذخیره شد!</div>';
@@ -3616,12 +3709,13 @@ async function saveEditSupp(){
 }
 async function saveAddSupp(){
   const name=document.getElementById("as-name").value.trim();
+  const phone=document.getElementById("as-phone").value.trim();
   const bal=+(document.getElementById("as-bal").value)||0;
   if(!name){document.getElementById("as-msg").innerHTML='<div class="ib err">نام الزامی</div>';return;}
   document.getElementById("as-btn").disabled=true;document.getElementById("as-btn").textContent="در حال ذخیره...";
   const newId="s"+(SUPPLIERS.length+1)+"x"+Date.now().toString().slice(-4);
-  SUPPLIERS.push({id:newId,n:name});
-  await sbPost("supplier_balances",{supplier_id:newId,supplier_name:name,balance_usd:bal,updated_at:new Date().toISOString()});
+  SUPPLIERS.push({id:newId,n:name,ph:phone});
+  await sbPost("supplier_balances",{supplier_id:newId,supplier_name:name,phone,balance_usd:bal,updated_at:new Date().toISOString()});
   await refreshSuppMap();
   document.getElementById("as-btn").disabled=false;document.getElementById("as-btn").textContent="اضافه کردن ✓";
   document.getElementById("as-msg").innerHTML='<div class="ib ok">✅ تامین‌کننده اضافه شد!</div>';
@@ -3654,11 +3748,16 @@ async function renderEmp(){
   document.getElementById("emp-tbody").innerHTML=list.length?list.map((e,i)=>{
     const pd=payMap[e.id]?.paid||0;
     const rem=Math.max(0,(+e.salary_amount||0)-pd);
+    const phoneBtn=e.phone?`<div style="display:flex;gap:4px">
+      <a href="tel:${e.phone}" style="background:rgba(46,204,122,.1);border:1px solid rgba(46,204,122,.3);color:var(--gr);border-radius:6px;padding:3px 7px;font-size:10px;text-decoration:none">📞</a>
+      <a href="https://wa.me/93${e.phone.replace(/^0/,'')}" target="_blank" style="background:rgba(37,211,102,.15);border:1px solid rgba(37,211,102,.3);color:#25d366;border-radius:6px;padding:3px 7px;font-size:10px;text-decoration:none">💬</a>
+    </div>`:`<span style="color:var(--t3);font-size:10px">—</span>`;
     return`<tr>
       <td style="color:var(--t3)">${i+1}</td>
       <td style="font-weight:700">${e.name}</td>
       <td><span class="bb bbl">${EMP_ROLE_LABEL[e.role]||e.role}</span></td>
       <td style="color:var(--t2)">${e.department||"—"}</td>
+      <td>${phoneBtn}</td>
       <td style="color:var(--t2)">${EMP_STYPE_LABEL[e.salary_type]||e.salary_type}</td>
       <td class="tdr" style="color:var(--gd);font-weight:700">${afn(e.salary_amount||0)}</td>
       <td class="tdr" style="color:var(--gr)">${afn(pd)}</td>
@@ -3668,7 +3767,7 @@ async function renderEmp(){
         <button onclick="showEmpPays(${e.id},'${e.name}')" style="background:var(--bl2);border:1px solid rgba(59,158,255,.3);color:var(--bl);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit">📋</button>
       </td>
     </tr>`;
-  }).join(""):'<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--t3)">هنوز کارمندی ثبت نشده — از دکمه + اضافه کن</td></tr>';
+  }).join(""):'<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--t3)">هنوز کارمندی ثبت نشده — از دکمه + اضافه کن</td></tr>';
 }
 
 function filterEmp(type){
@@ -3883,8 +3982,8 @@ async function initApp(){
           if(saved&&saved.length>0){
             saved.forEach(sc=>{
               const idx=CUSTOMERS.findIndex(c=>c.id===sc.id);
-              if(idx>=0){CUSTOMERS[idx].n=sc.n;CUSTOMERS[idx].p=sc.p;CUSTOMERS[idx].ob=sc.ob||0;}
-              else CUSTOMERS.push({id:sc.id,n:sc.n,p:sc.p,ob:sc.ob||0});
+              if(idx>=0){CUSTOMERS[idx].n=sc.n;CUSTOMERS[idx].p=sc.p;CUSTOMERS[idx].ob=sc.ob||0;CUSTOMERS[idx].ph=sc.ph||"";}
+              else CUSTOMERS.push({id:sc.id,n:sc.n,p:sc.p,ob:sc.ob||0,ph:sc.ph||""});
             });
           }
         }catch(e){}
@@ -3899,15 +3998,16 @@ async function initApp(){
   await refreshStockMap();
   populateDropdowns();
   setSyncOn();
+  await loadVocab();
   goPage("dash");
 }
 
 // ══ v9 — قابلیت‌های جدید ══
 
-// ── چک و اقساط ──
-let _chequeFilter="all";
+// ── قرض حسنه ──
+let _collectFilter="all";
 async function renderCheque(){
-  const rows=await sbGet("cheques","?order=due_date.asc")||[];
+  const rows=await sbGet("collects","?order=due_date.asc")||[];
   const inRows=rows.filter(r=>r.type==="receive");
   const outRows=rows.filter(r=>r.type==="pay");
   const inAmt=inRows.reduce((a,r)=>a+(+r.amount||0),0);
@@ -3920,11 +4020,11 @@ async function renderCheque(){
   document.getElementById("chq-out-amt").textContent=afn(outAmt);
   document.getElementById("chq-due").textContent=dueRows.length+" چک";
   let list=rows;
-  if(_chequeFilter!=="all") list=rows.filter(r=>_chequeFilter==="receive"||_chequeFilter==="pay"?r.type===_chequeFilter:r.status===_chequeFilter);
+  if(_collectFilter!=="all") list=rows.filter(r=>_collectFilter==="receive"||_collectFilter==="pay"?r.type===_collectFilter:r.status===_collectFilter);
   document.querySelectorAll("[id^='cf-']").forEach(b=>b.className="btn bsec");
-  const btn=document.getElementById("cf-"+_chequeFilter);
+  const btn=document.getElementById("cf-"+_collectFilter);
   if(btn) btn.className="btn bpri";
-  const STATUS={pending:'<span class="bb bog">⏳ در انتظار</span>',cleared:'<span class="bb bg2">✅ وصول شده</span>',bounced:'<span class="bb br2">❌ برگشتی</span>'};
+  const STATUS={pending:'<span class="bb bog">⏳ ⏳ باقی</span>',cleared:'<span class="bb bg2">✅ ✅ برگشت شد</span>',bounced:'<span class="bb br2">❌ ❌ پس نداد</span>'};
   document.getElementById("chq-tbody").innerHTML=list.length?list.map((r,i)=>`<tr>
     <td style="color:var(--t3)">${i+1}</td>
     <td>${r.date||"—"}</td>
@@ -3938,30 +4038,30 @@ async function renderCheque(){
       ${r.status==="pending"?`<button onclick="updateCheque(${r.id},'cleared')" style="background:var(--gr2);border:1px solid rgba(34,197,94,.3);color:var(--gr);border-radius:5px;padding:3px 7px;cursor:pointer;font-size:10px;font-family:inherit">✅ وصول</button>
       <button onclick="updateCheque(${r.id},'bounced')" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:5px;padding:3px 7px;cursor:pointer;font-size:10px;font-family:inherit">❌ برگشت</button>`:"—"}
     </td>
-  </tr>`).join(""):'<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--t3)">هنوز چکی ثبت نشده</td></tr>';
+  </tr>`).join(""):'<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--t3)">هنوز قرضی ثبت نشده</td></tr>';
 }
-function filterCheque(f){_chequeFilter=f;renderCheque();}
+function filterCheque(f){_collectFilter=f;renderCheque();}
 async function saveCheque(){
   const amt=+(document.getElementById("chq-amt").value)||0;
   if(!amt){document.getElementById("chq-msg").innerHTML='<div class="ib err">مبلغ الزامی</div>';return;}
   document.getElementById("chq-btn").disabled=true;document.getElementById("chq-btn").textContent="در حال ذخیره...";
-  const res=await sbPost("cheques",{
+  const res=await sbPost("collects",{
     type:document.getElementById("chq-type").value,
     person:document.getElementById("chq-person").value,
     date:document.getElementById("chq-date").value||today(),
     due_date:document.getElementById("chq-due-date").value,
-    cheque_no:document.getElementById("chq-no").value,
+    collect_no:document.getElementById("chq-no").value,
     bank:document.getElementById("chq-bank").value,
     amount:amt,
     description:document.getElementById("chq-desc").value,
     status:"pending"
   });
-  document.getElementById("chq-btn").disabled=false;document.getElementById("chq-btn").textContent="ثبت چک ✓";
-  if(res){document.getElementById("chq-msg").innerHTML='<div class="ib ok">✅ چک ثبت شد!</div>';showSaved();setTimeout(()=>{closeModal("modalAddCheque");renderCheque();},1000);}
+  document.getElementById("chq-btn").disabled=false;document.getElementById("chq-btn").textContent="ثبت قرض ✓";
+  if(res){document.getElementById("chq-msg").innerHTML='<div class="ib ok">✅ قرض ثبت شد!</div>';showSaved();setTimeout(()=>{closeModal("modalAddCheque");renderCheque();},1000);}
   else document.getElementById("chq-msg").innerHTML='<div class="ib err">خطا — دوباره امتحان کن</div>';
 }
 async function updateCheque(id,status){
-  await sbPatch("cheques",{status,updated_at:new Date().toISOString()},`?id=eq.${id}`);
+  await sbPatch("collects",{status,updated_at:new Date().toISOString()},`?id=eq.${id}`);
   showSaved();renderCheque();
 }
 
@@ -4985,7 +5085,7 @@ async function openEditRecord(table,id){
       </div>
       <div class="row2">
         <div class="fg"><label>قیمت فی درجن (؋)</label><input type="number" id="ef-price_per_doz" value="${r.price_per_doz||r.price_per_dozen||0}"/></div>
-        <div class="fg"><label>وصول شده (؋)</label><input type="number" id="ef-paid" value="${r.paid||0}"/></div>
+        <div class="fg"><label>✅ برگشت شد (؋)</label><input type="number" id="ef-paid" value="${r.paid||0}"/></div>
       </div>
       <div class="fg"><label>یادداشت</label><input id="ef-note" value="${r.note||""}"/></div>`;
   } else if(table==="purchases"){
@@ -6101,7 +6201,7 @@ function printCollectSheet(type){
     </tr></thead>
     <tbody>${rows||''}</tbody></table>
     <div style="margin-top:30px;display:flex;justify-content:space-between;font-size:11px;border-top:1px solid #ccc;padding-top:12px">
-      <div>جمع وصول شده: ___________</div>
+      <div>جمع ✅ برگشت شد: ___________</div>
       <div>جمع باقی: ___________</div>
       <div>امضای مدیر: ___________</div>
     </div>
@@ -6674,6 +6774,200 @@ async function submitWaste() {
 document.addEventListener("keydown",e=>{
   if(e.key==="Enter"&&document.getElementById("loginPage").style.display!=="none") doLogin();
 });
+
+// ══════════════════════════════════════════════════
+// ══ سیستم ویرایش واژه‌ها ══
+// ══════════════════════════════════════════════════
+
+// واژه‌های پیش‌فرض
+const VOCAB_DEFAULT = {
+  menu: {
+    'داشبورد':       'داشبورد',
+    'فروش':          'فروش',
+    'فرمایشات':      'فرمایشات',
+    'خرید مواد':     'خرید مواد',
+    'تولید (اجرت)':  'تولید (اجرت)',
+    'مکسچر و تولید': 'مکسچر و تولید',
+    'انبار مواد':    'انبار مواد',
+    'مشتریان':       'مشتریان',
+    'وصول مطالبات':  'وصول مطالبات',
+    'قرض حسنه':      'قرض حسنه',
+    'تامین‌کنندگان': 'تامین‌کنندگان',
+    'صندوق افغانی':  'صندوق افغانی',
+    'کارمندان و شاگردان': 'کارمندان و شاگردان',
+    'شریکان / سهام‌داران': 'شریکان / سهام‌داران',
+    'گزارشات & سود و زیان': 'گزارشات & سود و زیان',
+    'مالیات':        'مالیات',
+    'تنظیمات':       'تنظیمات',
+  },
+  cheque: {
+    'قرض حسنه':    'قرض حسنه',
+    'قرض گرفتیم':  'قرض گرفتیم',
+    'قرض دادیم':   'قرض دادیم',
+    'برگشت شد':    'برگشت شد',
+    'پس نداد':     'پس نداد',
+    'باقی':        'باقی',
+    'ثبت قرض جدید':'ثبت قرض جدید',
+    'شماره رسید':  'شماره رسید',
+    'از/به کی':    'از/به کی',
+    'تاریخ قرض':   'تاریخ قرض',
+    'تاریخ پرداخت/برگشت': 'تاریخ پرداخت/برگشت',
+  },
+  product: {
+    'PCU استاندارد ۳۶-۴۲': 'PCU استاندارد ۳۶-۴۲',
+    'PCU ویژه ۴۳-۴۵':      'PCU ویژه ۴۳-۴۵',
+    'PCU کودکانه ۲۴-۳۵':   'PCU کودکانه ۲۴-۳۵',
+    'فابریکه حیات‌زاده':   'فابریکه حیات‌زاده',
+    'کمپنی نورآغامنصور':   'کمپنی نورآغامنصور',
+  },
+  status: {
+    'در انتظار':    'در انتظار',
+    'ناقص':        'ناقص',
+    'تکمیل':       'تکمیل',
+    'تسویه':       'تسویه',
+    'بدهکار':      'بدهکار',
+    'وصول از مشتری': 'وصول از مشتری',
+    'مدیر شهر':    'مدیر شهر',
+    'مدیر ولایت':  'مدیر ولایت',
+  },
+  batch: {
+    'نوبت':            'نوبت',
+    'مکسچر':          'مکسچر',
+    'کچره':           'کچره',
+    'بهای تمام‌شده':  'بهای تمام‌شده',
+    'هزینه تولید':    'هزینه تولید',
+    'در مکسچر':       'در مکسچر',
+    'رفته به ماشین':  'رفته به ماشین',
+    'تمام شد':        'تمام شد',
+    'شروع مکسچر':     'شروع مکسچر',
+    'ثبت نتیجه':      'ثبت نتیجه',
+  }
+};
+
+// واژه‌های فعلی (از Supabase لود می‌شود)
+let VOCAB_CURRENT = JSON.parse(JSON.stringify(VOCAB_DEFAULT));
+let _vocabTab = 'menu';
+
+// لود واژه‌ها از Supabase
+async function loadVocab() {
+  const rows = await sbGet('settings','?key=eq.vocab_data') || [];
+  if(rows[0]) {
+    try {
+      const saved = JSON.parse(rows[0].value);
+      // merge با default (در صورت اضافه شدن واژه جدید)
+      Object.keys(VOCAB_DEFAULT).forEach(cat => {
+        if(!VOCAB_CURRENT[cat]) VOCAB_CURRENT[cat] = {};
+        Object.keys(VOCAB_DEFAULT[cat]).forEach(k => {
+          VOCAB_CURRENT[cat][k] = saved[cat]?.[k] ?? VOCAB_DEFAULT[cat][k];
+        });
+      });
+    } catch(e) {}
+  }
+  applyVocab();
+}
+
+// اعمال واژه‌ها روی DOM
+function applyVocab() {
+  // نام منو
+  const menuMap = VOCAB_CURRENT.menu;
+  document.querySelectorAll('.ni').forEach(btn => {
+    const span = btn.querySelector('span.em');
+    if(!span) return;
+    const txt = btn.childNodes[btn.childNodes.length-1]?.textContent?.trim();
+    if(txt && menuMap[txt]) {
+      btn.childNodes[btn.childNodes.length-1].textContent = menuMap[txt];
+    }
+  });
+
+  // نام فابریکه
+  const fn = VOCAB_CURRENT.product['فابریکه حیات‌زاده'];
+  if(fn) {
+    const logo = document.querySelector('.drawer-logo');
+    if(logo) logo.textContent = '👟 ' + fn;
+  }
+}
+
+// تغییر تب ویرایش واژه‌ها
+function switchVocabTab(tab) {
+  _vocabTab = tab;
+  document.querySelectorAll('.vocab-panel').forEach(p => p.style.display='none');
+  document.getElementById('vocab-'+tab).style.display = 'block';
+  ['menu','cheque','product','status','batch'].forEach(t => {
+    document.getElementById('vt-'+t).className = 'btn ' + (t===tab?'bpri':'bsec');
+    document.getElementById('vt-'+t).style.fontSize = '11px';
+    document.getElementById('vt-'+t).style.padding = '6px 12px';
+  });
+  renderVocabFields(tab);
+}
+
+// نمایش فیلدهای ویرایش
+function renderVocabFields(tab) {
+  const container = document.getElementById('vocab-'+tab+'-fields');
+  if(!container) return;
+  const data = VOCAB_CURRENT[tab] || {};
+  const def = VOCAB_DEFAULT[tab] || {};
+  container.innerHTML = Object.keys(def).map(key => `
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;padding:8px;background:var(--b3);border-radius:8px;border:1px solid var(--bd)">
+      <div style="flex:1;font-size:11px;color:var(--t3);min-width:80px">${key}</div>
+      <div style="color:var(--t3);font-size:14px">→</div>
+      <input
+        id="vocab_${tab}_${key.replace(/[^a-zA-Z0-9]/g,'_')}"
+        value="${data[key]||key}"
+        style="flex:2;padding:7px 10px;background:var(--b4);border:1px solid var(--bd2);border-radius:7px;color:var(--gd);font-size:13px;font-weight:700;font-family:inherit;outline:none"
+        placeholder="${key}"
+      />
+      <button onclick="resetOneVocab('${tab}','${key}')"
+        style="background:rgba(240,90,110,.1);border:1px solid rgba(240,90,110,.2);color:var(--rd);border-radius:6px;padding:5px 8px;cursor:pointer;font-size:11px;flex-shrink:0"
+        title="برگشت به پیش‌فرض">↩</button>
+    </div>`).join('');
+}
+
+// ریست یک واژه
+function resetOneVocab(tab, key) {
+  const defVal = VOCAB_DEFAULT[tab]?.[key] || key;
+  const inputId = 'vocab_'+tab+'_'+key.replace(/[^a-zA-Z0-9]/g,'_');
+  const inp = document.getElementById(inputId);
+  if(inp) inp.value = defVal;
+}
+
+// ذخیره همه واژه‌ها
+async function saveVocab() {
+  const btn = document.querySelector('[onclick="saveVocab()"]');
+  if(btn) { btn.disabled=true; btn.textContent='در حال ذخیره...'; }
+
+  // خواندن همه تب‌ها
+  ['menu','cheque','product','status','batch'].forEach(tab => {
+    const def = VOCAB_DEFAULT[tab] || {};
+    Object.keys(def).forEach(key => {
+      const inputId = 'vocab_'+tab+'_'+key.replace(/[^a-zA-Z0-9]/g,'_');
+      const inp = document.getElementById(inputId);
+      if(inp) VOCAB_CURRENT[tab][key] = inp.value.trim() || key;
+    });
+  });
+
+  // ذخیره در Supabase
+  const existing = await sbGet('settings','?key=eq.vocab_data');
+  const val = JSON.stringify(VOCAB_CURRENT);
+  if(existing && existing.length > 0) {
+    await sbPatch('settings',{value:val,updated_at:new Date().toISOString()},'?key=eq.vocab_data');
+  } else {
+    await sbPost('settings',{key:'vocab_data',value:val});
+  }
+
+  applyVocab();
+  showSaved();
+  document.getElementById('vocab-msg').innerHTML='<div class="ib ok">✅ واژه‌ها ذخیره و اعمال شد!</div>';
+  setTimeout(()=>document.getElementById('vocab-msg').innerHTML='',2500);
+  if(btn) { btn.disabled=false; btn.textContent='💾 ذخیره تغییرات ✓'; }
+}
+
+// ریست همه به پیش‌فرض
+function resetVocab() {
+  if(!confirm('همه واژه‌ها به حالت اول برگردد؟')) return;
+  VOCAB_CURRENT = JSON.parse(JSON.stringify(VOCAB_DEFAULT));
+  renderVocabFields(_vocabTab);
+  document.getElementById('vocab-msg').innerHTML='<div class="ib warn">🔄 پیش‌فرض بازگشت — برای ذخیره دکمه ذخیره را بزن</div>';
+}
 </script>
 </body>
 </html>
