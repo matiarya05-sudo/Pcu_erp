@@ -1070,8 +1070,8 @@ select option{background:#1a1820}
         </div>
         <div class="ib info" style="font-size:10.5px;margin-bottom:8px">✏️ Admin می‌تواند بدهی و اطلاعات تامین‌کنندگان را ویرایش کند</div>
         <div class="tw"><table>
-          <thead><tr><th>#</th><th>نام</th><th>📞 تماس</th><th>بدهی ($)</th><th>معادل (؋)</th><th>وضعیت</th><th></th></tr></thead>
-          <tbody id="supp-tbody"><tr><td colspan="7" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
+          <thead><tr><th>#</th><th>نام</th><th>بدهی ($)</th><th>معادل (؋)</th><th>وضعیت</th><th></th></tr></thead>
+          <tbody id="supp-tbody"><tr><td colspan="6" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
         </table></div>
       </div>
     </div>
@@ -1137,8 +1137,8 @@ select option{background:#1a1820}
           <button onclick="filterEmp('apprentice')" class="bb bbl" id="ef-apprentice" style="cursor:pointer;padding:4px 10px">👦 شاگرد</button>
         </div>
         <div class="tw"><table>
-          <thead><tr><th>#</th><th>نام</th><th>وظیفه</th><th>بخش</th><th>📞 تماس</th><th>نوع معاش</th><th>معاش</th><th>پرداخت شده</th><th>باقی</th><th></th></tr></thead>
-          <tbody id="emp-tbody"><tr><td colspan="10" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
+          <thead><tr><th>#</th><th>نام</th><th>وظیفه</th><th>بخش</th><th>نوع معاش</th><th>معاش</th><th>پرداخت شده</th><th>باقی</th><th></th></tr></thead>
+          <tbody id="emp-tbody"><tr><td colspan="9" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
         </table></div>
       </div>
       <div class="card" id="emp-pay-section" style="display:none">
@@ -1709,7 +1709,6 @@ select option{background:#1a1820}
     <div class="modal-body">
       <div id="as-msg"></div>
       <div class="fg"><label>نام تامین‌کننده</label><input id="as-name" placeholder="نام کامل..."/></div>
-      <div class="fg"><label>📞 شماره تماس</label><input id="as-phone" placeholder="0700000000" type="tel"/></div>
       <div class="fg"><label>بدهی افتتاحیه ($)</label><input type="number" id="as-bal" value="0" min="0" step="0.01"/></div>
     </div>
     <div class="modal-foot">
@@ -1725,7 +1724,6 @@ select option{background:#1a1820}
       <div id="es-msg"></div>
       <input type="hidden" id="es-id"/>
       <div class="fg"><label>نام تامین‌کننده</label><input id="es-name"/></div>
-      <div class="fg"><label>📞 شماره تماس</label><input id="es-phone" placeholder="0700000000" type="tel"/></div>
       <div class="fg"><label>بدهی ($)</label><input type="number" id="es-bal" min="0" step="0.01"/></div>
       <div class="ib warn">⚠️ این بدهی افتتاحیه است — بعد از خریدهای جدید اتوماتیک آپدیت می‌شود</div>
     </div>
@@ -3668,14 +3666,9 @@ async function renderSupp(){
   const isAdmin=currentUser?.role==="admin";
   document.getElementById("supp-tbody").innerHTML=SUPPLIERS.map((s,i)=>{
     const b=S.suppMap[s.id]?.bal||0;
-    const phoneBtn=s.ph?`<div style="display:flex;gap:4px">
-      <a href="tel:${s.ph}" style="background:rgba(46,204,122,.1);border:1px solid rgba(46,204,122,.3);color:var(--gr);border-radius:6px;padding:3px 7px;font-size:10px;text-decoration:none">📞</a>
-      <a href="https://wa.me/93${s.ph.replace(/^0/,'')}" target="_blank" style="background:rgba(37,211,102,.15);border:1px solid rgba(37,211,102,.3);color:#25d366;border-radius:6px;padding:3px 7px;font-size:10px;text-decoration:none">💬</a>
-    </div>`:`<span style="color:var(--t3);font-size:10px">—</span>`;
     return`<tr>
       <td style="color:var(--t3)">${i+1}</td>
       <td style="font-weight:700">${s.n}</td>
-      <td>${phoneBtn}</td>
       <td class="tdr" style="color:var(--bl);font-weight:700">${usd(b)}</td>
       <td class="tdr" style="color:var(--gd)">${afn(b*S.usdRate)}</td>
       <td>${b>0?'<span class="bb br2">بدهکار</span>':'<span class="bb bg2">تسویه</span>'}</td>
@@ -3687,7 +3680,6 @@ function openEditSupp(id){
   const s=SUPPLIERS.find(x=>x.id===id);if(!s)return;
   document.getElementById("es-id").value=id;
   document.getElementById("es-name").value=s.n;
-  document.getElementById("es-phone").value=s.ph||"";
   document.getElementById("es-bal").value=S.suppMap[id]?.bal||0;
   document.getElementById("es-msg").innerHTML="";
   openModal("modalEditSupp");
@@ -3695,13 +3687,12 @@ function openEditSupp(id){
 async function saveEditSupp(){
   const id=document.getElementById("es-id").value;
   const name=document.getElementById("es-name").value.trim();
-  const phone=document.getElementById("es-phone").value.trim();
   const bal=+(document.getElementById("es-bal").value)||0;
   if(!name){document.getElementById("es-msg").innerHTML='<div class="ib err">نام الزامی</div>';return;}
   document.getElementById("es-btn").disabled=true;document.getElementById("es-btn").textContent="در حال ذخیره...";
   const idx=SUPPLIERS.findIndex(s=>s.id===id);
-  if(idx>=0){SUPPLIERS[idx].n=name;SUPPLIERS[idx].ph=phone;}
-  await sbPatch("supplier_balances",{balance_usd:bal,supplier_name:name,phone,updated_at:new Date().toISOString()},`?supplier_id=eq.${id}`);
+  if(idx>=0) SUPPLIERS[idx].n=name;
+  await sbPatch("supplier_balances",{balance_usd:bal,supplier_name:name,updated_at:new Date().toISOString()},`?supplier_id=eq.${id}`);
   await refreshSuppMap();
   document.getElementById("es-btn").disabled=false;document.getElementById("es-btn").textContent="ذخیره ✓";
   document.getElementById("es-msg").innerHTML='<div class="ib ok">✅ ذخیره شد!</div>';
@@ -3709,13 +3700,12 @@ async function saveEditSupp(){
 }
 async function saveAddSupp(){
   const name=document.getElementById("as-name").value.trim();
-  const phone=document.getElementById("as-phone").value.trim();
   const bal=+(document.getElementById("as-bal").value)||0;
   if(!name){document.getElementById("as-msg").innerHTML='<div class="ib err">نام الزامی</div>';return;}
   document.getElementById("as-btn").disabled=true;document.getElementById("as-btn").textContent="در حال ذخیره...";
   const newId="s"+(SUPPLIERS.length+1)+"x"+Date.now().toString().slice(-4);
-  SUPPLIERS.push({id:newId,n:name,ph:phone});
-  await sbPost("supplier_balances",{supplier_id:newId,supplier_name:name,phone,balance_usd:bal,updated_at:new Date().toISOString()});
+  SUPPLIERS.push({id:newId,n:name});
+  await sbPost("supplier_balances",{supplier_id:newId,supplier_name:name,balance_usd:bal,updated_at:new Date().toISOString()});
   await refreshSuppMap();
   document.getElementById("as-btn").disabled=false;document.getElementById("as-btn").textContent="اضافه کردن ✓";
   document.getElementById("as-msg").innerHTML='<div class="ib ok">✅ تامین‌کننده اضافه شد!</div>';
@@ -3748,16 +3738,11 @@ async function renderEmp(){
   document.getElementById("emp-tbody").innerHTML=list.length?list.map((e,i)=>{
     const pd=payMap[e.id]?.paid||0;
     const rem=Math.max(0,(+e.salary_amount||0)-pd);
-    const phoneBtn=e.phone?`<div style="display:flex;gap:4px">
-      <a href="tel:${e.phone}" style="background:rgba(46,204,122,.1);border:1px solid rgba(46,204,122,.3);color:var(--gr);border-radius:6px;padding:3px 7px;font-size:10px;text-decoration:none">📞</a>
-      <a href="https://wa.me/93${e.phone.replace(/^0/,'')}" target="_blank" style="background:rgba(37,211,102,.15);border:1px solid rgba(37,211,102,.3);color:#25d366;border-radius:6px;padding:3px 7px;font-size:10px;text-decoration:none">💬</a>
-    </div>`:`<span style="color:var(--t3);font-size:10px">—</span>`;
     return`<tr>
       <td style="color:var(--t3)">${i+1}</td>
       <td style="font-weight:700">${e.name}</td>
       <td><span class="bb bbl">${EMP_ROLE_LABEL[e.role]||e.role}</span></td>
       <td style="color:var(--t2)">${e.department||"—"}</td>
-      <td>${phoneBtn}</td>
       <td style="color:var(--t2)">${EMP_STYPE_LABEL[e.salary_type]||e.salary_type}</td>
       <td class="tdr" style="color:var(--gd);font-weight:700">${afn(e.salary_amount||0)}</td>
       <td class="tdr" style="color:var(--gr)">${afn(pd)}</td>
@@ -3767,7 +3752,7 @@ async function renderEmp(){
         <button onclick="showEmpPays(${e.id},'${e.name}')" style="background:var(--bl2);border:1px solid rgba(59,158,255,.3);color:var(--bl);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit">📋</button>
       </td>
     </tr>`;
-  }).join(""):'<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--t3)">هنوز کارمندی ثبت نشده — از دکمه + اضافه کن</td></tr>';
+  }).join(""):'<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--t3)">هنوز کارمندی ثبت نشده — از دکمه + اضافه کن</td></tr>';
 }
 
 function filterEmp(type){
@@ -3787,17 +3772,32 @@ async function saveAddEmp(){
   const name=document.getElementById("ae-name").value.trim();
   if(!name){document.getElementById("ae-msg").innerHTML='<div class="ib err">نام الزامی</div>';return;}
   document.getElementById("ae-btn").disabled=true;document.getElementById("ae-btn").textContent="در حال ذخیره...";
-  const res=await sbPost("employees",{
+  const phone=document.getElementById("ae-phone").value||"";
+  // اول بدون phone امتحان کن، اگر نشد با phone
+  let res=await sbPost("employees",{
     name,
     role:document.getElementById("ae-role").value,
     department:document.getElementById("ae-dept").value,
     salary_type:document.getElementById("ae-stype").value,
     salary_amount:+(document.getElementById("ae-sal").value)||0,
     hire_date:document.getElementById("ae-hire").value||today(),
-    phone:document.getElementById("ae-phone").value,
+    phone:phone,
     notes:document.getElementById("ae-notes").value,
     is_active:true
   });
+  // اگر خطا داد (ستون phone نداشت) — بدون phone ذخیره کن
+  if(!res){
+    res=await sbPost("employees",{
+      name,
+      role:document.getElementById("ae-role").value,
+      department:document.getElementById("ae-dept").value,
+      salary_type:document.getElementById("ae-stype").value,
+      salary_amount:+(document.getElementById("ae-sal").value)||0,
+      hire_date:document.getElementById("ae-hire").value||today(),
+      notes:(document.getElementById("ae-notes").value||"")+(phone?` | 📞 ${phone}`:""),
+      is_active:true
+    });
+  }
   document.getElementById("ae-btn").disabled=false;document.getElementById("ae-btn").textContent="ثبت کارمند ✓";
   if(res){
     document.getElementById("ae-msg").innerHTML='<div class="ib ok">✅ کارمند ثبت شد!</div>';
