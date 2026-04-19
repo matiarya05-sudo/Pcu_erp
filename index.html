@@ -759,7 +759,7 @@ select option{background:#1a1820}
       <button class="ni" onclick="goPage('stock')" data-page="stock" data-roles="admin,staff"><span class="em">🏗️</span>انبار مواد</button>
       <button class="ni" onclick="goPage('cust')" data-page="cust" data-roles="admin,staff"><span class="em">👥</span>مشتریان</button>
       <button class="ni" onclick="goPage('collect')" data-page="collect" data-roles="admin,staff"><span class="em">💰</span>وصول مطالبات</button>
-      <button class="ni" onclick="goPage('collect')" data-page="collect" data-roles="admin"><span class="em">💚</span>قرض حسنه</button>
+      <button class="ni" onclick="goPage('cheque')" data-page="cheque" data-roles="admin"><span class="em">💚</span>قرض حسنه</button>
       <button class="ni" onclick="goPage('supp')" data-page="supp" data-roles="admin,staff"><span class="em">🏭</span>تامین‌کنندگان</button>
       <button class="ni" onclick="goPage('cash')" data-page="cash" data-roles="admin"><span class="em">💵</span>صندوق افغانی</button>
       <div class="nsec">منابع انسانی</div>
@@ -1205,7 +1205,7 @@ select option{background:#1a1820}
     </div>
 
     <!-- CHEQUE / قرض حسنه -->
-    <div id="page-collect" class="page">
+    <div id="page-cheque" class="page">
       <div class="kg k3">
         <div class="kc bl"><div class="kl">🏦 قرض گرفتیم</div><div class="kv" id="chq-in-cnt">—</div><div class="ks" id="chq-in-amt">—</div></div>
         <div class="kc rd"><div class="kl">💸 قرض دادیم</div><div class="kv" id="chq-out-cnt">—</div><div class="ks" id="chq-out-amt">—</div></div>
@@ -2881,7 +2881,7 @@ const PAGE_TITLES={dash:"داشبورد",sales:"فروش",orders:"فرمایشا
   assets:"دارایی‌های ثابت",report:"گزارشات & سود و زیان",settings:"تنظیمات"};
 
 function goPage(id){
-  const adminOnlyPages=["cash","report","reports_more","settings","emp","tax","collect","partners"];
+  const adminOnlyPages=["cash","report","reports_more","settings","emp","tax","collect","cheque","partners"];
   if(adminOnlyPages.includes(id)&&currentUser?.role!=="admin"){goPage("dash");return;}
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   const pg=document.getElementById("page-"+id);
@@ -2895,7 +2895,7 @@ function goPage(id){
     stock:"انبار مواد",cust:"مشتریان",supp:"تامین‌کنندگان",cash:"صندوق افغانی",
     report:"گزارشات & سود و زیان",reports_more:"گزارش‌های تفصیلی",
     emp:"کارمندان و شاگردان",tax:"مالیات",collect:"قرض حسنه",
-    partners:"شریکان / سهام‌داران",settings:"تنظیمات",batch:"مکسچر و تولید",collect:"وصول مطالبات"};
+    partners:"شریکان / سهام‌داران",settings:"تنظیمات",batch:"مکسچر و تولید",collect:"وصول مطالبات",cheque:"💚 قرض حسنه"};
   document.getElementById("pageTitle").textContent=allTitles[id]||id;
   toggleDrawer(false);
   renderPage(id);
@@ -2917,7 +2917,7 @@ function renderPage(id){
   else if(id==="reports_more") renderReportsMore();
   else if(id==="emp") renderEmp();
   else if(id==="tax") renderTax();
-  else if(id==="collect") renderCheque();
+  else if(id==="cheque") renderCheque();
   else if(id==="partners") renderPartners();
   else if(id==="settings") renderSettings();
 }
@@ -3773,7 +3773,7 @@ async function saveAddEmp(){
   if(!name){document.getElementById("ae-msg").innerHTML='<div class="ib err">نام الزامی</div>';return;}
   document.getElementById("ae-btn").disabled=true;document.getElementById("ae-btn").textContent="در حال ذخیره...";
   const phone=document.getElementById("ae-phone").value||"";
-  // اول بدون phone امتحان کن، اگر نشد با phone
+  // اول با phone امتحان کن
   let res=await sbPost("employees",{
     name,
     role:document.getElementById("ae-role").value,
@@ -3785,7 +3785,7 @@ async function saveAddEmp(){
     notes:document.getElementById("ae-notes").value,
     is_active:true
   });
-  // اگر خطا داد (ستون phone نداشت) — بدون phone ذخیره کن
+  // اگر خطا داد — بدون phone دوباره امتحان کن
   if(!res){
     res=await sbPost("employees",{
       name,
@@ -3794,7 +3794,7 @@ async function saveAddEmp(){
       salary_type:document.getElementById("ae-stype").value,
       salary_amount:+(document.getElementById("ae-sal").value)||0,
       hire_date:document.getElementById("ae-hire").value||today(),
-      notes:(document.getElementById("ae-notes").value||"")+(phone?` | 📞 ${phone}`:""),
+      notes:(document.getElementById("ae-notes").value||"")+(phone?" | 📞 "+phone:""),
       is_active:true
     });
   }
@@ -4007,7 +4007,7 @@ async function initApp(){
 // ── قرض حسنه ──
 let _collectFilter="all";
 async function renderCheque(){
-  const rows=await sbGet("collects","?order=due_date.asc")||[];
+  const rows=await sbGet("cheques","?order=due_date.asc")||[];
   const inRows=rows.filter(r=>r.type==="receive");
   const outRows=rows.filter(r=>r.type==="pay");
   const inAmt=inRows.reduce((a,r)=>a+(+r.amount||0),0);
@@ -4045,7 +4045,7 @@ async function saveCheque(){
   const amt=+(document.getElementById("chq-amt").value)||0;
   if(!amt){document.getElementById("chq-msg").innerHTML='<div class="ib err">مبلغ الزامی</div>';return;}
   document.getElementById("chq-btn").disabled=true;document.getElementById("chq-btn").textContent="در حال ذخیره...";
-  const res=await sbPost("collects",{
+  const res=await sbPost("cheques",{
     type:document.getElementById("chq-type").value,
     person:document.getElementById("chq-person").value,
     date:document.getElementById("chq-date").value||today(),
@@ -4061,7 +4061,7 @@ async function saveCheque(){
   else document.getElementById("chq-msg").innerHTML='<div class="ib err">خطا — دوباره امتحان کن</div>';
 }
 async function updateCheque(id,status){
-  await sbPatch("collects",{status,updated_at:new Date().toISOString()},`?id=eq.${id}`);
+  await sbPatch("cheques",{status,updated_at:new Date().toISOString()},`?id=eq.${id}`);
   showSaved();renderCheque();
 }
 
