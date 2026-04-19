@@ -1284,6 +1284,23 @@ select option{background:#1a1820}
         <div class="ct">👷 حساب سرکاریگران</div>
         <div id="staff-tbl"></div>
       </div>
+      <!-- نرخ اجرت به تفکیک مدل -->
+      <div class="card">
+        <div class="ct">💰 نرخ اجرت فی درجن — به تفکیک مدل</div>
+        <div class="ib info" style="font-size:10.5px;margin-bottom:12px">💡 نرخ جمشید (ماشینری) و سمیع‌الله (بسته‌بندی) برای هر مدل — وقتی مدل را در فروش انتخاب کنی اتوماتیک پر می‌شود</div>
+        <div class="tw"><table>
+          <thead><tr>
+            <th>مدل جنس</th>
+            <th style="text-align:center">جمشید (؋/درجن)</th>
+            <th style="text-align:center">سمیع‌الله (؋/درجن)</th>
+          </tr></thead>
+          <tbody id="wage-rates-tbody"></tbody>
+        </table></div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn bpri btn-full" onclick="saveWageRates()">💾 ذخیره نرخ‌ها ✓</button>
+        </div>
+        <div id="wage-rates-msg" style="margin-top:8px"></div>
+      </div>
       <div class="card">
         <div class="ct">📋 تاریخچه نرخ دالر</div>
         <div id="rate-log-tbl"></div>
@@ -1381,10 +1398,22 @@ select option{background:#1a1820}
       <div id="cust-sel" style="display:none" class="ib ok"></div>
       <div class="row2">
         <div class="fg"><label>مدل</label>
-          <select id="s-prod">
-            <option value="STD">PCU استاندارد ۳۶-۴۲</option>
-            <option value="VIP">PCU ویژه ۴۳-۴۵</option>
-            <option value="KID">PCU کودکانه ۲۴-۳۵</option>
+          <select id="s-prod" onchange="updateWageFromProduct()">
+            <option value="بوت شیما سیاه ۷-۱۰">بوت شیما سیاه ۷-۱۰</option>
+            <option value="بوت شیما سیاه ۱-۶">بوت شیما سیاه ۱-۶</option>
+            <option value="بوت شیما سیاه ۹-۱۳">بوت شیما سیاه ۹-۱۳</option>
+            <option value="چپلک حمام دوم">چپلک حمام دوم</option>
+            <option value="چپلک حمام اول">چپلک حمام اول</option>
+            <option value="چپلک حمام سفید دوم">چپلک حمام سفید دوم</option>
+            <option value="بوت شیما سفید ۷-۱۰">بوت شیما سفید ۷-۱۰</option>
+            <option value="بوت شیما سفید ۱-۶">بوت شیما سفید ۱-۶</option>
+            <option value="بوت شیما سفید ۹-۱۳">بوت شیما سفید ۹-۱۳</option>
+            <option value="چپلک زنانه آپردار">چپلک زنانه آپردار</option>
+            <option value="چپلک زنانه ۰۵ اول">چپلک زنانه ۰۵ اول</option>
+            <option value="چپلک دخترانه ۰۳ دوم">چپلک دخترانه ۰۳ دوم</option>
+            <option value="بوت زنانه سیاه">بوت زنانه سیاه</option>
+            <option value="بوت دخترانه ۱-۵">بوت دخترانه ۱-۵</option>
+            <option value="بوت دخترانه ۷-۱۳">بوت دخترانه ۷-۱۳</option>
           </select>
         </div>
         <div class="fg"><label>درجن</label><input type="number" id="s-doz" min="0" step="0.5" oninput="calcSale()"/></div>
@@ -1462,9 +1491,21 @@ select option{background:#1a1820}
       <div class="row2">
         <div class="fg"><label>مدل</label>
           <select id="p-prod">
-            <option value="STD">PCU استاندارد ۳۶-۴۲</option>
-            <option value="VIP">PCU ویژه ۴۳-۴۵</option>
-            <option value="KID">PCU کودکانه ۲۴-۳۵</option>
+            <option value="بوت شیما سیاه ۷-۱۰">بوت شیما سیاه ۷-۱۰</option>
+            <option value="بوت شیما سیاه ۱-۶">بوت شیما سیاه ۱-۶</option>
+            <option value="بوت شیما سیاه ۹-۱۳">بوت شیما سیاه ۹-۱۳</option>
+            <option value="چپلک حمام دوم">چپلک حمام دوم</option>
+            <option value="چپلک حمام اول">چپلک حمام اول</option>
+            <option value="چپلک حمام سفید دوم">چپلک حمام سفید دوم</option>
+            <option value="بوت شیما سفید ۷-۱۰">بوت شیما سفید ۷-۱۰</option>
+            <option value="بوت شیما سفید ۱-۶">بوت شیما سفید ۱-۶</option>
+            <option value="بوت شیما سفید ۹-۱۳">بوت شیما سفید ۹-۱۳</option>
+            <option value="چپلک زنانه آپردار">چپلک زنانه آپردار</option>
+            <option value="چپلک زنانه ۰۵ اول">چپلک زنانه ۰۵ اول</option>
+            <option value="چپلک دخترانه ۰۳ دوم">چپلک دخترانه ۰۳ دوم</option>
+            <option value="بوت زنانه سیاه">بوت زنانه سیاه</option>
+            <option value="بوت دخترانه ۱-۵">بوت دخترانه ۱-۵</option>
+            <option value="بوت دخترانه ۷-۱۳">بوت دخترانه ۷-۱۳</option>
           </select>
         </div>
         <div class="fg"><label>درجن</label><input type="number" id="p-doz" min="0" step="0.5" oninput="calcProd()"/></div>
@@ -2067,9 +2108,21 @@ select option{background:#1a1820}
         <div class="fg">
           <label>مدل</label>
           <select id="co-prod">
-            <option value="STD">PCU استاندارد ۳۶-۴۲</option>
-            <option value="VIP">PCU ویژه ۴۳-۴۵</option>
-            <option value="KID">PCU کودکانه ۲۴-۳۵</option>
+            <option value="بوت شیما سیاه ۷-۱۰">بوت شیما سیاه ۷-۱۰</option>
+            <option value="بوت شیما سیاه ۱-۶">بوت شیما سیاه ۱-۶</option>
+            <option value="بوت شیما سیاه ۹-۱۳">بوت شیما سیاه ۹-۱۳</option>
+            <option value="چپلک حمام دوم">چپلک حمام دوم</option>
+            <option value="چپلک حمام اول">چپلک حمام اول</option>
+            <option value="چپلک حمام سفید دوم">چپلک حمام سفید دوم</option>
+            <option value="بوت شیما سفید ۷-۱۰">بوت شیما سفید ۷-۱۰</option>
+            <option value="بوت شیما سفید ۱-۶">بوت شیما سفید ۱-۶</option>
+            <option value="بوت شیما سفید ۹-۱۳">بوت شیما سفید ۹-۱۳</option>
+            <option value="چپلک زنانه آپردار">چپلک زنانه آپردار</option>
+            <option value="چپلک زنانه ۰۵ اول">چپلک زنانه ۰۵ اول</option>
+            <option value="چپلک دخترانه ۰۳ دوم">چپلک دخترانه ۰۳ دوم</option>
+            <option value="بوت زنانه سیاه">بوت زنانه سیاه</option>
+            <option value="بوت دخترانه ۱-۵">بوت دخترانه ۱-۵</option>
+            <option value="بوت دخترانه ۷-۱۳">بوت دخترانه ۷-۱۳</option>
           </select>
         </div>
       </div>
@@ -2173,10 +2226,22 @@ select option{background:#1a1820}
       <div class="fg">
         <label>مدل تولیدشده</label>
         <select id="br-product">
-          <option value="STD">PCU استاندارد ۳۶-۴۲</option>
-          <option value="VIP">PCU ویژه ۴۳-۴۵</option>
-          <option value="KID">PCU کودکانه ۲۴-۳۵</option>
-          <option value="MIX">مکس (چند مدل)</option>
+          <option value="بوت شیما سیاه ۷-۱۰">بوت شیما سیاه ۷-۱۰</option>
+          <option value="بوت شیما سیاه ۱-۶">بوت شیما سیاه ۱-۶</option>
+          <option value="بوت شیما سیاه ۹-۱۳">بوت شیما سیاه ۹-۱۳</option>
+          <option value="چپلک حمام دوم">چپلک حمام دوم</option>
+          <option value="چپلک حمام اول">چپلک حمام اول</option>
+          <option value="چپلک حمام سفید دوم">چپلک حمام سفید دوم</option>
+          <option value="بوت شیما سفید ۷-۱۰">بوت شیما سفید ۷-۱۰</option>
+          <option value="بوت شیما سفید ۱-۶">بوت شیما سفید ۱-۶</option>
+          <option value="بوت شیما سفید ۹-۱۳">بوت شیما سفید ۹-۱۳</option>
+          <option value="چپلک زنانه آپردار">چپلک زنانه آپردار</option>
+          <option value="چپلک زنانه ۰۵ اول">چپلک زنانه ۰۵ اول</option>
+          <option value="چپلک دخترانه ۰۳ دوم">چپلک دخترانه ۰۳ دوم</option>
+          <option value="بوت زنانه سیاه">بوت زنانه سیاه</option>
+          <option value="بوت دخترانه ۱-۵">بوت دخترانه ۱-۵</option>
+          <option value="بوت دخترانه ۷-۱۳">بوت دخترانه ۷-۱۳</option>
+          <option value="مکس">مکس (چند مدل)</option>
         </select>
       </div>
 
@@ -2371,7 +2436,7 @@ function pickCustOrd(id){
 
 // اضافه کردن ردیف جنس جدید
 function addOrderItem(){
-  _orderItems.push({prod:"استاندارد",doz:""});
+  _orderItems.push({prod:"بوت شیما سیاه ۷-۱۰",doz:""});
   renderOrderItemInputs();
 }
 function removeOrderItem(i){
@@ -2394,9 +2459,21 @@ function renderOrderItemInputs(){
       <div style="flex:2">
         <div style="font-size:10px;color:var(--t2);margin-bottom:3px">نوع جنس</div>
         <select onchange="updateOrderItem(${i},'prod',this.value)" style="width:100%;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-family:inherit;font-size:12px">
-          <option value="استاندارد" ${it.prod==="استاندارد"?"selected":""}>PCU استاندارد ۳۶-۴۲</option>
-          <option value="ویژه" ${it.prod==="ویژه"?"selected":""}>PCU ویژه ۴۳-۴۵</option>
-          <option value="کودکانه" ${it.prod==="کودکانه"?"selected":""}>PCU کودکانه ۲۴-۳۵</option>
+          <option value="بوت شیما سیاه ۷-۱۰" ${it.prod==="بوت شیما سیاه ۷-۱۰"?"selected":""}>بوت شیما سیاه ۷-۱۰</option>
+          <option value="بوت شیما سیاه ۱-۶" ${it.prod==="بوت شیما سیاه ۱-۶"?"selected":""}>بوت شیما سیاه ۱-۶</option>
+          <option value="بوت شیما سیاه ۹-۱۳" ${it.prod==="بوت شیما سیاه ۹-۱۳"?"selected":""}>بوت شیما سیاه ۹-۱۳</option>
+          <option value="چپلک حمام دوم" ${it.prod==="چپلک حمام دوم"?"selected":""}>چپلک حمام دوم</option>
+          <option value="چپلک حمام اول" ${it.prod==="چپلک حمام اول"?"selected":""}>چپلک حمام اول</option>
+          <option value="چپلک حمام سفید دوم" ${it.prod==="چپلک حمام سفید دوم"?"selected":""}>چپلک حمام سفید دوم</option>
+          <option value="بوت شیما سفید ۷-۱۰" ${it.prod==="بوت شیما سفید ۷-۱۰"?"selected":""}>بوت شیما سفید ۷-۱۰</option>
+          <option value="بوت شیما سفید ۱-۶" ${it.prod==="بوت شیما سفید ۱-۶"?"selected":""}>بوت شیما سفید ۱-۶</option>
+          <option value="بوت شیما سفید ۹-۱۳" ${it.prod==="بوت شیما سفید ۹-۱۳"?"selected":""}>بوت شیما سفید ۹-۱۳</option>
+          <option value="چپلک زنانه آپردار" ${it.prod==="چپلک زنانه آپردار"?"selected":""}>چپلک زنانه آپردار</option>
+          <option value="چپلک زنانه ۰۵ اول" ${it.prod==="چپلک زنانه ۰۵ اول"?"selected":""}>چپلک زنانه ۰۵ اول</option>
+          <option value="چپلک دخترانه ۰۳ دوم" ${it.prod==="چپلک دخترانه ۰۳ دوم"?"selected":""}>چپلک دخترانه ۰۳ دوم</option>
+          <option value="بوت زنانه سیاه" ${it.prod==="بوت زنانه سیاه"?"selected":""}>بوت زنانه سیاه</option>
+          <option value="بوت دخترانه ۱-۵" ${it.prod==="بوت دخترانه ۱-۵"?"selected":""}>بوت دخترانه ۱-۵</option>
+          <option value="بوت دخترانه ۷-۱۳" ${it.prod==="بوت دخترانه ۷-۱۳"?"selected":""}>بوت دخترانه ۷-۱۳</option>
         </select>
       </div>
       <div style="flex:1">
@@ -3209,6 +3286,7 @@ async function renderSettings(){
   document.getElementById("rateInput").value=S.usdRate;
   // init vocab tab
   switchVocabTab('menu');
+  renderWageRatesTable();
   const pRows=await sbGet("production","?select=worker,total_wage,paid_wage")||[];
   const staffMap={جمشید:{e:0,p:0},"سمیع‌الله":{e:0,p:0}};
   pRows.forEach(r=>{if(staffMap[r.worker]){staffMap[r.worker].e+=+r.total_wage||0;staffMap[r.worker].p+=+r.paid_wage||0;}});
@@ -3284,8 +3362,10 @@ function initSaleModal(){
   document.getElementById("s-paid").value="";
   document.getElementById("s-tot").value="";
   document.getElementById("s-rem").value="";
-  document.getElementById("s-wage-j").value="22";
-  document.getElementById("s-wage-s").value="25";
+  const defProd=document.getElementById("s-prod")?.value||"";
+  const defWage=getWageForProduct(defProd);
+  document.getElementById("s-wage-j").value=defWage.j;
+  document.getElementById("s-wage-s").value=defWage.s;
   document.getElementById("s-wage-info").innerHTML="";
   document.getElementById("cust-dd").style.display="none";
   document.getElementById("cust-sel").style.display="none";
@@ -3321,6 +3401,14 @@ function calcSale(){
   document.getElementById("s-cogs").textContent=`💡 هزینه تولید: ${afn(cg)} | سود: ${afn(gp)} | حاشیه: ${tot>0?Math.round(gp/tot*100):0}%`;
   calcSaleWage();
 }
+function updateWageFromProduct(){
+  const prod=document.getElementById("s-prod")?.value||"";
+  const w=getWageForProduct(prod);
+  document.getElementById("s-wage-j").value=w.j;
+  document.getElementById("s-wage-s").value=w.s;
+  calcSaleWage();
+}
+
 function calcSaleWage(){
   const doz=+(document.getElementById("s-doz").value)||0;
   const wj=+(document.getElementById("s-wage-j").value)||0;
@@ -3386,8 +3474,7 @@ async function submitSale(){
     // ── پیام واتساپ ──
     const custPhone=_selCust?.ph||"";
     const billNo=document.getElementById("s-bill").value||"—";
-    const prodNames={STD:"PCU استاندارد",VIP:"PCU ویژه",KID:"PCU کودکانه"};
-    const waMsg=`سلام ${_selCust?.n||"مشتری گرامی"} 🌹\nبل شماره ${billNo}\n📦 ${doz} درجن ${prodNames[prod]||prod}\n💰 مجموع: ${afn(tot)}\n✅ رسید: ${afn(paid)}\n⏳ باقی: ${afn(rem)}\nتشکر — فابریکه حیات‌زاده`;
+    const waMsg=`سلام ${_selCust?.n||"مشتری گرامی"} 🌹\nبل شماره ${billNo}\n📦 ${doz} درجن ${prod}\n💰 مجموع: ${afn(tot)}\n✅ رسید: ${afn(paid)}\n⏳ باقی: ${afn(rem)}\nتشکر — فابریکه حیات‌زاده`;
     const waPhone=custPhone?"93"+custPhone.replace(/^0/,""):"";
     const waUrl=waPhone
       ?`https://wa.me/${waPhone}?text=${encodeURIComponent(waMsg)}`
@@ -4006,6 +4093,7 @@ async function initApp(){
   populateDropdowns();
   setSyncOn();
   await loadVocab();
+  await loadWageRates();
   goPage("dash");
 }
 
@@ -6787,6 +6875,78 @@ document.addEventListener("keydown",e=>{
 // ══════════════════════════════════════════════════
 
 // واژه‌های پیش‌فرض
+// ══ نرخ اجرت پیش‌فرض به تفکیک مدل ══
+const PRODUCTS_LIST = [
+  "بوت شیما سیاه ۷-۱۰","بوت شیما سیاه ۱-۶","بوت شیما سیاه ۹-۱۳",
+  "چپلک حمام دوم","چپلک حمام اول","چپلک حمام سفید دوم",
+  "بوت شیما سفید ۷-۱۰","بوت شیما سفید ۱-۶","بوت شیما سفید ۹-۱۳",
+  "چپلک زنانه آپردار","چپلک زنانه ۰۵ اول","چپلک دخترانه ۰۳ دوم",
+  "بوت زنانه سیاه","بوت دخترانه ۱-۵","بوت دخترانه ۷-۱۳"
+];
+
+// نرخ اجرت — پیش‌فرض ۲۲/۲۵ — از Supabase لود می‌شود
+let WAGE_RATES = {};
+PRODUCTS_LIST.forEach(p => { WAGE_RATES[p] = {j:22, s:25}; });
+
+// لود نرخ‌ها از Supabase
+async function loadWageRates(){
+  const rows = await sbGet('settings','?key=eq.wage_rates') || [];
+  if(rows[0]){
+    try{
+      const saved = JSON.parse(rows[0].value);
+      Object.assign(WAGE_RATES, saved);
+    }catch(e){}
+  }
+}
+
+// نمایش جدول نرخ‌ها در تنظیمات
+function renderWageRatesTable(){
+  const tbody = document.getElementById('wage-rates-tbody');
+  if(!tbody) return;
+  tbody.innerHTML = PRODUCTS_LIST.map(p => `
+    <tr>
+      <td style="font-weight:700;font-size:12px">${p}</td>
+      <td style="text-align:center">
+        <input type="number" id="wj_${p.replace(/[^a-zA-Z0-9]/g,'_')}"
+          value="${WAGE_RATES[p]?.j||22}" min="0" step="1"
+          style="width:80px;padding:5px 8px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-weight:700;font-family:inherit;font-size:13px;text-align:center"/>
+      </td>
+      <td style="text-align:center">
+        <input type="number" id="ws_${p.replace(/[^a-zA-Z0-9]/g,'_')}"
+          value="${WAGE_RATES[p]?.s||25}" min="0" step="1"
+          style="width:80px;padding:5px 8px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--bl);font-weight:700;font-family:inherit;font-size:13px;text-align:center"/>
+      </td>
+    </tr>`).join('');
+}
+
+// ذخیره نرخ‌ها
+async function saveWageRates(){
+  // خواندن از فرم
+  PRODUCTS_LIST.forEach(p => {
+    const key = p.replace(/[^a-zA-Z0-9]/g,'_');
+    const j = +(document.getElementById('wj_'+key)?.value)||22;
+    const s = +(document.getElementById('ws_'+key)?.value)||25;
+    WAGE_RATES[p] = {j, s};
+  });
+  // ذخیره در Supabase
+  const existing = await sbGet('settings','?key=eq.wage_rates');
+  const val = JSON.stringify(WAGE_RATES);
+  if(existing && existing.length > 0){
+    await sbPatch('settings',{value:val,updated_at:new Date().toISOString()},'?key=eq.wage_rates');
+  } else {
+    await sbPost('settings',{key:'wage_rates',value:val});
+  }
+  showSaved();
+  const msg = document.getElementById('wage-rates-msg');
+  if(msg) msg.innerHTML = '<div class="ib ok">✅ نرخ‌های اجرت ذخیره شد!</div>';
+  setTimeout(()=>{ if(msg) msg.innerHTML=''; }, 2500);
+}
+
+// گرفتن نرخ اجرت برای یک مدل
+function getWageForProduct(prod){
+  return WAGE_RATES[prod] || {j:22, s:25};
+}
+
 const VOCAB_DEFAULT = {
   menu: {
     'داشبورد':       'داشبورد',
