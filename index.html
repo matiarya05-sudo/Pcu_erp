@@ -3565,11 +3565,7 @@ async function renderCust(){
     salesMap[s.cust_id].rem+=+s.remaining||0;
   });
 
-  // اضافه کردن وصول به paid
-  Object.keys(collectMap).forEach(cid=>{
-    if(!salesMap[cid]) salesMap[cid]={tot:0,paid:0,rem:0};
-    salesMap[cid].paid+=collectMap[cid];
-  });
+  // collectMap جداگانه نگه داشته می‌شود — دو بار جمع نشود
 
   const totalBal=CUSTOMERS.reduce((a,c)=>a+(c.ob||0),0)+salesRows.reduce((a,r)=>a+(+r.remaining||0),0)-payments.reduce((a,p)=>a+(+p.amount||0),0);
   document.getElementById("cust-total-kpi").textContent=afn(Math.max(0,totalBal));
