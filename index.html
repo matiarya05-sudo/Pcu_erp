@@ -796,7 +796,7 @@ select option{background:#1a1820}
     </div>
     <!-- SALES -->
     <div id="page-sales" class="page">
-      <div class="ib info">☁️ داده‌ها روی Supabase Cloud ذخیره می‌شوند | ۱۲۴ مشتری | فروش به درجن</div>
+      <div class="ib info">☁️ فروش به درجن | بل‌های چند قلم با شماره بل یکسان نشان داده می‌شوند</div>
       <div class="card">
         <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
           <div class="ct" style="margin-bottom:0;flex:1">🛒 دفتر فروش | <span id="sales-count" style="color:var(--gd)">—</span></div>
@@ -1387,60 +1387,52 @@ select option{background:#1a1820}
 <!-- Sale -->
 <div class="modal-overlay" id="modalSale">
   <div class="modal">
-    <div class="modal-head"><h3>🛒 ثبت فاکتور فروش</h3><button class="close-btn" onclick="closeModal('modalSale')">✕</button></div>
+    <div class="modal-head"><h3>🛒 ثبت بل فروش</h3><button class="close-btn" onclick="closeModal('modalSale')">✕</button></div>
     <div class="modal-body">
       <div id="sale-msg"></div>
       <div class="row2">
         <div class="fg"><label>تاریخ</label><input id="s-date"/></div>
         <div class="fg"><label>شماره بل</label><input id="s-bill"/></div>
       </div>
-      <div class="fg"><label>جستجوی مشتری (۱۲۴ مشتری)</label>
+      <div class="fg"><label>جستجوی مشتری</label>
         <input id="s-csrch" placeholder="نام یا ولایت..." oninput="searchCust(this.value)" onfocus="searchCust(this.value)"/>
       </div>
       <div id="cust-dd" class="ddrop" style="display:none"></div>
       <div id="cust-sel" style="display:none" class="ib ok"></div>
-      <div class="row2">
-        <div class="fg"><label>مدل</label>
-          <select id="s-prod" onchange="updateWageFromProduct()">
-            <option value="بوت شیما سیاه ۷-۱۰">بوت شیما سیاه ۷-۱۰</option>
-            <option value="بوت شیما سیاه ۱-۶">بوت شیما سیاه ۱-۶</option>
-            <option value="بوت شیما سیاه ۹-۱۳">بوت شیما سیاه ۹-۱۳</option>
-            <option value="چپلک حمام دوم">چپلک حمام دوم</option>
-            <option value="چپلک حمام اول">چپلک حمام اول</option>
-            <option value="چپلک حمام سفید دوم">چپلک حمام سفید دوم</option>
-            <option value="بوت شیما سفید ۷-۱۰">بوت شیما سفید ۷-۱۰</option>
-            <option value="بوت شیما سفید ۱-۶">بوت شیما سفید ۱-۶</option>
-            <option value="بوت شیما سفید ۹-۱۳">بوت شیما سفید ۹-۱۳</option>
-            <option value="چپلک زنانه آپردار">چپلک زنانه آپردار</option>
-            <option value="چپلک زنانه ۰۵ اول">چپلک زنانه ۰۵ اول</option>
-            <option value="چپلک دخترانه ۰۳ دوم">چپلک دخترانه ۰۳ دوم</option>
-            <option value="بوت زنانه سیاه">بوت زنانه سیاه</option>
-            <option value="بوت دخترانه ۱-۵">بوت دخترانه ۱-۵</option>
-            <option value="بوت دخترانه ۷-۱۳">بوت دخترانه ۷-۱۳</option>
-          </select>
+
+      <!-- اقلام بل -->
+      <div class="dv"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:12px;font-weight:700;color:var(--gd)">📦 اقلام بل</div>
+        <button onclick="addSaleItem()" class="btn bsec" style="padding:5px 12px;font-size:11px">+ اضافه کردن جنس</button>
+      </div>
+      <div id="sale-items-list"></div>
+
+      <!-- خلاصه بل -->
+      <div id="sale-summary" style="background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.15);border-radius:10px;padding:12px;margin-top:8px">
+        <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px">
+          <span style="color:var(--t2)">جمع کل بل:</span>
+          <span id="s-tot-display" style="font-weight:800;color:var(--gd)">؋ 0</span>
         </div>
-        <div class="fg"><label>درجن</label><input type="number" id="s-doz" min="0" step="0.5" oninput="calcSale()"/></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px">
+          <span style="color:var(--t2)">اجرت جمشید:</span>
+          <span id="s-wage-j-display" style="color:var(--tl)">؋ 0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px">
+          <span style="color:var(--t2)">اجرت سمیع‌الله:</span>
+          <span id="s-wage-s-display" style="color:var(--tl)">؋ 0</span>
+        </div>
       </div>
+
+      <div class="dv"></div>
       <div class="row2">
-        <div class="fg"><label>قیمت فی درجن (؋)</label><input type="number" id="s-prc" min="0" oninput="calcSale()"/></div>
-        <div class="fg"><label>مبلغ کل</label><input id="s-tot" readonly/></div>
-      </div>
-      <div class="row2">
-        <div class="fg"><label>پول رسیده (؋)</label><input type="number" id="s-paid" min="0" oninput="calcSale()"/></div>
+        <div class="fg"><label>پول رسیده (؋)</label><input type="number" id="s-paid" min="0" oninput="calcSaleSummary()"/></div>
         <div class="fg"><label>باقی طلب</label><input id="s-rem" readonly/></div>
       </div>
-      <div id="s-cogs" class="ib info"></div>
-      <div class="dv"></div>
-      <div class="ib warn" style="font-size:10.5px">👷 اجرت سرکاریگران — بعد از فروش به حساب آنها می‌رسد</div>
-      <div class="row2">
-        <div class="fg"><label>اجرت جمشید فی درجن (؋) — ماشینری</label><input type="number" id="s-wage-j" min="0" value="22" oninput="calcSaleWage()"/></div>
-        <div class="fg"><label>اجرت سمیع‌الله فی درجن (؋) — بسته‌بندی</label><input type="number" id="s-wage-s" min="0" value="25" oninput="calcSaleWage()"/></div>
-      </div>
-      <div id="s-wage-info" style="font-size:11px;color:var(--t2);padding:4px 0"></div>
     </div>
     <div class="modal-foot">
       <button class="btn bsec" onclick="closeModal('modalSale')">انصراف</button>
-      <button class="btn bpri" onclick="submitSale()" id="sale-btn">ثبت فروش ✓</button>
+      <button class="btn bpri" onclick="submitSale()" id="sale-btn">ثبت بل ✓</button>
     </div>
   </div>
 </div>
@@ -3016,6 +3008,7 @@ function openFab(){
   else if(cp==="prod") openModal("modalProd");
   else if(cp==="batch") openModal("modalNewBatch");
   else if(cp==="emp") openModal("modalAddEmp");
+  else if(cp==="collect") openModal("modalCollectPay");
   else if(cp==="cash"&&currentUser?.role==="admin") openModal("modalCash");
   else openModal("modalSale");
 }
@@ -3356,24 +3349,122 @@ function initModal(id){
 // Order modal init
 // Sale modal
 let _selCust=null;
+let _saleItems=[]; // اقلام بل
+
+// ── PRODUCT OPTIONS HTML ──
+const PROD_OPTIONS_HTML=`
+  <option value="بوت شیما سیاه ۷-۱۰">بوت شیما سیاه ۷-۱۰</option>
+  <option value="بوت شیما سیاه ۱-۶">بوت شیما سیاه ۱-۶</option>
+  <option value="بوت شیما سیاه ۹-۱۳">بوت شیما سیاه ۹-۱۳</option>
+  <option value="چپلک حمام دوم">چپلک حمام دوم</option>
+  <option value="چپلک حمام اول">چپلک حمام اول</option>
+  <option value="چپلک حمام سفید دوم">چپلک حمام سفید دوم</option>
+  <option value="بوت شیما سفید ۷-۱۰">بوت شیما سفید ۷-۱۰</option>
+  <option value="بوت شیما سفید ۱-۶">بوت شیما سفید ۱-۶</option>
+  <option value="بوت شیما سفید ۹-۱۳">بوت شیما سفید ۹-۱۳</option>
+  <option value="چپلک زنانه آپردار">چپلک زنانه آپردار</option>
+  <option value="چپلک زنانه ۰۵ اول">چپلک زنانه ۰۵ اول</option>
+  <option value="چپلک دخترانه ۰۳ دوم">چپلک دخترانه ۰۳ دوم</option>
+  <option value="بوت زنانه سیاه">بوت زنانه سیاه</option>
+  <option value="بوت دخترانه ۱-۵">بوت دخترانه ۱-۵</option>
+  <option value="بوت دخترانه ۷-۱۳">بوت دخترانه ۷-۱۳</option>`;
+
 function initSaleModal(){
   document.getElementById("s-date").value=today();
   document.getElementById("s-bill").value="";
   document.getElementById("s-csrch").value="";
-  document.getElementById("s-doz").value="";
-  document.getElementById("s-prc").value="";
   document.getElementById("s-paid").value="";
-  document.getElementById("s-tot").value="";
   document.getElementById("s-rem").value="";
-  const defProd=document.getElementById("s-prod")?.value||"";
-  const defWage=getWageForProduct(defProd);
-  document.getElementById("s-wage-j").value=defWage.j;
-  document.getElementById("s-wage-s").value=defWage.s;
-  document.getElementById("s-wage-info").innerHTML="";
   document.getElementById("cust-dd").style.display="none";
   document.getElementById("cust-sel").style.display="none";
   document.getElementById("sale-msg").innerHTML="";
-  _selCust=null;calcSale();
+  _selCust=null;
+  _saleItems=[];
+  renderSaleItems();
+  addSaleItem(); // یک ردیف پیش‌فرض
+  calcSaleSummary();
+}
+
+// ── اضافه کردن ردیف جنس ──
+let _saleItemIdx=0;
+function addSaleItem(){
+  _saleItemIdx++;
+  const idx=_saleItemIdx;
+  _saleItems.push({idx,prod:PRODUCTS_LIST[0],doz:0,prc:0});
+  renderSaleItems();
+}
+
+function removeSaleItem(idx){
+  _saleItems=_saleItems.filter(it=>it.idx!==idx);
+  renderSaleItems();
+  calcSaleSummary();
+}
+
+function updateSaleItem(idx,field,val){
+  const it=_saleItems.find(x=>x.idx===idx);
+  if(!it) return;
+  it[field]=field==='prod'?val:+val||0;
+  calcSaleSummary();
+}
+
+function renderSaleItems(){
+  const el=document.getElementById("sale-items-list");
+  if(!_saleItems.length){
+    el.innerHTML='<div style="text-align:center;color:var(--t3);font-size:12px;padding:8px">+ یک جنس اضافه کن</div>';
+    return;
+  }
+  el.innerHTML=_saleItems.map(it=>`
+    <div style="background:var(--b3);border:1px solid var(--bd);border-radius:8px;padding:8px;margin-bottom:8px">
+      <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">
+        <select onchange="updateSaleItem(${it.idx},'prod',this.value)"
+          style="flex:1;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-family:inherit;font-size:11px">
+          ${PRODUCTS_LIST.map(p=>`<option value="${p}" ${p===it.prod?'selected':''}>${p}</option>`).join('')}
+        </select>
+        <button onclick="removeSaleItem(${it.idx})"
+          style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:5px 8px;cursor:pointer;font-size:12px;flex-shrink:0">🗑</button>
+      </div>
+      <div style="display:flex;gap:6px">
+        <div style="flex:1">
+          <div style="font-size:10px;color:var(--t2);margin-bottom:2px">درجن</div>
+          <input type="number" value="${it.doz||''}" min="0" step="0.5" placeholder="0"
+            oninput="updateSaleItem(${it.idx},'doz',this.value)"
+            style="width:100%;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-weight:700;font-family:inherit;font-size:13px"/>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:10px;color:var(--t2);margin-bottom:2px">قیمت فی درجن (؋)</div>
+          <input type="number" value="${it.prc||''}" min="0" placeholder="0"
+            oninput="updateSaleItem(${it.idx},'prc',this.value)"
+            style="width:100%;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--bl);font-weight:700;font-family:inherit;font-size:13px"/>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:10px;color:var(--t2);margin-bottom:2px">جمله</div>
+          <div style="padding:7px;background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.15);border-radius:6px;font-size:12px;font-weight:700;color:var(--gd);text-align:center">
+            ${it.doz&&it.prc?Math.round(it.doz*it.prc).toLocaleString('fa-IR'):'—'}
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function calcSaleSummary(){
+  const totAll=_saleItems.reduce((a,it)=>a+(it.doz*it.prc),0);
+  const dozAll=_saleItems.reduce((a,it)=>a+it.doz,0);
+  const paid=+(document.getElementById("s-paid").value)||0;
+  const rem=totAll-paid;
+  // اجرت
+  let wj=0,ws=0;
+  _saleItems.forEach(it=>{
+    const w=getWageForProduct(it.prod);
+    wj+=it.doz*w.j;
+    ws+=it.doz*w.s;
+  });
+  const afnN=n=>"؋ "+Math.round(n||0).toLocaleString("fa-IR");
+  document.getElementById("s-tot-display").textContent=afnN(totAll);
+  document.getElementById("s-wage-j-display").textContent=afnN(wj);
+  document.getElementById("s-wage-s-display").textContent=afnN(ws);
+  document.getElementById("s-rem").value=afnN(rem);
+  // re-render items for جمله column
+  renderSaleItems();
 }
 function searchCust(q){
   const dd=document.getElementById("cust-dd");
@@ -3426,71 +3517,96 @@ function calcSaleWage(){
 }
 
 async function submitSale(){
-  const doz=+(document.getElementById("s-doz").value);
-  const prc=+(document.getElementById("s-prc").value);
-  if(!doz||!prc){document.getElementById("sale-msg").innerHTML='<div class="ib err">درجن و قیمت الزامی</div>';return;}
-  const tot=doz*prc,paid=+(document.getElementById("s-paid").value)||0,rem=tot-paid;
-  const prod=document.getElementById("s-prod").value;
-  const cg=calcCOGS(prod,doz),gp=tot-cg;
-  const wj=+(document.getElementById("s-wage-j").value)||0;
-  const ws=+(document.getElementById("s-wage-s").value)||0;
-  const totalWageJ=doz*wj, totalWageS=doz*ws;
+  const validItems=_saleItems.filter(it=>it.doz>0&&it.prc>0);
+  if(!validItems.length){
+    document.getElementById("sale-msg").innerHTML='<div class="ib err">حداقل یک قلم جنس با درجن و قیمت اضافه کن</div>';
+    return;
+  }
+  const custName=_selCust?.n||(document.getElementById("s-csrch").value||"مشتری جدید");
+  const custProv=_selCust?.p||"نامشخص";
+  const saleDate=document.getElementById("s-date").value;
+  const billNo=document.getElementById("s-bill").value;
+  const paid=+(document.getElementById("s-paid").value)||0;
+  const totAll=validItems.reduce((a,it)=>a+(it.doz*it.prc),0);
+  const remAll=Math.max(0,totAll-paid);
+
   document.getElementById("sale-btn").disabled=true;
   document.getElementById("sale-btn").textContent="در حال ذخیره...";
-  const saleDate=document.getElementById("s-date").value;
-  const res=await sbPost("sales",{
-    date:saleDate,
-    cust_id:_selCust?.id||"new",cust_name:_selCust?.n||(document.getElementById("s-csrch").value||"مشتری جدید"),
-    province:_selCust?.p||"نامشخص",bill:document.getElementById("s-bill").value,
-    product:prod,dozen:doz,price_per_doz:prc,total:tot,paid,remaining:rem,
-    cogs:cg,gross_profit:gp,margin:tot>0?gp/tot*100:0
+
+  // اجرت کل
+  let totalWageJ=0, totalWageS=0;
+  validItems.forEach(it=>{
+    const w=getWageForProduct(it.prod);
+    totalWageJ+=it.doz*w.j;
+    totalWageS+=it.doz*w.s;
   });
-  // ثبت اجرت سرکاریگران در employee_payments
-  if(res){
-    // پیدا کردن ID کارمندان از Supabase
+
+  // ثبت هر قلم جداگانه در sales (یک بل = چند ردیف با bill یکسان)
+  // paid را نسبی تقسیم می‌کنیم
+  const savedRows=[];
+  for(let i=0;i<validItems.length;i++){
+    const it=validItems[i];
+    const tot=it.doz*it.prc;
+    // paid نسبت به این قلم
+    const itemPaidRatio=totAll>0?tot/totAll:0;
+    const itemPaid=i===validItems.length-1
+      ?Math.max(0,paid-savedRows.reduce((a,r)=>a+r._paid,0))
+      :Math.round(paid*itemPaidRatio);
+    const itemRem=Math.max(0,tot-itemPaid);
+    const cg=calcCOGS(it.prod,it.doz),gp=tot-cg;
+    const res=await sbPost("sales",{
+      date:saleDate,
+      cust_id:_selCust?.id||"new",
+      cust_name:custName,
+      province:custProv,
+      bill:billNo,
+      product:it.prod,
+      dozen:it.doz,
+      price_per_doz:it.prc,
+      total:tot,
+      paid:itemPaid,
+      remaining:itemRem,
+      cogs:cg,gross_profit:gp,
+      margin:tot>0?gp/tot*100:0
+    });
+    if(res) savedRows.push({...res[0],_paid:itemPaid});
+  }
+
+  if(savedRows.length===validItems.length){
+    // ثبت اجرت سرکاریگران
     const emps=await sbGet("employees","?select=id,name");
     if(emps){
       const jamshid=emps.find(e=>e.name.includes("جمشید"));
       const samiullah=emps.find(e=>e.name.includes("سمیع"));
-      const wageNote=`اجرت فروش ${doz} درجن ${prod} | بل: ${document.getElementById("s-bill").value||"—"}`;
-      if(jamshid&&totalWageJ>0){
-        await sbPost("employee_payments",{
-          employee_id:jamshid.id,
-          employee_name:"جمشید",
-          date:saleDate,
-          amount_afn:totalWageJ,
-          type:"salary",
-          notes:wageNote
-        });
-      }
-      if(samiullah&&totalWageS>0){
-        await sbPost("employee_payments",{
-          employee_id:samiullah.id,
-          employee_name:"سمیع‌الله",
-          date:saleDate,
-          amount_afn:totalWageS,
-          type:"salary",
-          notes:wageNote
-        });
-      }
+      const wageNote=`اجرت بل ${billNo||"—"} | ${validItems.length} قلم | ${custName}`;
+      if(jamshid&&totalWageJ>0) await sbPost("employee_payments",{employee_id:jamshid.id,employee_name:"جمشید",date:saleDate,amount_afn:totalWageJ,type:"salary",notes:wageNote});
+      if(samiullah&&totalWageS>0) await sbPost("employee_payments",{employee_id:samiullah.id,employee_name:"سمیع‌الله",date:saleDate,amount_afn:totalWageS,type:"salary",notes:wageNote});
     }
-    // ── پیام واتساپ ──
+
+    // پیام واتساپ — خلاصه بل
     const custPhone=_selCust?.ph||"";
-    const billNo=document.getElementById("s-bill").value||"—";
-    const waMsg=`سلام ${_selCust?.n||"مشتری گرامی"} 🌹\nبل شماره ${billNo}\n📦 ${doz} درجن ${prod}\n💰 مجموع: ${afn(tot)}\n✅ رسید: ${afn(paid)}\n⏳ باقی: ${afn(rem)}\nتشکر — فابریکه حیات‌زاده`;
+    const itemLines=validItems.map(it=>`📦 ${it.doz} درجن ${it.prod} × ${afn(it.prc)} = ${afn(it.doz*it.prc)}`).join("
+");
+    const waMsg=`سلام ${custName} 🌹
+بل شماره ${billNo||"—"}
+${itemLines}
+━━━━━━━━━━
+💰 مجموع: ${afn(totAll)}
+✅ رسید: ${afn(paid)}
+⏳ باقی: ${afn(remAll)}
+تشکر — فابریکه حیات‌زاده`;
     const waPhone=custPhone?"93"+custPhone.replace(/^0/,""):"";
-    const waUrl=waPhone
-      ?`https://wa.me/${waPhone}?text=${encodeURIComponent(waMsg)}`
-      :`https://wa.me/?text=${encodeURIComponent(waMsg)}`;
-    document.getElementById("sale-msg").innerHTML=`<div class="ib ok" style="flex-direction:column;align-items:flex-start">
-      <div>✅ فروش ثبت شد!</div>
-      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+    const waUrl=waPhone?`https://wa.me/${waPhone}?text=${encodeURIComponent(waMsg)}`:`https://wa.me/?text=${encodeURIComponent(waMsg)}`;
+
+    document.getElementById("sale-msg").innerHTML=`<div class="ib ok" style="flex-direction:column;align-items:flex-start;gap:8px">
+      <div>✅ بل با ${validItems.length} قلم ثبت شد! | جمع: ${afn(totAll)}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
         <a href="${waUrl}" target="_blank"
-          style="display:inline-flex;align-items:center;gap:6px;background:#25d366;color:#000;border:none;border-radius:9px;padding:8px 16px;font-size:13px;font-weight:800;text-decoration:none">
+          style="display:inline-flex;align-items:center;gap:6px;background:#25d366;color:#000;border:none;border-radius:9px;padding:8px 14px;font-size:12px;font-weight:800;text-decoration:none">
           💬 ارسال واتساپ${custPhone?' به '+custPhone:''}
         </a>
         <button onclick="navigator.clipboard.writeText(${JSON.stringify(waMsg)}).then(()=>this.textContent='✅ کاپی شد!')"
-          style="background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);color:#25d366;border-radius:9px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">
+          style="background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);color:#25d366;border-radius:9px;padding:8px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">
           📋 کاپی متن
         </button>
       </div>
@@ -3498,10 +3614,10 @@ async function submitSale(){
     showSaved();
     setTimeout(()=>{closeModal("modalSale");renderSales();},4000);
   } else {
-    document.getElementById("sale-msg").innerHTML='<div class="ib err">خطا در اتصال! دوباره امتحان کن</div>';
+    document.getElementById("sale-msg").innerHTML='<div class="ib err">خطا در ثبت! دوباره امتحان کن</div>';
   }
   document.getElementById("sale-btn").disabled=false;
-  document.getElementById("sale-btn").textContent="ثبت فروش ✓";
+  document.getElementById("sale-btn").textContent="ثبت بل ✓";
 }
 
 // Buy modal
