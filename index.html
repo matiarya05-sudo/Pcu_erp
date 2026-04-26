@@ -3585,8 +3585,7 @@ async function submitSale(){
 
     // پیام واتساپ — خلاصه بل
     const custPhone=_selCust?.ph||"";
-    const itemLines=validItems.map(it=>`📦 ${it.doz} درجن ${it.prod} × ${afn(it.prc)} = ${afn(it.doz*it.prc)}`).join("
-");
+    const itemLines=validItems.map(it=>["📦",it.doz,"درجن",it.prod,"=",afn(it.doz*it.prc)].join(" ")).join("\n");
     const waMsg=`سلام ${custName} 🌹
 بل شماره ${billNo||"—"}
 ${itemLines}
