@@ -772,7 +772,9 @@ select option{background:#1a1820}
       <button class="ni" onclick="goPage('assets')" data-page="assets" data-roles="admin"><span class="em">🏭</span>دارایی‌های ثابت</button>
       <button class="ni" onclick="goPage('report')" data-page="report" data-roles="admin"><span class="em">📈</span>گزارشات & سود و زیان</button>
       <button class="ni" onclick="goPage('reports_more')" data-page="reports_more" data-roles="admin"><span class="em">📊</span>گزارش‌های تفصیلی</button>
+      <button class="ni" onclick="goPage('expenses')" data-page="expenses" data-roles="admin"><span class="em">💸</span>مصارف تفکیکی</button>
       <button class="ni" onclick="goPage('tax')" data-page="tax" data-roles="admin"><span class="em">🧾</span>مالیات</button>
+      <button class="ni" onclick="goPage('expenses')" data-page="expenses" data-roles="admin"><span class="em">💸</span>مصارف تفکیکی</button>
       <button class="ni" onclick="goPage('settings')" data-page="settings" data-roles="admin"><span class="em">⚙️</span>تنظیمات</button>
     </div>
     <div class="drawer-foot">
@@ -1088,7 +1090,7 @@ select option{background:#1a1820}
       <div class="card">
         <div class="ct">💵 صندوق افغانی</div>
         <div class="tw"><table>
-          <thead><tr><th>#</th><th>تاریخ</th><th>نوع</th><th>شرح</th><th>ورودی</th><th>خروجی</th><th>مانده</th><th>✏️</th></tr></thead>
+          <thead><tr><th>#</th><th>تاریخ</th><th>نوع / شرح</th><th>ورودی</th><th>خروجی</th><th>مانده</th><th>✏️</th></tr></thead>
           <tbody id="cash-tbody"></tbody>
         </table></div>
       </div>
@@ -1261,6 +1263,135 @@ select option{background:#1a1820}
     </div>
 
     <!-- SETTINGS -->
+    <div id="page-expenses" class="page">
+      <!-- KPI cards -->
+      <div class="kpi-row" id="exp-kpi-row" style="display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;margin-bottom:8px"></div>
+      <!-- فیلتر ماه -->
+      <div class="card" style="padding:10px 12px">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div style="font-size:12px;color:var(--t2)">ماه:</div>
+          <select id="exp-month-filter" onchange="renderExpenses()" style="flex:1;padding:7px;background:var(--b3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:inherit;font-size:12px"></select>
+          <button onclick="openModal('modalExpCat')" class="btn bsec" style="padding:6px 12px;font-size:11px">⚙️ دسته‌بندی‌ها</button>
+          <button onclick="openModal('modalExpense')" class="btn bpri" style="padding:6px 12px;font-size:11px">+ ثبت مصرف</button>
+        </div>
+      </div>
+      <!-- چارت دسته‌بندی -->
+      <div class="card" style="padding:12px">
+        <div class="ct">📊 مصارف به تفکیک دسته</div>
+        <div id="exp-chart-wrap" style="margin-top:8px"></div>
+      </div>
+      <!-- جدول مصارف -->
+      <div class="card" style="padding:0">
+        <table class="tbl">
+          <thead><tr><th>تاریخ</th><th>دسته</th><th>شرح</th><th class="tdr">مبلغ</th><th>✏️</th></tr></thead>
+          <tbody id="exp-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Modal ثبت مصرف -->
+    <div class="modal-overlay" id="modalExpense">
+      <div class="modal">
+        <div class="modal-head"><h3>💸 ثبت مصرف</h3><button class="close-btn" onclick="closeModal('modalExpense')">✕</button></div>
+        <div class="modal-body">
+          <div id="exp-msg"></div>
+          <div class="fg"><label>تاریخ</label><input id="exp-date"/></div>
+          <div class="fg"><label>دسته مصرف</label>
+            <select id="exp-cat" onchange="checkExpCustomCat()" style="width:100%;padding:10px;background:var(--b3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:inherit;font-size:13px">
+            </select>
+          </div>
+          <div class="fg" id="exp-custom-wrap" style="display:none">
+            <label>نام دسته جدید</label>
+            <input id="exp-custom-cat" placeholder="مثال: بیمه، تبلیغات..."/>
+          </div>
+          <div class="fg"><label>شرح / توضیح</label><input id="exp-desc" placeholder="مثال: فاکتور برق ماه حمل..."/></div>
+          <div class="fg"><label>مبلغ (؋)</label><input type="number" id="exp-amt" min="0" placeholder="0"/></div>
+          <div class="fg">
+            <label style="display:flex;align-items:center;gap:8px">
+              <input type="checkbox" id="exp-deduct-cash" checked style="width:16px;height:16px"/>
+              <span>از صندوق افغانی کم شود</span>
+            </label>
+          </div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn bsec" onclick="closeModal('modalExpense')">انصراف</button>
+          <button class="btn bpri" onclick="submitExpense()" id="exp-btn">ثبت مصرف ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal مدیریت دسته‌بندی‌ها -->
+    <div class="modal-overlay" id="modalExpCat">
+      <div class="modal">
+        <div class="modal-head"><h3>⚙️ دسته‌بندی مصارف</h3><button class="close-btn" onclick="closeModal('modalExpCat')">✕</button></div>
+        <div class="modal-body">
+          <div class="ib info" style="font-size:11px">دسته‌ها را ویرایش کن یا مورد جدید اضافه کن</div>
+          <div id="exp-cat-list" style="margin-top:8px"></div>
+          <div style="display:flex;gap:8px;margin-top:10px">
+            <input id="exp-new-cat-name" placeholder="نام دسته جدید..." style="flex:1;padding:9px;background:var(--b3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:inherit;font-size:13px"/>
+            <input id="exp-new-cat-icon" placeholder="آیکون" style="width:60px;padding:9px;background:var(--b3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:inherit;font-size:16px;text-align:center"/>
+            <button onclick="addExpCat()" class="btn bpri" style="padding:9px 14px;font-size:12px">+ اضافه</button>
+          </div>
+          <div id="exp-cat-msg" style="margin-top:6px"></div>
+        </div>
+        <div class="modal-foot">
+          <button class="btn bsec" onclick="closeModal('modalExpCat')">بستن</button>
+          <button class="btn bpri" onclick="saveExpCats()">ذخیره دسته‌ها ✓</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-expenses" class="page">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <div class="ct" style="margin-bottom:0">💸 مصارف تفکیکی فابریکه</div>
+          <button class="btn bpri" onclick="openModal('modalExpense')" style="padding:7px 14px;font-size:12px">+ ثبت مصرف</button>
+        </div>
+
+        <!-- فیلتر ماه -->
+        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+          <select id="exp-filter-month" onchange="renderExpenses()"
+            style="flex:1;padding:8px;background:var(--b3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:inherit;font-size:12px">
+            <option value="">همه ماه‌ها</option>
+          </select>
+          <select id="exp-filter-cat" onchange="renderExpenses()"
+            style="flex:1;padding:8px;background:var(--b3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:inherit;font-size:12px">
+            <option value="">همه دسته‌ها</option>
+          </select>
+        </div>
+
+        <!-- KPI دسته‌بندی -->
+        <div id="exp-kpi-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"></div>
+
+        <!-- جمع کل -->
+        <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(240,82,82,.08);border:1px solid rgba(240,82,82,.2);border-radius:10px;padding:12px;margin-bottom:12px">
+          <span style="font-size:13px;color:var(--t2)">مجموع مصارف دوره انتخاب‌شده:</span>
+          <span id="exp-total" style="font-size:16px;font-weight:900;color:var(--rd)">؋ 0</span>
+        </div>
+
+        <!-- تنظیمات دسته‌بندی -->
+        <details style="margin-bottom:12px">
+          <summary style="cursor:pointer;font-size:12px;color:var(--gd);padding:8px 0;font-weight:700">⚙️ مدیریت دسته‌بندی‌ها</summary>
+          <div style="margin-top:8px;background:var(--b3);border-radius:8px;padding:10px">
+            <div id="exp-cats-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
+            <div style="display:flex;gap:6px">
+              <input id="exp-new-cat" placeholder="دسته جدید..." 
+                style="flex:1;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-family:inherit;font-size:12px"/>
+              <button onclick="addExpenseCat()" class="btn bpri" style="padding:7px 12px;font-size:11px">+ اضافه</button>
+            </div>
+          </div>
+        </details>
+
+        <!-- جدول -->
+        <div class="tbl-wrap">
+          <table class="tbl">
+            <thead><tr><th>#</th><th>تاریخ</th><th>دسته</th><th>شرح</th><th class="tdr">مبلغ</th><th>✏️</th></tr></thead>
+            <tbody id="exp-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <div id="page-settings" class="page">
       <div class="card">
         <div class="ct">🏭 اطلاعات شرکت</div>
@@ -1529,7 +1660,13 @@ select option{background:#1a1820}
           <option value="in">ورودی</option><option value="out">خروجی</option>
         </select>
       </div>
-      <div class="fg"><label>عملیات</label><select id="c-type"></select></div>
+      <div class="fg"><label>عملیات</label>
+        <select id="c-type" onchange="checkCustomCashType()"></select>
+      </div>
+      <div class="fg" id="c-custom-wrap" style="display:none">
+        <label>موضوع جدید را بنویس</label>
+        <input id="c-custom-type" placeholder="مثال: تعمیرات، بیمه..." oninput="syncCustomType()"/>
+      </div>
       <div class="fg"><label>شرح</label><input id="c-desc"/></div>
       <div class="fg"><label>مبلغ (؋)</label><input type="number" id="c-amt" min="0"/></div>
     </div>
@@ -2398,6 +2535,43 @@ select option{background:#1a1820}
   </div>
 </div>
 
+<!-- ══ EXPENSE MODAL ══ -->
+<div class="modal-overlay" id="modalExpense">
+  <div class="modal">
+    <div class="modal-head"><h3>💸 ثبت مصرف</h3><button class="close-btn" onclick="closeModal('modalExpense')">✕</button></div>
+    <div class="modal-body">
+      <div id="exp-msg"></div>
+      <div class="row2">
+        <div class="fg"><label>تاریخ</label><input id="exp-date"/></div>
+        <div class="fg"><label>مبلغ (؋)</label><input type="number" id="exp-amt" min="0" placeholder="0"/></div>
+      </div>
+      <div class="fg"><label>دسته‌بندی</label>
+        <select id="exp-cat" onchange="checkCustomExpCat()"
+          style="width:100%;padding:9px;background:var(--b3);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-family:inherit;font-size:13px">
+        </select>
+      </div>
+      <div class="fg" id="exp-custom-wrap" style="display:none">
+        <label>دسته جدید را بنویس</label>
+        <input id="exp-custom-cat" placeholder="مثال: تعمیرات لوله..."/>
+      </div>
+      <div class="fg"><label>شرح / توضیح</label>
+        <input id="exp-desc" placeholder="مثال: برق ماه حمل، معاش ندیم..."/>
+      </div>
+      <div class="fg"><label>از صندوق کم شود؟</label>
+        <select id="exp-deduct"
+          style="width:100%;padding:9px;background:var(--b3);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-family:inherit;font-size:13px">
+          <option value="yes">✅ بله — از صندوق افغانی کم شود</option>
+          <option value="no">❌ نه — فقط ریکورد شود</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn bsec" onclick="closeModal('modalExpense')">انصراف</button>
+      <button class="btn bpri" onclick="submitExpense()" id="exp-btn">ثبت مصرف ✓</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ══ ORDERS v2 — چند آیتم ══
 const PRD_NAMES={استاندارد:"PCU استاندارد ۳۶-۴۲",ویژه:"PCU ویژه ۴۳-۴۵",کودکانه:"PCU کودکانه ۲۴-۳۵"};
@@ -2965,7 +3139,7 @@ function goPage(id){
   document.querySelector(`.tab-item[data-tab="${id}"]`)?.classList.add("on");
   const allTitles={dash:"داشبورد",sales:"فروش",orders:"فرمایشات",buy:"خرید مواد",prod:"تولید",
     stock:"انبار مواد",cust:"مشتریان",supp:"تامین‌کنندگان",cash:"صندوق افغانی",
-    report:"گزارشات & سود و زیان",reports_more:"گزارش‌های تفصیلی",
+    report:"گزارشات & سود و زیان",reports_more:"گزارش‌های تفصیلی",expenses:"مصارف تفکیکی",
     emp:"کارمندان و شاگردان",tax:"مالیات",collect:"قرض حسنه",
     partners:"شریکان / سهام‌داران",settings:"تنظیمات",batch:"مکسچر و تولید",collect:"وصول مطالبات",cheque:"💚 قرض حسنه"};
   document.getElementById("pageTitle").textContent=allTitles[id]||id;
@@ -2984,6 +3158,8 @@ function renderPage(id){
   else if(id==="batch") renderBatch();
   else if(id==="supp") renderSupp();
   else if(id==="cash") renderCash();
+  else if(id==="expenses"){loadExpCats().then(()=>{renderExpenses();renderExpCatsList();});}
+  else if(id==="expenses") renderExpenses();
   else if(id==="assets") renderAssets();
   else if(id==="report") renderReport();
   else if(id==="reports_more") renderReportsMore();
@@ -3210,21 +3386,26 @@ async function renderCash(){
   document.getElementById("cash-out-kpi").textContent=afn(outT);
   document.getElementById("cash-bal-kpi").textContent=afn(inT-outT);
   let run=0;
-  document.getElementById("cash-tbody").innerHTML=allCash.map((r,i)=>{
+  document.getElementById("cash-tbody").innerHTML=allCash.length?allCash.map((r,i)=>{
     run+=r.category==="in"?(+r.amount_in||0):-(+r.amount_out||0);
+    const isIn=r.category==="in";
     return`<tr>
-      <td style="color:var(--t3)">${i+1}</td><td>${r.date}</td>
-      <td><span class="bb ${r.category==="in"?"bg2":"br2"}">${r.category==="in"?"ورودی":"خروجی"}</span></td>
-      <td style="font-size:11px;color:var(--t2)">${r.type}</td>
-      <td class="tdr" style="color:var(--gr)">${r.category==="in"?afn(r.amount_in):""}</td>
-      <td class="tdr" style="color:var(--rd)">${r.category==="out"?afn(r.amount_out):""}</td>
-      <td class="tdr" style="font-weight:700;color:${run>=0?"var(--gd)":"var(--rd)"}">${afn(run)}</td>
+      <td style="color:var(--t3);font-size:10px">${i+1}</td>
+      <td style="font-size:11px;color:var(--t2)">${r.date}</td>
+      <td>
+        <span class="bb ${isIn?"bg2":"br2"}" style="font-size:9px">${isIn?"⬆️ ورودی":"⬇️ خروجی"}</span>
+        <div style="font-size:11px;font-weight:700;color:var(--tx);margin-top:2px">${r.type||"—"}</div>
+        ${r.description?`<div style="font-size:10px;color:var(--t2)">${r.description}</div>`:""}
+      </td>
+      <td class="tdr" style="color:var(--gr);font-weight:700">${isIn?afn(r.amount_in):""}</td>
+      <td class="tdr" style="color:var(--rd);font-weight:700">${!isIn?afn(r.amount_out):""}</td>
+      <td class="tdr" style="font-weight:800;color:${run>=0?"var(--gd)":"var(--rd)"}">${afn(run)}</td>
       <td style="display:flex;gap:3px">
         <button onclick="openEditRecord('cash_ledger',${r.id})" style="${_editBtnStyle('bl')}">✏️</button>
         <button onclick="deleteRecord('cash_ledger',${r.id},'renderCash')" style="${_editBtnStyle('rd')}">🗑️</button>
       </td>
     </tr>`;
-  }).join("");
+  }).join(""):'<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--t3)">هنوز تراکنشی ثبت نشده</td></tr>';
 }
 
 // ── REPORT ──
@@ -3334,6 +3515,8 @@ async function changePass(type){
 // ── MODAL INITS ──
 function initModal(id){
   if(id==="modalSale") initSaleModal();
+  if(id==="modalExpense") initExpenseModal();
+  if(id==="modalExpCat"){renderExpCatList();}
   else if(id==="modalOrder") initOrderModal();
   else if(id==="modalBuy") initBuyModal();
   else if(id==="modalProd") initProdModal();
@@ -3476,13 +3659,37 @@ function searchCust(q){
     <div style="display:flex;gap:5px"><span class="bb bbl">${c.p}</span><span class="bb by2">${afn(c.ob)}</span></div>
   </div>`).join("");
 }
-function pickCust(id){
+async function pickCust(id){
   _selCust=CUSTOMERS.find(c=>c.id===id);
   document.getElementById("s-csrch").value=_selCust.n;
   document.getElementById("cust-dd").style.display="none";
   const sel=document.getElementById("cust-sel");
   sel.style.display="flex";
-  sel.textContent=`✅ ${_selCust.n} | ${_selCust.p} | موجودی: ${afn(_selCust.ob)}`;
+  sel.innerHTML="<span>⏳ در حال بارگذاری حساب "+_selCust.n+"...</span>";
+  try{
+    const [sales,collects]=await Promise.all([
+      sbGet("sales","?cust_id=eq."+id+"&select=total,paid"),
+      sbGet("collection_payments","?cust_id=eq."+id+"&select=amount")
+    ]);
+    const ob=+(_selCust.ob)||0;
+    const totSales=(sales||[]).reduce((a,r)=>a+(+r.total||0),0);
+    const totPaid=(sales||[]).reduce((a,r)=>a+(+r.paid||0),0);
+    const totCollect=(collects||[]).reduce((a,r)=>a+(+r.amount||0),0);
+    _selCust._realBal=ob+totSales-totPaid-totCollect;
+    const bal=_selCust._realBal;
+    sel.innerHTML="<div style='display:flex;flex-direction:column;gap:3px;width:100%'>"
+      +"<div style='font-weight:700'>✅ "+_selCust.n+" | "+_selCust.p+"</div>"
+      +"<div style='display:flex;gap:8px;flex-wrap:wrap;font-size:11px'>"
+      +"<span style='color:var(--t2)'>موجودی اول: <b style='color:var(--gd)'>"+afn(ob)+"</b></span>"
+      +"<span style='color:var(--t2)'>فروش: <b style='color:var(--bl)'>"+afn(totSales)+"</b></span>"
+      +"<span style='color:var(--t2)'>وصول: <b style='color:var(--gr)'>"+afn(totPaid+totCollect)+"</b></span>"
+      +"</div>"
+      +"<div style='font-size:13px;font-weight:800;color:"+(bal>0?"var(--rd)":"var(--gr)")+"'>"
+      +"🔴 باقی طلب فعلی: "+afn(bal)
+      +"</div></div>";
+  }catch(e){
+    sel.textContent="✅ "+_selCust.n+" | "+_selCust.p+" | موجودی اول: "+afn(_selCust.ob);
+  }
 }
 function calcSale(){
   const doz=+(document.getElementById("s-doz").value)||0;
@@ -3586,19 +3793,19 @@ async function submitSale(){
     // پیام واتساپ — خلاصه بل
     const custPhone=_selCust?.ph||"";
     const itemLines=validItems.map(it=>["📦",it.doz,"درجن",it.prod,"=",afn(it.doz*it.prc)].join(" ")).join("\n");
-    const waMsg=`سلام ${custName} 🌹
-بل شماره ${billNo||"—"}
-${itemLines}
-━━━━━━━━━━
-💰 مجموع: ${afn(totAll)}
-✅ رسید: ${afn(paid)}
-⏳ باقی: ${afn(remAll)}
-تشکر — فابریکه حیات‌زاده`;
+    const _oldBal=(_selCust&&_selCust._realBal!=null)?_selCust._realBal:null;
+    // باقی طلب کل = موجودی قبلی + مجموع بل جدید - رسید بل جدید
+    const _finalBal=_oldBal!=null?(_oldBal+totAll-paid):null;
+    const _wLines=["سلام "+custName,"بل شماره "+(billNo||"—"),itemLines,"━━━━━━━━━━","مجموع: "+afn(totAll),"رسید: "+afn(paid),"باقی این بل: "+afn(remAll)];
+    if(_finalBal!=null) _wLines.push("مجموع طلب فعلی: "+afn(_finalBal));
+    _wLines.push("تشکر — فابریکه حیات‌زاده");
+    const waMsg=_wLines.join("\n");
     const waPhone=custPhone?"93"+custPhone.replace(/^0/,""):"";
     const waUrl=waPhone?`https://wa.me/${waPhone}?text=${encodeURIComponent(waMsg)}`:`https://wa.me/?text=${encodeURIComponent(waMsg)}`;
 
     document.getElementById("sale-msg").innerHTML=`<div class="ib ok" style="flex-direction:column;align-items:flex-start;gap:8px">
       <div>✅ بل با ${validItems.length} قلم ثبت شد! | جمع: ${afn(totAll)}</div>
+      ${_finalBal!=null?`<div style="font-size:12px;font-weight:800;color:var(--rd)">🔴 مجموع طلب فعلی ${custName}: ${afn(_finalBal)}</div>`:""}
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <a href="${waUrl}" target="_blank"
           style="display:inline-flex;align-items:center;gap:6px;background:#25d366;color:#000;border:none;border-radius:9px;padding:8px 14px;font-size:12px;font-weight:800;text-decoration:none">
@@ -3617,6 +3824,243 @@ ${itemLines}
   }
   document.getElementById("sale-btn").disabled=false;
   document.getElementById("sale-btn").textContent="ثبت بل ✓";
+}
+
+
+// ══════════════════════════════════════════════════════
+// 💸 سیستم مصارف تفکیکی
+// ══════════════════════════════════════════════════════
+
+const DEFAULT_EXP_CATS=[
+  {id:1,icon:"👷",name:"معاش کارمندان"},
+  {id:2,icon:"⚡",name:"برق"},
+  {id:3,icon:"🏠",name:"کرایه"},
+  {id:4,icon:"📦",name:"خرید مواد خام"},
+  {id:5,icon:"🔧",name:"تعمیرات ماشین"},
+  {id:6,icon:"📋",name:"مصارف دفتر"},
+  {id:7,icon:"🚗",name:"ترانسپورت"},
+  {id:8,icon:"☎️",name:"انترنت و تلفون"},
+  {id:9,icon:"🍽️",name:"آشپزخانه / غذا"},
+  {id:10,icon:"💊",name:"صحی و دوا"},
+  {id:11,icon:"🔨",name:"ابزار و لوازم"},
+  {id:12,icon:"📦",name:"سایر مصارف"}
+];
+
+let _expCats=[...DEFAULT_EXP_CATS];
+let _expNextId=13;
+
+// بارگذاری دسته‌ها از Supabase
+async function loadExpCats(){
+  const res=await sbGet("settings","?key=eq.exp_categories");
+  if(res&&res[0]){
+    try{
+      const data=JSON.parse(res[0].value);
+      if(data.cats) _expCats=data.cats;
+      if(data.nextId) _expNextId=data.nextId;
+    }catch(e){}
+  }
+}
+
+// ذخیره دسته‌ها در Supabase
+async function saveExpCats(){
+  const btn=document.querySelector("#modalExpCat .bpri");
+  if(btn){btn.disabled=true;btn.textContent="در حال ذخیره...";}
+  const payload=JSON.stringify({cats:_expCats,nextId:_expNextId});
+  const ex=await sbGet("settings","?key=eq.exp_categories");
+  if(ex&&ex[0]){
+    await fetch(SUPA_URL+"/rest/v1/settings?key=eq.exp_categories",{
+      method:"PATCH",headers:{...HEADERS,"Prefer":"return=representation"},
+      body:JSON.stringify({value:payload})
+    });
+  } else {
+    await sbPost("settings",{key:"exp_categories",value:payload});
+  }
+  if(btn){btn.disabled=false;btn.textContent="ذخیره دسته‌ها ✓";}
+  document.getElementById("exp-cat-msg").innerHTML='<div class="ib ok">✅ ذخیره شد!</div>';
+  setTimeout(()=>document.getElementById("exp-cat-msg").innerHTML="",2000);
+  renderExpCatList();
+  renderExpCatSelect();
+}
+
+// نمایش لیست دسته‌ها در modal
+function renderExpCatList(){
+  const el=document.getElementById("exp-cat-list");
+  if(!el) return;
+  el.innerHTML=_expCats.map((c,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--bd)">
+      <input value="${c.icon}" oninput="_expCats[${i}].icon=this.value"
+        style="width:44px;padding:6px;background:var(--b3);border:1px solid var(--bd);border-radius:6px;color:var(--tx);font-family:inherit;font-size:16px;text-align:center"/>
+      <input value="${c.name}" oninput="_expCats[${i}].name=this.value"
+        style="flex:1;padding:6px 8px;background:var(--b3);border:1px solid var(--bd);border-radius:6px;color:var(--tx);font-family:inherit;font-size:12px"/>
+      <button onclick="removeExpCat(${i})"
+        style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:5px 8px;cursor:pointer;font-size:12px">🗑</button>
+    </div>`).join("");
+}
+
+function addExpCat(){
+  const name=document.getElementById("exp-new-cat-name").value.trim();
+  const icon=document.getElementById("exp-new-cat-icon").value.trim()||"💰";
+  if(!name){alert("نام دسته را بنویس!");return;}
+  _expCats.push({id:_expNextId++,icon,name});
+  document.getElementById("exp-new-cat-name").value="";
+  document.getElementById("exp-new-cat-icon").value="";
+  renderExpCatList();
+}
+
+function removeExpCat(idx){
+  if(!confirm("این دسته حذف شود؟")) return;
+  _expCats.splice(idx,1);
+  renderExpCatList();
+}
+
+// پر کردن dropdown دسته‌ها
+function renderExpCatSelect(){
+  const sel=document.getElementById("exp-cat");
+  if(!sel) return;
+  sel.innerHTML=_expCats.map(c=>`<option value="${c.icon} ${c.name}">${c.icon} ${c.name}</option>`).join("")
+    +`<option value="__custom__">➕ دسته جدید...</option>`;
+}
+
+function checkExpCustomCat(){
+  const val=document.getElementById("exp-cat").value;
+  document.getElementById("exp-custom-wrap").style.display=val==="__custom__"?"block":"none";
+}
+
+// init modal مصرف
+function initExpenseModal(){
+  document.getElementById("exp-date").value=today();
+  document.getElementById("exp-desc").value="";
+  document.getElementById("exp-amt").value="";
+  document.getElementById("exp-msg").innerHTML="";
+  document.getElementById("exp-custom-wrap").style.display="none";
+  renderExpCatSelect();
+}
+
+// ثبت مصرف
+async function submitExpense(){
+  const amt=+(document.getElementById("exp-amt").value)||0;
+  if(!amt){document.getElementById("exp-msg").innerHTML='<div class="ib err">مبلغ الزامی</div>';return;}
+  let cat=document.getElementById("exp-cat").value;
+  if(cat==="__custom__"){
+    const custom=document.getElementById("exp-custom-cat").value.trim();
+    if(!custom){document.getElementById("exp-msg").innerHTML='<div class="ib err">نام دسته را بنویس</div>';return;}
+    // اضافه کردن به لیست
+    _expCats.push({id:_expNextId++,icon:"💰",name:custom});
+    cat="💰 "+custom;
+    saveExpCats();
+  }
+  const expDate=document.getElementById("exp-date").value;
+  const desc=document.getElementById("exp-desc").value;
+  const deductCash=document.getElementById("exp-deduct-cash").checked;
+
+  document.getElementById("exp-btn").disabled=true;
+  document.getElementById("exp-btn").textContent="در حال ذخیره...";
+
+  // ثبت در cash_ledger به عنوان خروجی با دسته مصرف
+  const res=await sbPost("cash_ledger",{
+    date:expDate,
+    category:"out",
+    type:cat,
+    description:desc||cat,
+    amount_in:0,
+    amount_out:amt
+  });
+
+  document.getElementById("exp-btn").disabled=false;
+  document.getElementById("exp-btn").textContent="ثبت مصرف ✓";
+
+  if(res){
+    document.getElementById("exp-msg").innerHTML=`<div class="ib ok">✅ ثبت شد! ${deductCash?"| از صندوق کم شد":""}</div>`;
+    showSaved();
+    setTimeout(()=>{closeModal("modalExpense");renderExpenses();},1200);
+  } else {
+    document.getElementById("exp-msg").innerHTML='<div class="ib err">خطا در ذخیره!</div>';
+  }
+}
+
+// نمایش صفحه مصارف
+async function renderExpenses(){
+  await loadExpCats();
+  renderExpCatSelect();
+
+  // پر کردن فیلتر ماه‌ها
+  const months=[];
+  const curDate=new Date();
+  for(let i=0;i<12;i++){
+    const d=new Date(curDate.getFullYear(),curDate.getMonth()-i,1);
+    const yr=d.getFullYear();
+    const mo=String(d.getMonth()+1).padStart(2,"0");
+    // تبدیل به تقویم شمسی تقریبی
+    const shamsiYr=yr-621;
+    months.push({val:`${yr}-${mo}`,label:`${shamsiYr}/${mo}`});
+  }
+  const mSel=document.getElementById("exp-month-filter");
+  if(mSel){
+    const cur=mSel.value||months[0].val;
+    mSel.innerHTML=months.map(m=>`<option value="${m.val}" ${m.val===cur?"selected":""}>${m.label}</option>`).join("");
+  }
+
+  const selMonth=document.getElementById("exp-month-filter")?.value||months[0].val;
+
+  // بارگذاری از cash_ledger - فیلتر ماه
+  const allCash=await sbGet("cash_ledger",`?category=eq.out&date=gte.${selMonth}-01&date=lte.${selMonth}-31&order=date.desc`)||[];
+
+  // فیلتر مصارف (نه وصول/فروش)
+  const skipTypes=["وصول از مشتری","سرمایه شریک","قرض دریافتی","سایر ورودی"];
+  const expenses=allCash.filter(r=>!skipTypes.includes(r.type));
+
+  // جمع به تفکیک دسته
+  const bycat={};
+  expenses.forEach(r=>{
+    const k=r.type||"سایر";
+    bycat[k]=(bycat[k]||0)+(+r.amount_out||0);
+  });
+  const totAll=expenses.reduce((a,r)=>a+(+r.amount_out||0),0);
+
+  // KPI cards
+  const topCats=Object.entries(bycat).sort((a,b)=>b[1]-a[1]).slice(0,4);
+  const kpiEl=document.getElementById("exp-kpi-row");
+  if(kpiEl){
+    kpiEl.innerHTML=`
+      <div class="kpi" style="min-width:120px;flex:1">
+        <div class="kl">مجموع مصارف</div>
+        <div class="kv" style="color:var(--rd)">${afn(totAll)}</div>
+      </div>
+      ${topCats.map(([k,v])=>`
+      <div class="kpi" style="min-width:100px;flex:1">
+        <div class="kl" style="font-size:9px">${k}</div>
+        <div class="kv" style="font-size:14px;color:var(--gd)">${afn(v)}</div>
+        <div style="font-size:9px;color:var(--t3)">${totAll>0?Math.round(v/totAll*100):0}%</div>
+      </div>`).join("")}`;
+  }
+
+  // چارت بار افقی
+  const chartEl=document.getElementById("exp-chart-wrap");
+  if(chartEl){
+    const sorted=Object.entries(bycat).sort((a,b)=>b[1]-a[1]);
+    const maxVal=sorted[0]?.[1]||1;
+    chartEl.innerHTML=sorted.length?sorted.map(([k,v])=>`
+      <div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+          <span style="color:var(--tx)">${k}</span>
+          <span style="font-weight:700;color:var(--gd)">${afn(v)} <span style="color:var(--t3);font-weight:400">(${totAll>0?Math.round(v/totAll*100):0}%)</span></span>
+        </div>
+        <div style="background:var(--b3);border-radius:4px;height:8px;overflow:hidden">
+          <div style="background:linear-gradient(90deg,var(--gd),var(--g2));height:100%;width:${Math.round(v/maxVal*100)}%;border-radius:4px;transition:width .4s"></div>
+        </div>
+      </div>`).join(""):'<div style="text-align:center;color:var(--t3);padding:12px">هیچ مصرفی ثبت نشده</div>';
+  }
+
+  // جدول
+  document.getElementById("exp-tbody").innerHTML=expenses.length?expenses.map(r=>`<tr>
+    <td style="font-size:11px;color:var(--t2)">${r.date}</td>
+    <td><span style="font-size:11px;font-weight:700">${r.type||"—"}</span></td>
+    <td style="font-size:11px;color:var(--t2)">${r.description||"—"}</td>
+    <td class="tdr" style="font-weight:700;color:var(--rd)">${afn(r.amount_out)}</td>
+    <td>
+      <button onclick="deleteRecord('cash_ledger',${r.id},'renderExpenses')" style="${_editBtnStyle('rd')}">🗑️</button>
+    </td>
+  </tr>`).join(""):'<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--t3)">هیچ مصرفی در این ماه ثبت نشده</td></tr>';
 }
 
 // Buy modal
@@ -3725,24 +4169,67 @@ function initCashModal(){
   document.getElementById("c-cat").value="in";
   document.getElementById("c-desc").value="";
   document.getElementById("c-amt").value="";
+  const customWrap=document.getElementById("c-custom-wrap");
+  if(customWrap) customWrap.style.display="none";
+  const customInp=document.getElementById("c-custom-type");
+  if(customInp) customInp.value="";
   updateCashTypes();
 }
 function updateCashTypes(){
   const cat=document.getElementById("c-cat").value;
-  document.getElementById("c-type").innerHTML=(cat==="in"?CASH_IN:CASH_OUT).map(t=>`<option>${t}</option>`).join("");
+  const list=cat==="in"?CASH_IN:CASH_OUT;
+  document.getElementById("c-type").innerHTML=
+    list.map(t=>`<option value="${t}">${t}</option>`).join("")+
+    `<option value="__custom__">➕ موضوع جدید...</option>`;
+  checkCustomCashType();
+}
+
+function checkCustomCashType(){
+  const val=document.getElementById("c-type").value;
+  const wrap=document.getElementById("c-custom-wrap");
+  if(val==="__custom__"){
+    wrap.style.display="block";
+    document.getElementById("c-custom-type").focus();
+  } else {
+    wrap.style.display="none";
+  }
+}
+
+function syncCustomType(){
+  // موضوع جدید در شرح هم منعکس می‌شود
+  const customVal=document.getElementById("c-custom-type").value;
+  const descEl=document.getElementById("c-desc");
+  if(!descEl.value) descEl.value=customVal;
+}
+
+function getCashType(){
+  const sel=document.getElementById("c-type").value;
+  if(sel==="__custom__"){
+    const custom=document.getElementById("c-custom-type").value.trim();
+    if(!custom) return null;
+    // ذخیره در لیست برای دفعه بعد
+    const cat=document.getElementById("c-cat").value;
+    if(cat==="in"&&!CASH_IN.includes(custom)) CASH_IN.push(custom);
+    if(cat==="out"&&!CASH_OUT.includes(custom)) CASH_OUT.push(custom);
+    return custom;
+  }
+  return sel;
 }
 async function submitCash(){
   const cat=document.getElementById("c-cat").value;
   const amt=+(document.getElementById("c-amt").value)||0;
   if(!amt){alert("مبلغ الزامی است");return;}
   document.getElementById("cash-btn").disabled=true;
+  const cashType=getCashType();
+  if(!cashType){alert("موضوع عملیات را بنویس!");document.getElementById("cash-btn").disabled=false;return;}
   const res=await sbPost("cash_ledger",{
     date:document.getElementById("c-date").value,category:cat,
-    type:document.getElementById("c-type").value,
+    type:cashType,
     description:document.getElementById("c-desc").value,
     amount_in:cat==="in"?amt:0,amount_out:cat==="out"?amt:0
   });
   document.getElementById("cash-btn").disabled=false;
+  document.getElementById("cash-btn").textContent="ثبت ✓";
   if(res){showSaved();closeModal("modalCash");renderCash();}
   else alert("خطا در ذخیره!");
 }
@@ -4030,20 +4517,46 @@ async function saveEmpPay(){
   const empId=+(document.getElementById("ep-empid").value);
   const empName=document.getElementById("ep-empname").value;
   const amt=+(document.getElementById("ep-amt").value)||0;
+  const payType=document.getElementById("ep-type").value;
+  const notes=document.getElementById("ep-notes").value;
+  const payDate=document.getElementById("ep-date").value;
   if(!amt){document.getElementById("ep-msg").innerHTML='<div class="ib err">مبلغ الزامی</div>';return;}
-  document.getElementById("ep-btn").disabled=true;document.getElementById("ep-btn").textContent="در حال ذخیره...";
+  document.getElementById("ep-btn").disabled=true;
+  document.getElementById("ep-btn").textContent="در حال ذخیره...";
+
+  // ۱ — ثبت در employee_payments
   const res=await sbPost("employee_payments",{
     employee_id:empId,employee_name:empName,
-    date:document.getElementById("ep-date").value,
-    amount_afn:amt,
-    type:document.getElementById("ep-type").value,
-    notes:document.getElementById("ep-notes").value
+    date:payDate,amount_afn:amt,
+    type:payType,notes:notes
   });
-  document.getElementById("ep-btn").disabled=false;document.getElementById("ep-btn").textContent="ثبت پرداخت ✓";
+
   if(res){
-    document.getElementById("ep-msg").innerHTML='<div class="ib ok">✅ ثبت شد!</div>';
-    showSaved();setTimeout(()=>{closeModal("modalEmpPay");renderEmp();},1000);
-  } else document.getElementById("ep-msg").innerHTML='<div class="ib err">خطا!</div>';
+    // ۲ — اگر پرداختی (نه کسر) → از صندوق کم شود
+    if(payType!=="deduction"){
+      const typeLabel={salary:"معاش",advance:"پیش‌پرداخت",bonus:"پاداش"}[payType]||payType;
+      const cashDesc=`${typeLabel} ${empName}${notes?" | "+notes:""}`;
+      await sbPost("cash_ledger",{
+        date:payDate,
+        category:"out",
+        type:"پرداخت معاش/اجرت",
+        description:cashDesc,
+        amount_in:0,
+        amount_out:amt
+      });
+    }
+
+    document.getElementById("ep-msg").innerHTML=`<div class="ib ok" style="flex-direction:column;gap:6px">
+      <div>✅ ثبت شد!</div>
+      ${payType!=="deduction"?`<div style="font-size:11px;color:var(--t2)">💵 ${afn(amt)} از صندوق افغانی کم شد</div>`:""}
+    </div>`;
+    showSaved();
+    setTimeout(()=>{closeModal("modalEmpPay");renderEmp();},1200);
+  } else {
+    document.getElementById("ep-msg").innerHTML='<div class="ib err">خطا!</div>';
+  }
+  document.getElementById("ep-btn").disabled=false;
+  document.getElementById("ep-btn").textContent="ثبت پرداخت ✓";
 }
 async function showEmpPays(id,name){
   const pays=await sbGet("employee_payments",`?employee_id=eq.${id}&order=id.desc`)||[];
@@ -7285,6 +7798,190 @@ function resetVocab() {
   renderVocabFields(_vocabTab);
   document.getElementById('vocab-msg').innerHTML='<div class="ib warn">🔄 پیش‌فرض بازگشت — برای ذخیره دکمه ذخیره را بزن</div>';
 }
+
+// ══ EXPENSES MODULE ══
+const EXP_CATS_DEFAULT=[
+  {id:"salary",   label:"👷 معاش کارمندان", icon:"👷"},
+  {id:"electric", label:"⚡ برق",            icon:"⚡"},
+  {id:"rent",     label:"🏠 کرایه",          icon:"🏠"},
+  {id:"material", label:"📦 خرید مواد",      icon:"📦"},
+  {id:"repair",   label:"🔧 تعمیرات",        icon:"🔧"},
+  {id:"office",   label:"📋 مصارف دفتر",     icon:"📋"},
+  {id:"transport",label:"🚗 ترانسپورت",      icon:"🚗"},
+  {id:"internet", label:"☎️ انترنت/تلفون",   icon:"☎️"},
+  {id:"food",     label:"🍽️ آشپزخانه/غذا",   icon:"🍽️"},
+  {id:"other",    label:"📌 سایر",            icon:"📌"}
+];
+let EXP_CATS=[...EXP_CATS_DEFAULT];
+
+async function loadExpCats(){
+  const r=await sbGet("settings","?key=eq.expense_cats");
+  if(r&&r[0]){try{EXP_CATS=JSON.parse(r[0].value);}catch(e){}}
+}
+async function saveExpCats(){
+  await fetch(SB_URL+"/rest/v1/settings",{
+    method:"POST",
+    headers:{...SB_HEADERS,"Prefer":"resolution=merge-duplicates"},
+    body:JSON.stringify({key:"expense_cats",value:JSON.stringify(EXP_CATS)})
+  });
+}
+
+function renderExpCatSelect(selId){
+  const sel=document.getElementById(selId);
+  if(!sel) return;
+  sel.innerHTML=EXP_CATS.map(c=>`<option value="${c.id}">${c.label}</option>`).join("")
+    +`<option value="__custom__">➕ دسته جدید...</option>`;
+}
+
+function checkCustomExpCat(){
+  const val=document.getElementById("exp-cat").value;
+  document.getElementById("exp-custom-wrap").style.display=val==="__custom__"?"block":"none";
+  if(val==="__custom__") document.getElementById("exp-custom-cat").focus();
+}
+
+async function addExpenseCat(){
+  const inp=document.getElementById("exp-new-cat");
+  const label=inp.value.trim();
+  if(!label) return;
+  const id="cat_"+Date.now();
+  EXP_CATS.push({id,label:"📌 "+label,icon:"📌"});
+  await saveExpCats();
+  renderExpCatSelect("exp-cat");
+  renderExpCatsList();
+  inp.value="";
+}
+
+function renderExpCatsList(){
+  const el=document.getElementById("exp-cats-list");
+  if(!el) return;
+  el.innerHTML=EXP_CATS.map((c,i)=>`
+    <div style="display:flex;align-items:center;gap:4px;background:var(--b4);border:1px solid var(--bd);border-radius:6px;padding:4px 8px;font-size:11px">
+      <span>${c.label}</span>
+      ${i>=EXP_CATS_DEFAULT.length?`<button onclick="removeExpCat('${c.id}')"
+        style="background:none;border:none;color:var(--rd);cursor:pointer;font-size:12px;padding:0 2px">✕</button>`:""}
+    </div>`).join("");
+}
+
+async function removeExpCat(id){
+  EXP_CATS=EXP_CATS.filter(c=>c.id!==id);
+  await saveExpCats();
+  renderExpCatsList();
+  renderExpCatSelect("exp-cat");
+}
+
+function initExpenseModal(){
+  document.getElementById("exp-date").value=today();
+  document.getElementById("exp-amt").value="";
+  document.getElementById("exp-desc").value="";
+  document.getElementById("exp-msg").innerHTML="";
+  document.getElementById("exp-custom-wrap").style.display="none";
+  document.getElementById("exp-deduct").value="yes";
+  renderExpCatSelect("exp-cat");
+}
+
+async function submitExpense(){
+  const amt=+(document.getElementById("exp-amt").value)||0;
+  if(!amt){document.getElementById("exp-msg").innerHTML='<div class="ib err">مبلغ الزامی</div>';return;}
+  let catId=document.getElementById("exp-cat").value;
+  let catLabel="";
+  if(catId==="__custom__"){
+    const custom=document.getElementById("exp-custom-cat").value.trim();
+    if(!custom){document.getElementById("exp-msg").innerHTML='<div class="ib err">دسته جدید را بنویس</div>';return;}
+    catId="cat_"+Date.now();
+    catLabel="📌 "+custom;
+    EXP_CATS.push({id:catId,label:catLabel,icon:"📌"});
+    await saveExpCats();
+  } else {
+    catLabel=EXP_CATS.find(c=>c.id===catId)?.label||catId;
+  }
+  const desc=document.getElementById("exp-desc").value;
+  const expDate=document.getElementById("exp-date").value;
+  const deduct=document.getElementById("exp-deduct").value==="yes";
+
+  document.getElementById("exp-btn").disabled=true;
+  document.getElementById("exp-btn").textContent="در حال ذخیره...";
+
+  // ثبت در expenses table (cash_ledger با category=expense)
+  const res=await sbPost("cash_ledger",{
+    date:expDate,
+    category:"out",
+    type:catLabel,
+    description:desc||catLabel,
+    amount_in:0,
+    amount_out:amt,
+    notes:catId
+  });
+
+  if(res){
+    document.getElementById("exp-msg").innerHTML=`<div class="ib ok">✅ مصرف ثبت شد! ${deduct?"| از صندوق کم شد":""}</div>`;
+    showSaved();
+    setTimeout(()=>{closeModal("modalExpense");renderExpenses();},1000);
+  } else {
+    document.getElementById("exp-msg").innerHTML='<div class="ib err">خطا!</div>';
+  }
+  document.getElementById("exp-btn").disabled=false;
+  document.getElementById("exp-btn").textContent="ثبت مصرف ✓";
+}
+
+async function renderExpenses(){
+  await loadExpCats();
+  renderExpCatsList();
+
+  const allCash=await sbGet("cash_ledger","?category=eq.out&order=id.desc")||[];
+
+  // populate month filter
+  const months=[...new Set(allCash.map(r=>r.date?.slice(0,7)))].sort().reverse();
+  const mSel=document.getElementById("exp-filter-month");
+  const mVal=mSel?.value||"";
+  if(mSel) mSel.innerHTML='<option value="">همه ماه‌ها</option>'+months.map(m=>`<option value="${m}" ${m===mVal?"selected":""}>${m}</option>`).join("");
+
+  // populate cat filter
+  const cSel=document.getElementById("exp-filter-cat");
+  const cVal=cSel?.value||"";
+  if(cSel) cSel.innerHTML='<option value="">همه دسته‌ها</option>'+EXP_CATS.map(c=>`<option value="${c.id}" ${c.id===cVal?"selected":""}>${c.label}</option>`).join("");
+
+  // filter
+  let rows=allCash;
+  if(mVal) rows=rows.filter(r=>r.date?.startsWith(mVal));
+  if(cVal) rows=rows.filter(r=>r.notes===cVal);
+
+  const total=rows.reduce((a,r)=>a+(+r.amount_out||0),0);
+  const totEl=document.getElementById("exp-total");
+  if(totEl) totEl.textContent=afn(total);
+
+  // KPI per category
+  const kpiGrid=document.getElementById("exp-kpi-grid");
+  if(kpiGrid){
+    const bycat={};
+    allCash.filter(r=>mVal?r.date?.startsWith(mVal):true).forEach(r=>{
+      const k=r.notes||"other";
+      bycat[k]=(bycat[k]||0)+(+r.amount_out||0);
+    });
+    const sorted=Object.entries(bycat).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    kpiGrid.innerHTML=sorted.map(([k,v])=>{
+      const cat=EXP_CATS.find(c=>c.id===k)||{label:k,icon:"📌"};
+      return`<div style="background:var(--b3);border:1px solid var(--bd);border-radius:8px;padding:10px">
+        <div style="font-size:11px;color:var(--t2);margin-bottom:4px">${cat.label}</div>
+        <div style="font-size:14px;font-weight:800;color:var(--rd)">${afn(v)}</div>
+      </div>`;
+    }).join("");
+  }
+
+  // table
+  const tbody=document.getElementById("exp-tbody");
+  if(tbody) tbody.innerHTML=rows.length?rows.map((r,i)=>{
+    const cat=EXP_CATS.find(c=>c.id===r.notes)||{label:r.type||"—",icon:"📌"};
+    return`<tr>
+      <td style="color:var(--t3);font-size:10px">${i+1}</td>
+      <td style="font-size:11px">${r.date}</td>
+      <td><span style="font-size:11px;font-weight:700">${cat.label}</span></td>
+      <td style="font-size:11px;color:var(--t2)">${r.description||"—"}</td>
+      <td class="tdr" style="font-weight:800;color:var(--rd)">${afn(r.amount_out)}</td>
+      <td><button onclick="deleteRecord('cash_ledger',${r.id},'renderExpenses')" style="${_editBtnStyle('rd')}">🗑️</button></td>
+    </tr>`;
+  }).join(""):'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--t3)">هیچ مصرفی ثبت نشده</td></tr>';
+}
+// ══ END EXPENSES ══
 </script>
 </body>
 </html>
