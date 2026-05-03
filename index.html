@@ -2607,6 +2607,41 @@ select option{background:#1a1820}
   </div>
 </div>
 
+<!-- ══ STATEMENT MODAL ══ -->
+<div class="modal-overlay" id="modalStatement" style="z-index:9999">
+  <div class="modal" style="max-width:620px;width:96vw;max-height:90vh;display:flex;flex-direction:column">
+    <div class="modal-head" style="flex-shrink:0">
+      <h3 id="stmt-title">📊 تاریخچه معاملات</h3>
+      <button class="close-btn" onclick="closeModal('modalStatement')">✕</button>
+    </div>
+    <div class="modal-body" style="overflow-y:auto;flex:1">
+      <div id="stmt-kpi" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px"></div>
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        <input id="stmt-search" placeholder="جستجو..." oninput="filterStmt()"
+          style="flex:1;padding:7px 10px;background:var(--b3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:inherit;font-size:12px"/>
+        <select id="stmt-filter" onchange="filterStmt()"
+          style="padding:7px;background:var(--b3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:inherit;font-size:12px">
+          <option value="all">همه</option>
+          <option value="sale">فروش</option>
+          <option value="collect">وصول</option>
+          <option value="purchase">خرید</option>
+          <option value="payment">پرداخت</option>
+        </select>
+      </div>
+      <div id="stmt-body"></div>
+      <div id="stmt-balance-row" style="background:rgba(212,168,67,.08);border:1px solid rgba(212,168,67,.2);border-radius:10px;padding:12px;margin-top:10px;display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:13px;color:var(--t2)">مانده نهایی:</span>
+        <span id="stmt-final-bal" style="font-size:18px;font-weight:900;color:var(--gd)">—</span>
+      </div>
+    </div>
+    <div class="modal-foot" style="flex-shrink:0">
+      <button class="btn bsec" onclick="closeModal('modalStatement')">بستن</button>
+      <button class="btn bpri" onclick="printStatement()" style="background:rgba(37,211,102,.15);border:1px solid rgba(37,211,102,.3);color:#25d366">🖨️ پرینت</button>
+    </div>
+  </div>
+</div>
+
+
 <script>
 // ══ ORDERS v2 — چند آیتم ══
 const PRD_NAMES={استاندارد:"PCU استاندارد ۳۶-۴۲",ویژه:"PCU ویژه ۴۳-۴۵",کودکانه:"PCU کودکانه ۲۴-۳۵"};
@@ -3622,7 +3657,31 @@ function updateSaleItem(idx,field,val){
   const it=_saleItems.find(x=>x.idx===idx);
   if(!it) return;
   it[field]=field==='prod'?val:+val||0;
-  calcSaleSummary();
+  if(field==='prod'){
+    // اگر مدل عوض شد re-render لازم است
+    calcSaleSummary();
+  } else {
+    // درجن یا قیمت — فقط summary و totals آپدیت کن
+    calcSaleSummaryOnly();
+  }
+}
+
+function calcSaleSummaryOnly(){
+  const totAll=_saleItems.reduce((a,it)=>a+(it.doz*it.prc),0);
+  const paid=+(document.getElementById("s-paid").value)||0;
+  const rem=totAll-paid;
+  let wj=0,ws=0;
+  _saleItems.forEach(it=>{
+    const w=getWageForProduct(it.prod);
+    wj+=it.doz*w.j;
+    ws+=it.doz*w.s;
+  });
+  const afnN=n=>"؋ "+Math.round(n||0).toLocaleString("fa-IR");
+  document.getElementById("s-tot-display").textContent=afnN(totAll);
+  document.getElementById("s-wage-j-display").textContent=afnN(wj);
+  document.getElementById("s-wage-s-display").textContent=afnN(ws);
+  document.getElementById("s-rem").value=afnN(rem);
+  updateItemTotals();
 }
 
 function renderSaleItems(){
@@ -3656,12 +3715,20 @@ function renderSaleItems(){
         </div>
         <div style="flex:1">
           <div style="font-size:10px;color:var(--t2);margin-bottom:2px">جمله</div>
-          <div style="padding:7px;background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.15);border-radius:6px;font-size:12px;font-weight:700;color:var(--gd);text-align:center">
+          <div id="sale-item-tot-${it.idx}" style="padding:7px;background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.15);border-radius:6px;font-size:12px;font-weight:700;color:var(--gd);text-align:center">
             ${it.doz&&it.prc?Math.round(it.doz*it.prc).toLocaleString('fa-IR'):'—'}
           </div>
         </div>
       </div>
     </div>`).join('');
+}
+
+function updateItemTotals(){
+  // فقط جمله هر ردیف را آپدیت کن — بدون re-render
+  _saleItems.forEach(it=>{
+    const el=document.getElementById("sale-item-tot-"+it.idx);
+    if(el) el.textContent=it.doz&&it.prc?Math.round(it.doz*it.prc).toLocaleString('fa-IR'):'—';
+  });
 }
 
 function calcSaleSummary(){
@@ -3681,8 +3748,8 @@ function calcSaleSummary(){
   document.getElementById("s-wage-j-display").textContent=afnN(wj);
   document.getElementById("s-wage-s-display").textContent=afnN(ws);
   document.getElementById("s-rem").value=afnN(rem);
-  // re-render items for جمله column
-  renderSaleItems();
+  // فقط جمله‌ها را آپدیت کن — بدون re-render (تا کیبورد گم نشود)
+  updateItemTotals();
 }
 function searchCust(q){
   const dd=document.getElementById("cust-dd");
@@ -4392,11 +4459,12 @@ async function submitCash(){
   const baseDesc=document.getElementById("c-desc").value;
   const fullDesc=(person?person+" — ":"")+baseDesc+(currency==="usd"?" | $ "+usdAmt+" × "+usdRate:"");
   const res=await sbPost("cash_ledger",{
-    date:document.getElementById("c-date").value,category:cat,
+    date:document.getElementById("c-date").value,
+    category:cat,
     type:cashType,
     description:fullDesc,
-    amount_in:cat==="in"?amt:0,amount_out:cat==="out"?amt:0,
-    notes:person||null
+    amount_in:cat==="in"?amt:0,
+    amount_out:cat==="out"?amt:0
   });
   if(res){
     // اگر خروجی است و نام شخص دارد → به employee_payments هم ثبت شود
@@ -4483,8 +4551,11 @@ function renderCustTable(salesMap){
       <td class="tdr" style="color:var(--bl)">${afn(sm.tot)}</td>
       <td class="tdr" style="color:var(--gr)">${afn(sm.paid+collected)}</td>
       <td>${tot>0?`<span class="bb br2">${afn(tot)}</span>`:'<span class="bb bg2">تسویه ✅</span>'}</td>
-      <td style="display:flex;gap:4px">${isAdmin?`<button onclick="openEditCust('${c.id}')" style="background:var(--g3);border:1px solid rgba(232,160,32,.3);color:var(--gd);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">✏️</button>
-        <button onclick="openCustCRM('${c.id}','${c.n.replace(/'/g,'')}')" style="background:var(--bl2);border:1px solid rgba(59,158,255,.3);color:var(--bl);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">📝</button>`:"—"}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap">
+        <button onclick="openPersonStatement('cust','${c.id}','${c.n.replace(/'/g,'')}')" style="background:rgba(59,158,255,.12);border:1px solid rgba(59,158,255,.3);color:var(--bl);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">📊</button>
+        ${isAdmin?`<button onclick="openEditCust('${c.id}')" style="background:var(--g3);border:1px solid rgba(232,160,32,.3);color:var(--gd);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">✏️</button>
+        <button onclick="openCustCRM('${c.id}','${c.n.replace(/'/g,'')}')" style="background:var(--bl2);border:1px solid rgba(59,158,255,.3);color:var(--bl);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">📝</button>`:""}
+      </td>
     </tr>`;
   }).join("");
 }
@@ -4550,7 +4621,10 @@ async function renderSupp(){
       <td class="tdr" style="color:var(--bl);font-weight:700">${usd(b)}</td>
       <td class="tdr" style="color:var(--gd)">${afn(b*S.usdRate)}</td>
       <td>${b>0?'<span class="bb br2">بدهکار</span>':'<span class="bb bg2">تسویه</span>'}</td>
-      <td>${isAdmin?`<button onclick="openEditSupp('${s.id}')" style="background:var(--g3);border:1px solid rgba(232,160,32,.3);color:var(--gd);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">✏️</button>`:"—"}</td>
+      <td style="display:flex;gap:4px">
+        <button onclick="openPersonStatement('supp','${s.id}','${s.n.replace(/'/g,'')}')" style="background:rgba(59,158,255,.12);border:1px solid rgba(59,158,255,.3);color:var(--bl);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">📊</button>
+        ${isAdmin?`<button onclick="openEditSupp('${s.id}')" style="background:var(--g3);border:1px solid rgba(232,160,32,.3);color:var(--gd);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">✏️</button>`:""}
+      </td>
     </tr>`;
   }).join("");
 }
@@ -8170,6 +8244,182 @@ async function renderExpenses(){
   }).join(""):'<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--t3)">هیچ مصرفی ثبت نشده</td></tr>';
 }
 // ══ END EXPENSES ══
+
+// ══ PERSON STATEMENT ══
+let _stmtRows=[];
+let _stmtType="";
+let _stmtId="";
+
+async function openPersonStatement(type, id, name){
+  _stmtType=type;
+  _stmtId=id;
+  document.getElementById("stmt-title").textContent="📊 تاریخچه معاملات — "+name;
+  document.getElementById("stmt-body").innerHTML='<div style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></div>';
+  document.getElementById("stmt-kpi").innerHTML="";
+  document.getElementById("stmt-final-bal").textContent="در حال بارگذاری...";
+  openModal("modalStatement");
+
+  _stmtRows=[];
+  if(type==="cust"){
+    const cust=CUSTOMERS.find(c=>c.id===id);
+    const ob=+(cust?.ob)||0;
+
+    // فروش‌ها
+    const sales=await sbGet("sales","?cust_id=eq."+id+"&order=date.asc")||[];
+    sales.forEach(r=>{
+      _stmtRows.push({
+        date:r.date, type:"sale", label:"فروش",
+        icon:"🛒", color:"var(--bl)",
+        detail:(r.bill?"بل "+r.bill+" | ":"")+r.product+" × "+r.dozen+" درجن",
+        debit:+r.total||0, credit:+r.paid||0,
+        bill:r.bill||""
+      });
+    });
+
+    // وصول مطالبات
+    const collects=await sbGet("collection_payments","?cust_id=eq."+id+"&order=date.asc")||[];
+    collects.forEach(r=>{
+      _stmtRows.push({
+        date:r.date, type:"collect", label:"وصول",
+        icon:"✅", color:"var(--gr)",
+        detail:r.note||"وصول نقدی",
+        debit:0, credit:+r.amount||0
+      });
+    });
+
+    // مرتب بر اساس تاریخ
+    _stmtRows.sort((a,b)=>a.date>b.date?1:-1);
+
+    // KPI
+    const totSales=_stmtRows.filter(r=>r.type==="sale").reduce((a,r)=>a+r.debit,0);
+    const totCollect=_stmtRows.filter(r=>r.type==="collect").reduce((a,r)=>a+r.credit,0);
+    const totPaid=sales.reduce((a,r)=>a+(+r.paid||0),0);
+    const finalBal=ob+totSales-totPaid-totCollect;
+
+    document.getElementById("stmt-kpi").innerHTML=
+      kpiBox("موجودی اول","gd",afn(ob))+
+      kpiBox("جمع فروش","bl",afn(totSales))+
+      kpiBox("جمع وصول","gr",afn(totPaid+totCollect))+
+      kpiBox("باقی طلب","rd",afn(Math.max(0,finalBal)))+
+      kpiBox("تعداد بل","t2",sales.length+" بل")+
+      kpiBox("تعداد وصول","t2",collects.length+" بار");
+
+    document.getElementById("stmt-final-bal").textContent=afn(Math.max(0,finalBal));
+    document.getElementById("stmt-final-bal").style.color=finalBal>0?"var(--rd)":"var(--gr)";
+
+    // موجودی اول را اول اضافه کن
+    if(ob>0){
+      _stmtRows.unshift({
+        date:"—", type:"ob", label:"موجودی اول",
+        icon:"🏁", color:"var(--gd)",
+        detail:"باقی از قبل از سیستم",
+        debit:ob, credit:0
+      });
+    }
+
+  } else if(type==="supp"){
+    // خریدها
+    const purchases=await sbGet("purchases","?supplier_id=eq."+id+"&order=date.asc")||[];
+    purchases.forEach(r=>{
+      _stmtRows.push({
+        date:r.date, type:"purchase", label:"خرید",
+        icon:"📦", color:"var(--og)",
+        detail:(r.bill?"بل "+r.bill+" | ":"")+r.material+" "+r.kg+"kg @ $"+r.amount_usd,
+        debit:+r.amount_usd||0, credit:+r.paid_afn||0,
+        bill:r.bill||""
+      });
+    });
+
+    // پرداخت‌ها به تامین‌کننده از cash_ledger
+    const cashPays=await sbGet("cash_ledger","?category=eq.out&type=eq.پرداخت به تامین‌کننده&order=date.asc")||[];
+    cashPays.filter(r=>r.description&&r.description.includes(id)).forEach(r=>{
+      _stmtRows.push({
+        date:r.date, type:"payment", label:"پرداخت",
+        icon:"💵", color:"var(--gr)",
+        detail:r.description||"پرداخت نقدی",
+        debit:0, credit:+r.amount_out||0
+      });
+    });
+
+    _stmtRows.sort((a,b)=>a.date>b.date?1:-1);
+
+    const totBuy=purchases.reduce((a,r)=>a+(+r.amount_usd||0),0);
+    const totPaid=purchases.reduce((a,r)=>a+(+r.paid_afn||0),0);
+    const suppBal=SUPPLIERS?SUPPLIERS.find(s=>s.id===id):null;
+    const balUsd=suppBal?+(suppBal.bal||0):0;
+
+    document.getElementById("stmt-kpi").innerHTML=
+      kpiBox("جمع خریدها ($)","og","$ "+totBuy.toFixed(2))+
+      kpiBox("پرداخت شده (؋)","gr",afn(totPaid))+
+      kpiBox("مانده ($)","rd","$ "+balUsd.toFixed(2))+
+      kpiBox("تعداد بل","t2",purchases.length+" بل");
+
+    document.getElementById("stmt-final-bal").textContent="$ "+balUsd.toFixed(2);
+    document.getElementById("stmt-final-bal").style.color=balUsd>0?"var(--rd)":"var(--gr)";
+  }
+
+  filterStmt();
+}
+
+function kpiBox(label,color,val){
+  return`<div style="background:var(--b3);border:1px solid var(--bd);border-radius:8px;padding:8px;text-align:center">
+    <div style="font-size:10px;color:var(--t2);margin-bottom:3px">${label}</div>
+    <div style="font-size:13px;font-weight:800;color:var(--${color})">${val}</div>
+  </div>`;
+}
+
+function filterStmt(){
+  const q=(document.getElementById("stmt-search").value||"").toLowerCase();
+  const f=document.getElementById("stmt-filter").value;
+  let rows=_stmtRows;
+  if(f!=="all") rows=rows.filter(r=>r.type===f);
+  if(q) rows=rows.filter(r=>r.detail.toLowerCase().includes(q)||r.date.includes(q)||(r.bill||"").includes(q));
+
+  let running=0;
+  document.getElementById("stmt-body").innerHTML=rows.length?
+    `<div style="overflow-x:auto"><table class="tbl">
+      <thead><tr><th>#</th><th>تاریخ</th><th>نوع</th><th>شرح</th><th class="tdr">بدهکار</th><th class="tdr">بستانکار</th><th class="tdr">مانده</th></tr></thead>
+      <tbody>`+
+    rows.map((r,i)=>{
+      running+=r.debit-r.credit;
+      return`<tr>
+        <td style="color:var(--t3);font-size:10px">${i+1}</td>
+        <td style="font-size:11px;color:var(--t2)">${r.date}</td>
+        <td><span style="font-size:10px;font-weight:700;color:${r.color}">${r.icon} ${r.label}</span></td>
+        <td style="font-size:11px;max-width:140px;word-break:break-word">${r.detail}</td>
+        <td class="tdr" style="color:var(--rd);font-weight:700">${r.debit>0?afn(r.debit):""}</td>
+        <td class="tdr" style="color:var(--gr);font-weight:700">${r.credit>0?afn(r.credit):""}</td>
+        <td class="tdr" style="font-weight:800;color:${running>0?"var(--rd)":"var(--gr)"}">${afn(running)}</td>
+      </tr>`;
+    }).join("")+
+    `</tbody></table></div>`
+    :'<div style="text-align:center;padding:20px;color:var(--t3)">هیچ معامله‌ای ثبت نشده</div>';
+}
+
+function printStatement(){
+  const title=document.getElementById("stmt-title").textContent;
+  const body=document.getElementById("stmt-body").innerHTML;
+  const kpi=document.getElementById("stmt-kpi").innerHTML;
+  const bal=document.getElementById("stmt-final-bal").textContent;
+  const win=window.open("","_blank");
+  win.document.write(`<!DOCTYPE html><html dir="rtl"><head><meta charset="UTF-8">
+    <title>${title}</title>
+    <style>body{font-family:Vazirmatn,sans-serif;padding:20px;direction:rtl}
+    table{width:100%;border-collapse:collapse}
+    th,td{border:1px solid #ddd;padding:6px 10px;text-align:right;font-size:12px}
+    th{background:#f5f5f5}
+    .kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+    .kpi-box{border:1px solid #ddd;border-radius:6px;padding:8px;text-align:center}
+    h2{margin-bottom:12px}</style></head><body>
+    <h2>${title}</h2>
+    <div class="kpi">${kpi}</div>
+    ${body}
+    <div style="margin-top:16px;text-align:left;font-size:14px;font-weight:bold">مانده نهایی: ${bal}</div>
+    </body></html>`);
+  win.document.close();
+  win.print();
+}
+// ══ END STATEMENT ══
 </script>
 </body>
 </html>
