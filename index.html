@@ -842,12 +842,23 @@ select option{background:#1a1820}
     </div>
     <!-- PROD -->
     <div id="page-prod" class="page">
-      <div class="ib info">☁️ جمشید = ماشین‌کار | سمیع‌الله = بسته‌بندی | مواد اتومات کسر</div>
+      <!-- KPI تولید -->
+      <div class="kg k3" style="margin-bottom:12px">
+        <div class="kc gr"><div class="kl">🏭 تولید امروز</div><div class="kv" id="prod-today-doz">—</div><div class="ks">درجن</div></div>
+        <div class="kc bl"><div class="kl">📅 تولید این ماه</div><div class="kv" id="prod-month-doz">—</div><div class="ks">درجن</div></div>
+        <div class="kc gd"><div class="kl">📦 جمع کل تولید</div><div class="kv" id="prod-total-doz">—</div><div class="ks">درجن</div></div>
+      </div>
+      <!-- خلاصه ماشین‌ها -->
+      <div class="card" style="margin-bottom:12px">
+        <div class="ct" style="margin-bottom:8px">🏭 تولید امروز به تفکیک ماشین</div>
+        <div id="prod-machines-today" style="color:var(--t3);font-size:12px;text-align:center;padding:8px">هنوز تولیدی ثبت نشده</div>
+      </div>
+      <div class="ib info" style="margin-bottom:8px">☁️ جمشید = ماشین‌کار | سمیع‌الله = بسته‌بندی | مواد اتومات کسر</div>
       <div class="card">
-        <div class="ct">🏭 دفتر تولید | <span id="prod-count" style="color:var(--gd)">—</span></div>
+        <div class="ct">📋 دفتر تولید | <span id="prod-count" style="color:var(--gd)">—</span></div>
         <div class="tw"><table>
-          <thead><tr><th>#</th><th>تاریخ</th><th>سرکاریگر</th><th>مدل</th><th>درجن</th><th>اجرت کل</th><th>پرداختی</th><th>باقی</th><th>✏️</th></tr></thead>
-          <tbody id="prod-tbody"><tr><td colspan="9" style="text-align:center;padding:20px;color:var(--t3)"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
+          <thead><tr><th>#</th><th>تاریخ</th><th>سرکاریگر</th><th>مدل</th><th>درجن</th><th>✏️</th></tr></thead>
+          <tbody id="prod-tbody"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--t3)"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
         </table></div>
       </div>
     </div>
@@ -1251,8 +1262,14 @@ select option{background:#1a1820}
       <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
         <div class="fg" style="margin:0"><label style="font-size:11px;color:var(--t2)">از تاریخ</label><input class="fg input" id="rpt-from" style="padding:7px 10px;background:var(--b3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:inherit;font-size:12px;margin-top:3px" placeholder="۱۴۰۴/۰۱/۰۱"/></div>
         <div class="fg" style="margin:0"><label style="font-size:11px;color:var(--t2)">تا تاریخ</label><input class="fg input" id="rpt-to" style="padding:7px 10px;background:var(--b3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:inherit;font-size:12px;margin-top:3px" placeholder="۱۴۰۴/۱۲/۲۹"/></div>
-        <button class="btn bpri" style="margin-top:18px" onclick="exportReportExcel()">📥 Export Excel</button>
-        <button class="btn bsec" style="margin-top:18px" onclick="exportReportPDF()">🖨️ چاپ / PDF</button>
+        <button class="btn bpri" style="margin-top:18px" onclick="exportReportExcel()">📥 Export CSV</button>
+        <button class="btn bpri" style="margin-top:18px;background:rgba(37,211,102,.15);border-color:rgba(37,211,102,.3);color:#25d366" onclick="exportMonthlyCSV()">📥 Export کامل</button>
+        <button class="btn bsec" style="margin-top:18px" onclick="printReport()">🖨️ چاپ / PDF</button>
+      </div>
+      <!-- گزارش ماهانه اتومات -->
+      <div class="card" style="margin-bottom:12px">
+        <div class="ct">📅 گزارش ماهانه — خلاصه عملیات</div>
+        <div id="rpt-more-body"><div style="text-align:center;padding:20px;color:var(--t3)">در حال بارگذاری...</div></div>
       </div>
       <div class="card" id="rpt-output">
         <div style="text-align:center;padding:30px;color:var(--t3)">
@@ -1402,7 +1419,14 @@ select option{background:#1a1820}
       </div>
       <div class="card">
         <div class="ct">💱 نرخ دالر روزانه</div>
-        <div class="fg"><label>نرخ دالر (افغانی)</label><input type="number" id="rateInput" value="68"/></div>
+        <div class="fg">
+          <label>نرخ دالر (افغانی)</label>
+          <div style="display:flex;gap:8px">
+            <input type="number" id="rateInput" value="70" style="flex:1"/>
+            <button onclick="saveUsdRate()" class="btn bpri" style="padding:8px 14px;font-size:12px;flex-shrink:0">💾 ذخیره</button>
+          </div>
+          <div id="rate-info" style="font-size:11px;color:var(--t2);margin-top:4px"></div>
+        </div>
         <button class="btn bpri btn-full" onclick="saveRate()">ذخیره نرخ ✓</button>
       </div>
       <div class="card">
@@ -1578,7 +1602,21 @@ select option{background:#1a1820}
         <div class="fg"><label>شماره بل</label><input id="b-bill"/></div>
       </div>
       <div class="fg"><label>تامین‌کننده</label><select id="b-supp"></select></div>
-      <div class="fg"><label>نرخ دالر (؋)</label><input type="number" id="b-rate" oninput="calcBuyItems()"/></div>
+
+      <!-- نوع معامله -->
+      <div class="fg"><label>نوع معامله</label>
+        <select id="b-currency" onchange="toggleBuyCurrency()"
+          style="width:100%;padding:9px;background:var(--b3);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-family:inherit;font-size:13px">
+          <option value="usd">💵 دالری (اشترک لایت، آی‌سی، مواد کیمیاوی)</option>
+          <option value="afn">؋ افغانی (کرش، مواد داخلی)</option>
+        </select>
+      </div>
+
+      <!-- نرخ دالر — فقط برای معامله دالری -->
+      <div class="fg" id="b-rate-wrap">
+        <label>نرخ دالر (؋)</label>
+        <input type="number" id="b-rate" oninput="calcBuyItems()"/>
+      </div>
 
       <!-- اقلام خرید -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 4px">
@@ -1589,7 +1627,7 @@ select option{background:#1a1820}
 
       <!-- خلاصه -->
       <div style="background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.15);border-radius:10px;padding:10px;margin-top:8px">
-        <div style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0">
+        <div id="b-tot-usd-row" style="display:flex;justify-content:space-between;font-size:12px;padding:3px 0">
           <span style="color:var(--t2)">جمع کل ($):</span>
           <span id="b-tot-usd" style="font-weight:800;color:var(--gd)">$ 0</span>
         </div>
@@ -1599,9 +1637,18 @@ select option{background:#1a1820}
         </div>
       </div>
 
-      <div class="row2" style="margin-top:8px">
+      <!-- پرداخت -->
+      <div class="fg" style="margin-top:8px"><label>نوع پرداخت</label>
+        <select id="b-pay-type"
+          style="width:100%;padding:9px;background:var(--b3);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-family:inherit;font-size:13px">
+          <option value="credit">🔴 قرض — بعداً پرداخت می‌شود</option>
+          <option value="cash">✅ نقد — همین الان پرداخت شد</option>
+          <option value="partial">⚡ نسبی — بخشی نقد، بخشی قرض</option>
+        </select>
+      </div>
+      <div class="row2" id="b-paid-wrap" style="display:none">
         <div class="fg"><label>پرداختی (؋)</label><input type="number" id="b-paid" min="0" oninput="calcBuyItems()"/></div>
-        <div class="fg"><label>باقی ($)</label><input id="b-rem-usd" readonly/></div>
+        <div class="fg"><label>باقی</label><input id="b-rem-usd" readonly/></div>
       </div>
 
       <!-- ماده جدید -->
@@ -2642,6 +2689,38 @@ select option{background:#1a1820}
 </div>
 
 
+<!-- ══ SUPPLIER PAYMENT MODAL ══ -->
+<div class="modal-overlay" id="modalSuppPay">
+  <div class="modal">
+    <div class="modal-head"><h3>💵 پرداخت به تامین‌کننده</h3><button class="close-btn" onclick="closeModal('modalSuppPay')">✕</button></div>
+    <div class="modal-body">
+      <div id="sp-msg"></div>
+      <div class="ib warn" id="sp-bal-info" style="margin-bottom:8px"></div>
+      <input type="hidden" id="sp-id"/>
+      <input type="hidden" id="sp-name-h"/>
+      <div class="row2">
+        <div class="fg"><label>تاریخ</label><input id="sp-date"/></div>
+        <div class="fg"><label>نرخ دالر (؋)</label><input type="number" id="sp-rate" min="0"/></div>
+      </div>
+      <div class="fg"><label>مبلغ پرداختی (؋)</label>
+        <input type="number" id="sp-amt" min="0" oninput="calcSuppPay()" placeholder="؋ 0"/>
+      </div>
+      <div id="sp-calc" class="ib info" style="font-size:11px"></div>
+      <div class="fg"><label>یادداشت</label>
+        <input id="sp-note" placeholder="مثال: پرداخت قسط ماه حمل..."/>
+      </div>
+      <div class="fg"><label>شماره تلفون (برای واتساپ)</label>
+        <input id="sp-phone" placeholder="07xxxxxxxx"/>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn bsec" onclick="closeModal('modalSuppPay')">انصراف</button>
+      <button class="btn bpri" onclick="submitSuppPay()" id="sp-btn">ثبت پرداخت ✓</button>
+    </div>
+  </div>
+</div>
+
+
 <script>
 // ══ ORDERS v2 — چند آیتم ══
 const PRD_NAMES={استاندارد:"PCU استاندارد ۳۶-۴۲",ویژه:"PCU ویژه ۴۳-۴۵",کودکانه:"PCU کودکانه ۲۴-۳۵"};
@@ -3336,13 +3415,21 @@ async function renderDash(){
   document.getElementById("dash-alerts").innerHTML=alerts;
 
   document.getElementById("dash-kpis").innerHTML=[
-    {l:"موجودی نقد",v:afn(cash),s:"افغانی",c:"gd",e:"💵"},
-    {l:"طلبات مشتریان",v:afn(custOB+custNew),s:"۱۲۴ مشتری",c:"bl",e:"👥"},
+    {l:"موجودی صندوق",v:afn(cash),s:cash>=0?"✅ موجود":"⚠️ کمبود",c:cash>=0?"gd":"rd",e:"💵"},
+    {l:"طلبات مشتریان",v:afn(custOB+custNew),s:"کل طلبات",c:"bl",e:"👥"},
     {l:"سود ناخالص",v:afn(gp),s:ts>0?Math.round(gp/ts*100)+"% حاشیه":"—",c:"gr",e:"💹"},
     {l:"بدهی تامین‌کنندگان",v:usd(suppUSD),s:"≈ "+afn(suppUSD*S.usdRate),c:"rd",e:"🏭"},
     {l:"سود خالص",v:afn(np),s:"",c:np>=0?"gr":"rd",e:"📊"},
     {l:"ارزش موجودی",v:afn(invVal),s:"میانگین متحرک",c:"tl",e:"📦"},
   ].map(k=>`<div class="kc ${k.c}"><div class="ke">${k.e}</div><div class="kl">${k.l}</div><div class="kv">${k.v}</div>${k.s?`<div class="ks">${k.s}</div>`:""}</div>`).join("");
+
+  // ── صندوق امروز ──
+  const todayCashIn=(cashData||[]).filter(r=>r.date===today()&&r.category==="in").reduce((a,r)=>a+(+r.amount_in||0),0);
+  const todayCashOut=(cashData||[]).filter(r=>r.date===today()&&r.category==="out").reduce((a,r)=>a+(+r.amount_out||0),0);
+  const cashAlerts=document.getElementById("dash-alerts");
+  let alertHtml=cashAlerts.innerHTML||"";
+  alertHtml+=`<div class="ib info" style="margin-top:6px">💵 امروز: ورودی ${afn(todayCashIn)} | خروجی ${afn(todayCashOut)} | خالص ${afn(todayCashIn-todayCashOut)}</div>`;
+  cashAlerts.innerHTML=alertHtml;
 
   const pm={};
   CUSTOMERS.forEach(c=>pm[c.p]=(pm[c.p]||0)+c.ob);
@@ -3425,26 +3512,59 @@ async function renderBuy(){
 // ── PROD ──
 let allProd=[];
 async function renderProd(){
-  document.getElementById("prod-tbody").innerHTML='<tr><td colspan="9" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr>';
+  document.getElementById("prod-tbody").innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr>';
   allProd=await sbGet("production","?order=id.desc")||[];
   document.getElementById("prod-count").textContent=allProd.length+" رکورد";
+
+  // KPI
+  const todayRecs=allProd.filter(r=>r.date===today());
+  const monthStr=today().slice(0,7);
+  const monthRecs=allProd.filter(r=>r.date?.slice(0,7)===monthStr);
+  const todayDoz=todayRecs.reduce((a,r)=>a+(+r.dozen||0),0);
+  const monthDoz=monthRecs.reduce((a,r)=>a+(+r.dozen||0),0);
+  const totalDoz=allProd.reduce((a,r)=>a+(+r.dozen||0),0);
+  ['prod-today-doz','prod-month-doz','prod-total-doz'].forEach((id,i)=>{
+    const el=document.getElementById(id);
+    if(el) el.textContent=[todayDoz,monthDoz,totalDoz][i].toFixed(1);
+  });
+
+  // خلاصه ماشین‌های امروز
+  const machineMap={};
+  todayRecs.forEach(r=>{
+    if(!machineMap[r.worker]) machineMap[r.worker]={doz:0,items:[]};
+    machineMap[r.worker].doz+=(+r.dozen||0);
+    machineMap[r.worker].items.push(r.product+" "+r.dozen+"درجن");
+  });
+  const mEl=document.getElementById("prod-machines-today");
+  if(mEl){
+    mEl.innerHTML=Object.keys(machineMap).length
+      ? Object.entries(machineMap).map(([w,d])=>
+          '<div style="padding:6px 0;border-bottom:1px solid var(--bd)">'
+          +'<div style="display:flex;justify-content:space-between;font-size:12px">'
+          +'<span style="font-weight:700">👷 '+w+'</span>'
+          +'<span style="color:var(--gd);font-weight:800">'+d.doz.toFixed(1)+' درجن</span></div>'
+          +'<div style="font-size:10px;color:var(--t2);margin-top:2px">'+d.items.join(' | ')+'</div></div>'
+        ).join("")
+      : '<div style="color:var(--t3);text-align:center;padding:8px">امروز تولیدی ثبت نشده</div>';
+  }
+
   const tb=document.getElementById("prod-tbody");
-  if(!allProd.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--t3);padding:18px">هنوز تولیدی ثبت نشده</td></tr>';return;}
+  if(!allProd.length){
+    tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--t3);padding:18px">هنوز تولیدی ثبت نشده</td></tr>';
+    return;
+  }
   tb.innerHTML=allProd.map((r,i)=>`<tr>
-    <td style="color:var(--t3)">${i+1}</td><td>${r.date}</td>
+    <td style="color:var(--t3);font-size:10px">${i+1}</td>
+    <td style="font-size:11px">${r.date}</td>
     <td style="font-weight:700;color:var(--gd)">${r.worker}</td>
-    <td><span class="bb bpp">${r.product}</span></td>
-    <td style="font-weight:700">${r.dozen}</td>
-    <td class="tdr" style="font-weight:700">${afn(r.total_wage)}</td>
-    <td class="tdr" style="color:var(--gr)">${afn(r.paid_wage)}</td>
-    <td>${+r.remaining_wage>0?`<span class="bb br2">${afn(r.remaining_wage)}</span>`:'<span class="bb bg2">تسویه</span>'}</td>
+    <td><span class="bb bpp" style="font-size:10px">${r.product}</span></td>
+    <td style="font-weight:800;color:var(--gd)">${r.dozen}</td>
     <td style="display:flex;gap:3px">
       <button onclick="openEditRecord('production',${r.id})" style="${_editBtnStyle('bl')}">✏️</button>
       <button onclick="deleteRecord('production',${r.id},'renderProd')" style="${_editBtnStyle('rd')}">🗑️</button>
     </td>
   </tr>`).join("");
 }
-
 // ── STOCK ──
 // ── CASH ──
 let allCash=[];
@@ -3531,6 +3651,8 @@ async function renderReport(){
 // ── SETTINGS ──
 async function renderSettings(){
   document.getElementById("rateInput").value=S.usdRate;
+  // نرخ آنلاین دالر
+  fetchUsdRate();
   // init vocab tab
   switchVocabTab('menu');
   renderWageRatesTable();
@@ -3892,6 +4014,33 @@ async function submitSale(){
       if(samiullah&&totalWageS>0) await sbPost("employee_payments",{employee_id:samiullah.id,employee_name:"سمیع‌الله",date:saleDate,amount_afn:totalWageS,type:"salary",notes:wageNote});
     }
 
+    // ══ ثبت در صندوق ══
+    const billDesc="بل "+(billNo||"—")+" | "+custName+" | "+validItems.length+" قلم";
+    if(paid>0){
+      // پول نقد رسیده → ورودی صندوق
+      await sbPost("cash_ledger",{
+        date:saleDate,
+        category:"in",
+        type:"وصول از مشتری",
+        description:"فروش نقدی — "+billDesc,
+        amount_in:paid,
+        amount_out:0
+      });
+    }
+    if(remAll>0){
+      // مقدار قرض → در صندوق ریکورد شود به عنوان طلب
+      await sbPost("cash_ledger",{
+        date:saleDate,
+        category:"in",
+        type:"طلب فروش (قرض)",
+        description:"قرض — "+billDesc+" | باقی: "+afn(remAll),
+        amount_in:0,
+        amount_out:0,
+        notes:"debt|"+(_selCust?.id||"new")
+      });
+    }
+    // ══ END صندوق ══
+
     // پیام واتساپ — خلاصه بل
     const custPhone=_selCust?.ph||"";
     const itemLines=validItems.map(it=>["📦",it.doz,"درجن",it.prod,"=",afn(it.doz*it.prc)].join(" ")).join("\n");
@@ -4175,12 +4324,36 @@ function initBuyModal(){
   document.getElementById("b-rate").value=S.usdRate||70;
   document.getElementById("b-paid").value="";
   document.getElementById("buy-msg").innerHTML="";
+  document.getElementById("b-currency").value="usd";
+  document.getElementById("b-pay-type").value="credit";
+  document.getElementById("b-paid-wrap").style.display="none";
   if(document.getElementById("b-new-mat")) document.getElementById("b-new-mat").value="";
   if(document.getElementById("b-new-mat-msg")) document.getElementById("b-new-mat-msg").innerHTML="";
   _buyItems=[];_buyItemIdx=0;
+  toggleBuyCurrency();
   addBuyItem();
   calcBuyItems();
 }
+
+function toggleBuyCurrency(){
+  const cur=document.getElementById("b-currency").value;
+  const isUsd=cur==="usd";
+  document.getElementById("b-rate-wrap").style.display=isUsd?"block":"none";
+  document.getElementById("b-tot-usd-row").style.display=isUsd?"flex":"none";
+  calcBuyItems();
+}
+
+// وقتی نوع پرداخت عوض شود
+document.addEventListener("change",function(e){
+  if(e.target.id==="b-pay-type"){
+    const v=e.target.value;
+    document.getElementById("b-paid-wrap").style.display=v==="cash"||v==="partial"?"flex":"none";
+    if(v==="cash"){
+      // نقد: همه مبلغ را پر کن
+      calcBuyItems();
+    }
+  }
+});
 
 function addBuyItem(){
   _buyItemIdx++;
@@ -4204,8 +4377,9 @@ function renderBuyItems(){
   const el=document.getElementById("buy-items-list");
   if(!el) return;
   const rate=+(document.getElementById("b-rate").value)||70;
+  const isUsd=document.getElementById("b-currency").value==="usd";
   el.innerHTML=_buyItems.map(it=>{
-    const afnAmt=Math.round(it.usd*rate);
+    const afnAmt=isUsd?Math.round(it.usd*rate):(it.usd||0);
     const upm=it.kg>0?Math.round(afnAmt/it.kg):0;
     return`<div style="background:var(--b3);border:1px solid var(--bd);border-radius:8px;padding:8px;margin-bottom:6px">
       <div style="display:flex;gap:6px;margin-bottom:5px;align-items:center">
@@ -4224,14 +4398,14 @@ function renderBuyItems(){
             style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-weight:700;font-family:inherit;font-size:12px"/>
         </div>
         <div style="flex:1">
-          <div style="font-size:10px;color:var(--t2);margin-bottom:2px">مبلغ ($)</div>
-          <input type="number" value="${it.usd||""}" min="0" step="0.01" placeholder="0"
+          <div style="font-size:10px;color:var(--t2);margin-bottom:2px">${isUsd?"مبلغ ($)":"مبلغ (؋)"}</div>
+          <input type="number" value="${it.usd||""}" min="0" step="${isUsd?"0.01":"1"}" placeholder="0"
             oninput="updateBuyItem(${it.idx},'usd',this.value)"
-            style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--bl);font-weight:700;font-family:inherit;font-size:12px"/>
+            style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:${isUsd?"var(--bl)":"var(--gd)"};font-weight:700;font-family:inherit;font-size:12px"/>
         </div>
         <div style="flex:1">
           <div style="font-size:10px;color:var(--t2);margin-bottom:2px">؋/کیلو</div>
-          <div style="padding:6px;background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.15);border-radius:6px;font-size:11px;font-weight:700;color:var(--gd);text-align:center">
+          <div id="buy-item-upm-${it.idx}" style="padding:6px;background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.15);border-radius:6px;font-size:11px;font-weight:700;color:var(--gd);text-align:center">
             ${upm>0?Math.round(upm).toLocaleString("fa-IR"):"—"}
           </div>
         </div>
@@ -4242,16 +4416,27 @@ function renderBuyItems(){
 
 function calcBuyItems(){
   const rate=+(document.getElementById("b-rate").value)||70;
+  const isUsd=document.getElementById("b-currency").value==="usd";
+  const payType=document.getElementById("b-pay-type").value;
   const totUsd=_buyItems.reduce((a,it)=>a+it.usd,0);
-  const totAfn=Math.round(totUsd*rate);
-  const pAfn=+(document.getElementById("b-paid").value)||0;
-  const remUsd=totUsd-pAfn/rate;
+  const totAfn=isUsd?Math.round(totUsd*rate):Math.round(totUsd);
+  const pAfn=+(document.getElementById("b-paid")?.value)||0;
+
   const tu=document.getElementById("b-tot-usd");
   const ta=document.getElementById("b-tot-afn");
   const ru=document.getElementById("b-rem-usd");
   if(tu) tu.textContent="$ "+totUsd.toFixed(2);
   if(ta) ta.textContent=afn(totAfn);
-  if(ru) ru.value="$ "+remUsd.toFixed(2);
+
+  if(payType==="cash"&&ru){
+    // نقد: باقی صفر
+    ru.value="؋ 0";
+  } else if(payType==="credit"&&ru){
+    ru.value=isUsd?"$ "+totUsd.toFixed(2):afn(totAfn);
+  } else if(ru){
+    const rem=isUsd?(totUsd-pAfn/rate):(totAfn-pAfn);
+    ru.value=isUsd?"$ "+Math.max(0,rem).toFixed(2):afn(Math.max(0,rem));
+  }
   renderBuyItems();
 }
 
@@ -4278,8 +4463,9 @@ async function addNewMaterial(){
 }
 async function submitBuy(){
   const sid=document.getElementById("b-supp").value;
-  const rate=+(document.getElementById("b-rate").value)||70;
-  const pAfn=+(document.getElementById("b-paid").value)||0;
+  const isUsd=document.getElementById("b-currency").value==="usd";
+  const rate=isUsd?(+(document.getElementById("b-rate").value)||70):1;
+  const payType=document.getElementById("b-pay-type").value;
   const validItems=_buyItems.filter(it=>it.kg>0&&it.usd>0);
   if(!sid||!validItems.length){
     document.getElementById("buy-msg").innerHTML='<div class="ib err">تامین‌کننده و حداقل یک قلم الزامی</div>';return;
@@ -4288,38 +4474,70 @@ async function submitBuy(){
   const billNo=document.getElementById("b-bill").value;
   const buyDate=document.getElementById("b-date").value;
   const totUsd=validItems.reduce((a,it)=>a+it.usd,0);
-  const remUsd=totUsd-pAfn/rate;
+  const totAfn=isUsd?Math.round(totUsd*rate):Math.round(totUsd);
+
+  // پرداختی
+  let pAfn=0;
+  if(payType==="cash") pAfn=totAfn;
+  else if(payType==="partial") pAfn=+(document.getElementById("b-paid").value)||0;
+  // قرض: pAfn=0
+
+  const remAfn=Math.max(0,totAfn-pAfn);
+  const remUsd=isUsd?Math.max(0,totUsd-pAfn/rate):0;
+
   document.getElementById("buy-btn").disabled=true;
   document.getElementById("buy-btn").textContent="در حال ذخیره...";
 
   let saved=0;
   for(const it of validItems){
-    const tAfn=it.usd*rate;
+    const tAfn=isUsd?Math.round(it.usd*rate):it.usd;
     const upm=it.kg>0?tAfn/it.kg:0;
-    // paid نسبی
-    const itemPaid=Math.round(pAfn*(it.usd/totUsd));
-    const itemRemUsd=it.usd-itemPaid/rate;
+    const itemPaidRatio=totAfn>0?tAfn/totAfn:0;
+    const itemPaid=Math.round(pAfn*itemPaidRatio);
+    const itemRemUsd=isUsd?(it.usd-itemPaid/rate):(tAfn-itemPaid);
     const res=await sbPost("purchases",{
       date:buyDate,supplier_id:sid,supplier_name:sn,
       bill:billNo,material:it.mat,kg:it.kg,
-      amount_usd:it.usd,usd_rate:rate,amount_afn:tAfn,
-      paid_afn:itemPaid,remaining_usd:itemRemUsd,cost_per_kg:upm
+      amount_usd:isUsd?it.usd:0,
+      amount_afn:tAfn,
+      usd_rate:isUsd?rate:0,
+      paid_afn:itemPaid,
+      remaining_usd:isUsd?itemRemUsd:0,
+      remaining_afn:!isUsd?Math.max(0,tAfn-itemPaid):0,
+      cost_per_kg:upm,
+      currency:isUsd?"usd":"afn",
+      pay_type:payType
     });
     if(res){
       saved++;
       const cur=S.stockMap[it.mat]||{kg:0,avgCost:0,val:0};
-      const newKg=cur.kg+it.kg,newVal=cur.kg*cur.avgCost+it.kg*upm,newAvg=newKg>0?newVal/newKg:0;
+      const newKg=cur.kg+it.kg,newVal=cur.kg*(cur.avgCost||0)+it.kg*upm,newAvg=newKg>0?newVal/newKg:0;
       await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,avg_cost:newAvg,updated_at:new Date().toISOString()},"?material=eq."+encodeURIComponent(it.mat));
     }
   }
+
   if(saved===validItems.length){
+    // آپدیت مانده تامین‌کننده
     const curBal=S.suppMap[sid]?.bal||0;
-    await sbPatch("supplier_balances",{balance_usd:+(curBal+remUsd).toFixed(2),updated_at:new Date().toISOString()},"?supplier_id=eq."+sid);
+    const newBal=isUsd?+(curBal+remUsd).toFixed(2):+(curBal+(remAfn/rate)).toFixed(2);
+    await sbPatch("supplier_balances",{balance_usd:newBal,updated_at:new Date().toISOString()},"?supplier_id=eq."+sid);
+
+    // ثبت در صندوق اگر نقد پرداخت شد
+    if(pAfn>0){
+      await sbPost("cash_ledger",{
+        date:buyDate,category:"out",
+        type:"پرداخت به تامین‌کننده",
+        description:"خرید از "+sn+(billNo?" بل "+billNo:"")+(isUsd?" | نرخ دالر: "+rate:""),
+        amount_in:0,amount_out:pAfn
+      });
+    }
+
     await refreshStockMap();await refreshSuppMap();
-    document.getElementById("buy-msg").innerHTML='<div class="ib ok">✅ بل با '+saved+' قلم ذخیره شد! | جمع: $ '+totUsd.toFixed(2)+'</div>';
-    showSaved();setTimeout(()=>{closeModal("modalBuy");renderBuy();},1300);
+    const payLabel=payType==="cash"?"نقد":payType==="credit"?"قرض":"نسبی";
+    document.getElementById("buy-msg").innerHTML="<div class='ib ok'>✅ بل "+saved+" قلم | "+afn(totAfn)+" | "+payLabel+(remAfn>0?" | قرض: "+afn(remAfn):"")+"</div>";
+    showSaved();setTimeout(()=>{closeModal("modalBuy");renderBuy();},1400);
   } else {
-    document.getElementById("buy-msg").innerHTML='<div class="ib err">خطا در ذخیره! دوباره امتحان کن</div>';
+    document.getElementById("buy-msg").innerHTML='<div class="ib err">خطا! دوباره امتحان کن</div>';
   }
   document.getElementById("buy-btn").disabled=false;
   document.getElementById("buy-btn").textContent="ثبت بل خرید ✓";
@@ -4623,7 +4841,9 @@ async function renderSupp(){
       <td>${b>0?'<span class="bb br2">بدهکار</span>':'<span class="bb bg2">تسویه</span>'}</td>
       <td style="display:flex;gap:4px">
         <button onclick="openPersonStatement('supp','${s.id}','${s.n.replace(/'/g,'')}')" style="background:rgba(59,158,255,.12);border:1px solid rgba(59,158,255,.3);color:var(--bl);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">📊</button>
-        ${isAdmin?`<button onclick="openEditSupp('${s.id}')" style="background:var(--g3);border:1px solid rgba(232,160,32,.3);color:var(--gd);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">✏️</button>`:""}
+        ${isAdmin?`
+          <button onclick="openSuppPay('${s.id}','${s.n.replace(/'/g,'')}',${b})" style="background:rgba(37,211,102,.12);border:1px solid rgba(37,211,102,.3);color:#25d366;border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">💵 پرداخت</button>
+          <button onclick="openEditSupp('${s.id}')" style="background:var(--g3);border:1px solid rgba(232,160,32,.3);color:var(--gd);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">✏️</button>`:""}
       </td>
     </tr>`;
   }).join("");
@@ -5056,7 +5276,104 @@ async function updateCheque(id,status){
 // ── گزارش‌های تفصیلی ──
 let _lastRptData=[];
 let _lastRptTitle="";
-async function renderReportsMore(){}
+async function renderReportsMore(){
+  const el=document.getElementById("rpt-more-body");
+  if(el) el.innerHTML='<div style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></div>';
+
+  // جمع‌آوری داده‌های ماه‌ها
+  const [sales,purchases,cashLedger,expenses]=await Promise.all([
+    sbGet("sales","?select=date,total,paid,remaining,product,dozen,cust_name&order=date.asc"),
+    sbGet("purchases","?select=date,amount_afn,paid_afn,supplier_name&order=date.asc"),
+    sbGet("cash_ledger","?select=date,category,type,amount_in,amount_out&order=date.asc"),
+    sbGet("cash_ledger","?category=eq.out&select=date,type,amount_out&order=date.asc")
+  ]);
+
+  // گروه‌بندی بر اساس ماه
+  const months={};
+  const addMonth=(d,key,val)=>{
+    const m=d?.slice(0,7);if(!m)return;
+    if(!months[m]) months[m]={sales:0,salesDoz:0,paid:0,purchases:0,expenses:0,cashIn:0,cashOut:0,profit:0};
+    months[m][key]=(months[m][key]||0)+val;
+  };
+
+  (sales||[]).forEach(r=>{addMonth(r.date,"sales",+r.total||0);addMonth(r.date,"salesDoz",+r.dozen||0);addMonth(r.date,"paid",+r.paid||0);});
+  (purchases||[]).forEach(r=>addMonth(r.date,"purchases",+r.amount_afn||0));
+  (cashLedger||[]).forEach(r=>{
+    addMonth(r.date,"cashIn",+r.amount_in||0);
+    addMonth(r.date,"cashOut",+r.amount_out||0);
+  });
+
+  const sortedMonths=Object.keys(months).sort().reverse();
+  if(!sortedMonths.length){
+    if(el) el.innerHTML='<div style="text-align:center;padding:20px;color:var(--t3)">هنوز داده‌ای ثبت نشده</div>';
+    return;
+  }
+
+  // جدول ماهانه
+  let html=`<div class="tbl-wrap"><table class="tbl">
+    <thead><tr>
+      <th>ماه</th>
+      <th class="tdr">فروش (؋)</th>
+      <th class="tdr">درجن</th>
+      <th class="tdr">وصول (؋)</th>
+      <th class="tdr">خرید مواد</th>
+      <th class="tdr">مصارف</th>
+      <th class="tdr">ورودی صندوق</th>
+      <th class="tdr">خروجی صندوق</th>
+      <th class="tdr">مانده صندوق</th>
+    </tr></thead><tbody>`;
+
+  let runCash=0;
+  [...sortedMonths].reverse().forEach(m=>{
+    const d=months[m];
+    runCash+=d.cashIn-d.cashOut;
+    const profit=d.paid-d.cashOut;
+    d.runCash=runCash;
+  });
+
+  sortedMonths.forEach(m=>{
+    const d=months[m];
+    const [yr,mo]=m.split("/");
+    const moLabel=(yr||"")+"/"+( mo||"");
+    html+=`<tr>
+      <td style="font-weight:700;color:var(--gd)">${moLabel}</td>
+      <td class="tdr" style="color:var(--bl);font-weight:700">${afn(d.sales)}</td>
+      <td class="tdr" style="color:var(--t2)">${(d.salesDoz||0).toFixed(1)}</td>
+      <td class="tdr" style="color:var(--gr)">${afn(d.paid)}</td>
+      <td class="tdr" style="color:var(--og)">${afn(d.purchases)}</td>
+      <td class="tdr" style="color:var(--rd)">${afn(d.cashOut)}</td>
+      <td class="tdr" style="color:var(--gr)">${afn(d.cashIn)}</td>
+      <td class="tdr" style="color:var(--rd)">${afn(d.cashOut)}</td>
+      <td class="tdr" style="font-weight:800;color:${(d.runCash||0)>=0?"var(--gd)":"var(--rd)"}">${afn(d.runCash||0)}</td>
+    </tr>`;
+  });
+
+  html+="</tbody></table></div>";
+
+  // KPI کلی
+  const totSales=(sales||[]).reduce((a,r)=>a+(+r.total||0),0);
+  const totPaid=(sales||[]).reduce((a,r)=>a+(+r.paid||0),0);
+  const totRem=(sales||[]).reduce((a,r)=>a+(+r.remaining||0),0);
+  const totBuy=(purchases||[]).reduce((a,r)=>a+(+r.amount_afn||0),0);
+  const totCashIn=(cashLedger||[]).reduce((a,r)=>a+(+r.amount_in||0),0);
+  const totCashOut=(cashLedger||[]).reduce((a,r)=>a+(+r.amount_out||0),0);
+
+  const kpis=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+    ${[
+      ["جمع کل فروش","bl",afn(totSales)],
+      ["جمع وصول شده","gr",afn(totPaid)],
+      ["جمع طلبات","rd",afn(totRem)],
+      ["جمع خرید مواد","og",afn(totBuy)],
+      ["جمع ورودی صندوق","gr",afn(totCashIn)],
+      ["جمع خروجی صندوق","rd",afn(totCashOut)],
+    ].map(([l,c,v])=>`<div style="background:var(--b3);border:1px solid var(--bd);border-radius:8px;padding:10px">
+      <div style="font-size:10px;color:var(--t2)">${l}</div>
+      <div style="font-size:14px;font-weight:800;color:var(--${c})">${v}</div>
+    </div>`).join("")}
+  </div>`;
+
+  if(el) el.innerHTML=kpis+html;
+}
 
 async function runReport(type){
   const out=document.getElementById("rpt-output");
@@ -5277,23 +5594,73 @@ async function runReport(type){
   }
 }
 
-// ── Export Excel ──
+// ── Export Excel / CSV ──
 function exportReportExcel(){
-  if(!_lastRptData.length){alert("اول یک گزارش را اجرا کن");return;}
-  const rows=_lastRptData;
-  let csv="\uFEFF"; // BOM for UTF-8
-  const keys=Object.keys(rows[0]);
-  csv+=keys.join(",")+"\n";
-  rows.forEach(r=>{
-    csv+=keys.map(k=>{
-      const v=String(r[k]||"").replace(/,/g,"،");
-      return `"${v}"`;
-    }).join(",")+"\n";
+  // اگر گزارش ماهانه باشد آن را export کن
+  const monthlyEl=document.getElementById("rpt-more-body");
+  const rptEl=document.getElementById("rpt-output");
+
+  // اگر _lastRptData دارد از آن استفاده کن
+  if(_lastRptData&&_lastRptData.length){
+    const rows=_lastRptData;
+    let csv="\uFEFF";
+    const keys=Object.keys(rows[0]);
+    // ترجمه کلیدها
+    const keyMap={date:"تاریخ",cust_name:"مشتری",province:"ولایت",product:"مدل",dozen:"درجن",
+      total:"مبلغ کل",paid:"وصول",remaining:"باقی",supplier_name:"تامین‌کننده",
+      material:"ماده",kg:"کیلو",amount_usd:"مبلغ دالر",amount_afn:"مبلغ افغانی"};
+    csv+=keys.map(k=>keyMap[k]||k).join(",")+"\n";
+    rows.forEach(r=>{
+      csv+=keys.map(k=>'"'+ String(r[k]||"").replace(/"/g,"'") +'"').join(",")+",\n";
+    });
+    const blobblob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download="PCU_"+(_lastRptTitle||"report")+"_"+today()+".csv";
+    a.click();
+    showSaved();
+    return;
+  }
+  alert("اول یک گزارش را اجرا کن");
+}
+
+// ── Export گزارش ماهانه ──
+async function exportMonthlyCSV(){
+  const [sales,purchases,cashLedger]=await Promise.all([
+    sbGet("sales","?select=date,total,paid,remaining,product,dozen,cust_name,province&order=date.asc"),
+    sbGet("purchases","?select=date,amount_afn,paid_afn,supplier_name&order=date.asc"),
+    sbGet("cash_ledger","?select=date,category,type,amount_in,amount_out,description&order=date.asc")
+  ]);
+
+  let csv="\uFEFF";
+  csv+="گزارش ماهانه فابریکه حیات‌زاده\n";
+  csv+="تاریخ تهیه: "+today()+"\n\n";
+
+  // ── فروش ──
+  csv+="═══ فروش ═══\n";
+  csv+="تاریخ,مشتری,ولایت,مدل,درجن,مبلغ,وصول,باقی\n";
+  (sales||[]).forEach(r=>{
+    csv+=`"${r.date}","${r.cust_name}","${r.province}","${r.product}","${r.dozen}","${r.total}","${r.paid}","${r.remaining}"\n`;
   });
+
+  csv+"\n";
+  csv+="═══ خرید مواد ═══\n";
+  csv+="تاریخ,تامین‌کننده,مبلغ افغانی,پرداختی\n";
+  (purchases||[]).forEach(r=>{
+    csv+=`"${r.date}","${r.supplier_name}","${r.amount_afn}","${r.paid_afn}"\n`;
+  });
+
+  csv+="\n";
+  csv+="═══ صندوق افغانی ═══\n";
+  csv+="تاریخ,نوع,موضوع,شرح,ورودی,خروجی\n";
+  (cashLedger||[]).forEach(r=>{
+    csv+=`"${r.date}","${r.category==="in"?"ورودی":"خروجی"}","${r.type}","${r.description||""}","${r.amount_in||0}","${r.amount_out||0}"\n`;
+  });
+
   const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
-  a.download=`PCU_${_lastRptTitle||"report"}_${today()}.csv`;
+  a.download="PCU_گزارش_کامل_"+today()+".csv";
   a.click();
   showSaved();
 }
@@ -8420,6 +8787,153 @@ function printStatement(){
   win.print();
 }
 // ══ END STATEMENT ══
+
+// ══ SUPPLIER PAYMENT ══
+function openSuppPay(id, name, balUsd){
+  document.getElementById("sp-id").value=id;
+  document.getElementById("sp-name-h").value=name;
+  document.getElementById("sp-date").value=today();
+  document.getElementById("sp-rate").value=S.usdRate||70;
+  document.getElementById("sp-amt").value="";
+  document.getElementById("sp-note").value="";
+  document.getElementById("sp-phone").value=SUPPLIERS.find(s=>s.id===id)?.ph||"";
+  document.getElementById("sp-msg").innerHTML="";
+  document.getElementById("sp-calc").innerHTML="";
+  const afnBal=Math.round(balUsd*(S.usdRate||70));
+  document.getElementById("sp-bal-info").innerHTML=
+    "🔴 مانده فعلی: <b>$ "+balUsd.toFixed(2)+"</b> ≈ <b>؋ "+afnBal.toLocaleString("fa-IR")+"</b>";
+  openModal("modalSuppPay");
+}
+
+function calcSuppPay(){
+  const amt=+(document.getElementById("sp-amt").value)||0;
+  const rate=+(document.getElementById("sp-rate").value)||70;
+  const usdPaid=amt/rate;
+  const suppId=document.getElementById("sp-id").value;
+  const balUsd=S.suppMap[suppId]?.bal||0;
+  const remUsd=Math.max(0,balUsd-usdPaid);
+  document.getElementById("sp-calc").innerHTML=
+    "$ "+usdPaid.toFixed(2)+" پرداخت | باقی: <b>$ "+remUsd.toFixed(2)+"</b> ≈ ؋ "+Math.round(remUsd*rate).toLocaleString("fa-IR");
+}
+
+async function submitSuppPay(){
+  const id=document.getElementById("sp-id").value;
+  const name=document.getElementById("sp-name-h").value;
+  const amt=+(document.getElementById("sp-amt").value)||0;
+  const rate=+(document.getElementById("sp-rate").value)||70;
+  const note=document.getElementById("sp-note").value;
+  const phone=document.getElementById("sp-phone").value.trim();
+  const payDate=document.getElementById("sp-date").value;
+  if(!amt){document.getElementById("sp-msg").innerHTML='<div class="ib err">مبلغ الزامی</div>';return;}
+
+  document.getElementById("sp-btn").disabled=true;
+  document.getElementById("sp-btn").textContent="در حال ذخیره...";
+
+  const usdPaid=amt/rate;
+  const curBal=S.suppMap[id]?.bal||0;
+  const newBal=Math.max(0,curBal-usdPaid);
+
+  // ۱ — از صندوق کم شود
+  await sbPost("cash_ledger",{
+    date:payDate, category:"out",
+    type:"پرداخت به تامین‌کننده",
+    description:"پرداخت به "+name+(note?" | "+note:"")+" | نرخ: "+rate,
+    amount_in:0, amount_out:amt
+  });
+
+  // ۲ — از مانده تامین‌کننده کم شود
+  await sbPatch("supplier_balances",{
+    balance_usd:+newBal.toFixed(2),
+    updated_at:new Date().toISOString()
+  },"?supplier_id=eq."+id);
+
+  await refreshSuppMap();
+
+  // ۳ — پیام واتساپ
+  const waLines=[
+    "سلام "+name+" 🌹",
+    "پرداخت شما ثبت شد:",
+    "📅 تاریخ: "+payDate,
+    "💵 مبلغ پرداختی: ؋ "+amt.toLocaleString("fa-IR"),
+    "≈ $ "+usdPaid.toFixed(2)+" (نرخ "+rate+")",
+    "✅ مانده باقی: $ "+newBal.toFixed(2),
+    "━━━━━━━━━━",
+    "تشکر — فابریکه حیات‌زاده"
+  ];
+  const waMsg=waLines.join("\n");
+  const waPhone=phone?"93"+phone.replace(/^0/,""):"";
+  const waUrl=waPhone
+    ?"https://wa.me/"+waPhone+"?text="+encodeURIComponent(waMsg)
+    :"https://wa.me/?text="+encodeURIComponent(waMsg);
+
+  document.getElementById("sp-msg").innerHTML=
+    "<div class='ib ok' style='flex-direction:column;gap:8px'>"
+    +"<div>✅ پرداخت ثبت شد! | باقی: $ "+newBal.toFixed(2)+"</div>"
+    +"<a href='"+waUrl+"' target='_blank' style='display:inline-flex;align-items:center;gap:6px;background:#25d366;color:#000;border-radius:9px;padding:8px 14px;font-size:12px;font-weight:800;text-decoration:none'>💬 ارسال واتساپ به "+name+"</a>"
+    +"</div>";
+
+  showSaved();
+  setTimeout(()=>{closeModal("modalSuppPay");renderSupp();},3500);
+  document.getElementById("sp-btn").disabled=false;
+  document.getElementById("sp-btn").textContent="ثبت پرداخت ✓";
+}
+// ══ END SUPPLIER PAYMENT ══
+
+// ══ نرخ دالر آنلاین ══
+async function fetchUsdRate(){
+  try{
+    // از Supabase settings نرخ ذخیره‌شده را بخوان
+    const saved=await sbGet("settings","?key=eq.usd_rate");
+    if(saved&&saved[0]){
+      const savedRate=+saved[0].value;
+      if(savedRate>0){
+        S.usdRate=savedRate;
+        const el=document.getElementById("rateInput");
+        if(el) el.value=savedRate;
+        const infoEl=document.getElementById("rate-info");
+        if(infoEl) infoEl.textContent="آخرین نرخ ذخیره‌شده: "+savedRate+" ؋";
+      }
+    }
+  }catch(e){}
+}
+
+async function saveUsdRate(){
+  const r=+(document.getElementById("rateInput").value)||70;
+  if(r<50||r>500){alert("نرخ دالر معقول نیست!");return;}
+  S.usdRate=r;
+  // ذخیره در Supabase
+  await fetch(SB_URL+"/rest/v1/settings",{
+    method:"POST",
+    headers:{...SB_HEADERS,"Prefer":"resolution=merge-duplicates"},
+    body:JSON.stringify({key:"usd_rate",value:String(r)})
+  });
+  const infoEl=document.getElementById("rate-info");
+  if(infoEl) infoEl.textContent="✅ نرخ "+r+" ؋ ذخیره شد";
+  showSaved();
+}
+// ══ END نرخ دالر ══
+
+function exportReportPDF(){printReport();}
 </script>
 </body>
-</html>
+</htmlfunction exportReportExcel(){
+  if(!_lastRptData||!_lastRptData.length){alert("اول یک گزارش را اجرا کن");return;}
+  const rows=_lastRptData;
+  const keyMap={date:"تاریخ",cust_name:"مشتری",province:"ولایت",product:"مدل",dozen:"درجن",
+    total:"مبلغ کل",paid:"وصول",remaining:"باقی",supplier_name:"تامین‌کننده",
+    material:"ماده",kg:"کیلو",amount_usd:"مبلغ دالر",amount_afn:"مبلغ افغانی"};
+  const keys=Object.keys(rows[0]);
+  let csv="﻿";
+  csv+=keys.map(k=>keyMap[k]||k).join(",")+"
+";
+  rows.forEach(r=>{
+    csv+=keys.map(k=>'"'+String(r[k]||"").replace(/"/g,"'")+'"').join(",")+"
+";
+  });
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="PCU_"+(_lastRptTitle||"report")+"_"+today()+".csv";
+  a.click();
+  showSaved();
+}>
