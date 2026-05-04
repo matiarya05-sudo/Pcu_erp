@@ -1122,7 +1122,7 @@ select option{background:#1a1820}
         </div>
         <div class="ib info" style="font-size:10.5px;margin-bottom:8px">✏️ Admin می‌تواند بدهی و اطلاعات تامین‌کنندگان را ویرایش کند</div>
         <div class="tw"><table>
-          <thead><tr><th>#</th><th>نام</th><th>بدهی ($)</th><th>معادل (؋)</th><th>وضعیت</th><th></th></tr></thead>
+          <thead><tr><th>#</th><th>نام</th><th>بدهی ($)</th><th>معادل (؋)</th><th>وضعیت</th><th>عملیات</th></tr></thead>
           <tbody id="supp-tbody"><tr><td colspan="6" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
         </table></div>
       </div>
@@ -2927,6 +2927,14 @@ async function submitDelivery(){
 const SB_URL = "https://vkdlcaeylmtzarridhem.supabase.co";
 const SB_KEY = "sb_publishable_jBm8VLUYeDZIPMPfo6d6-w_-ABkqjQn";
 
+// ── Headers آماده برای fetch مستقیم ──
+const SB_HEADERS = {
+  "apikey": SB_KEY,
+  "Authorization": "Bearer " + SB_KEY,
+  "Content-Type": "application/json",
+  "Prefer": "return=representation"
+};
+
 // ── Supabase REST helper ──
 async function sb(table, method="GET", body=null, params=""){
   const url=`${SB_URL}/rest/v1/${table}${params}`;
@@ -3260,7 +3268,8 @@ async function renderDash(){
     sbGet("cash_ledger","?select=category,amount_in,amount_out"),
     sbGet("supplier_balances","?select=balance_usd"),
   ]);
-  if(!salesData){setSyncOff();return;}
+  // فقط اگر همه null برگشت → واقعاً قطع است
+  if(salesData===null && prodData===null && cashData===null){setSyncOff();return;}
   setSyncOn();
   const ts=(salesData||[]).reduce((a,r)=>a+(+r.total||0),0);
   const tc=(salesData||[]).reduce((a,r)=>a+(+r.cogs||0),0);
@@ -3276,7 +3285,8 @@ async function renderDash(){
   const invVal=Object.values(S.stockMap).reduce((a,m)=>a+(m.kg*m.avgCost),0);
 
   let alerts="";
-  if(cash<50000) alerts+=`<div class="ib warn">💵 موجودی نقد ${afn(cash)} — کمبود نقدینگی!</div>`;
+  const hasCashData=(cashData||[]).length>0;
+  if(hasCashData && cash<50000) alerts+=`<div class="ib warn">💵 موجودی نقد ${afn(cash)} — کمبود نقدینگی!</div>`;
   if(suppUSD>20000) alerts+=`<div class="ib warn">🏭 بدهی تامین‌کنندگان ${usd(suppUSD)} — برنامه پرداخت!</div>`;
   document.getElementById("dash-alerts").innerHTML=alerts;
 
@@ -4087,7 +4097,16 @@ async function renderSupp(){
       <td class="tdr" style="color:var(--bl);font-weight:700">${usd(b)}</td>
       <td class="tdr" style="color:var(--gd)">${afn(b*S.usdRate)}</td>
       <td>${b>0?'<span class="bb br2">بدهکار</span>':'<span class="bb bg2">تسویه</span>'}</td>
-      <td>${isAdmin?`<button onclick="openEditSupp('${s.id}')" style="background:var(--g3);border:1px solid rgba(232,160,32,.3);color:var(--gd);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">✏️</button>`:"—"}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap">
+        <button onclick="openPersonStatement('supp','${s.id}','${s.n.replace(/'/g,"\\'")}') "
+          style="background:rgba(91,138,245,.12);border:1px solid rgba(91,138,245,.3);color:var(--bl);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">📊 تاریخچه</button>
+        ${isAdmin?`
+          <button onclick="openSuppPay('${s.id}','${s.n.replace(/'/g,"\\'")}',${b})"
+            style="background:rgba(46,204,122,.12);border:1px solid rgba(46,204,122,.3);color:var(--gr);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">💵 پرداخت</button>
+          <button onclick="openEditSupp('${s.id}')"
+            style="background:var(--g3);border:1px solid rgba(232,160,32,.3);color:var(--gd);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">✏️ ادیت</button>
+        `:""}
+      </td>
     </tr>`;
   }).join("");
 }
