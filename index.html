@@ -934,45 +934,84 @@ select option{background:#1a1820}
     </div>
     <!-- STOCK -->
     <div id="page-stock" class="page">
-      <!-- KPI -->
+      <!-- KPI دو گدام جداگانه -->
       <div class="kg">
-        <div class="kc tl"><div class="kl">ارزش مواد خام</div><div class="kv" id="stock-raw-val">—</div></div>
-        <div class="kc pp"><div class="kl">ارزش جنس تولیدشده</div><div class="kv" id="stock-fg-val">—</div></div>
+        <div class="kc tl" style="border:2px solid rgba(46,196,212,.3)">
+          <div class="ke">🏗️</div>
+          <div class="kl" style="font-weight:800;color:var(--tl)">🏗️ گدام مواد خام</div>
+          <div class="kv" id="stock-raw-val">—</div>
+          <div class="ks" id="stock-raw-count">— نوع ماده</div>
+        </div>
+        <div class="kc pp" style="border:2px solid rgba(155,110,245,.3)">
+          <div class="ke">👟</div>
+          <div class="kl" style="font-weight:800;color:var(--pp)">👟 گدام جنس تولیدشده</div>
+          <div class="kv" id="stock-fg-val">—</div>
+          <div class="ks" id="stock-fg-count">— نوع جنس</div>
+        </div>
       </div>
-      <!-- تب -->
+
+      <!-- تب انتخاب گدام -->
       <div style="display:flex;gap:8px;margin-bottom:12px">
-        <button id="tab-raw" onclick="switchStockTab('raw')" class="btn bpri" style="flex:1;justify-content:center">🏗️ مواد خام</button>
-        <button id="tab-fg" onclick="switchStockTab('fg')" class="btn bsec" style="flex:1;justify-content:center">👟 جنس تولیدشده</button>
+        <button id="tab-raw" onclick="switchStockTab('raw')" class="btn bpri" style="flex:1;justify-content:center;font-size:13px;padding:10px">
+          🏗️ گدام مواد خام
+        </button>
+        <button id="tab-fg" onclick="switchStockTab('fg')" class="btn bsec" style="flex:1;justify-content:center;font-size:13px;padding:10px">
+          👟 گدام جنس تولیدشده
+        </button>
       </div>
-      <!-- مواد خام -->
+
+      <!-- ══ گدام مواد خام ══ -->
       <div id="stock-raw-panel">
-        <div class="ib info" style="font-size:10.5px">☁️ قیمت میانگین متحرک | ✏️ Admin می‌تواند موجودی را ادیت کند</div>
+        <div style="background:linear-gradient(135deg,rgba(46,196,212,.1),rgba(46,196,212,.03));border:1px solid rgba(46,196,212,.25);border-radius:12px;padding:12px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <div style="font-size:20px">🏗️</div>
+            <div>
+              <div style="font-size:13px;font-weight:800;color:var(--tl)">گدام مواد خام</div>
+              <div style="font-size:10px;color:var(--t3)">مواد اولیه برای تولید | قیمت میانگین متحرک | Admin می‌تواند ادیت کند</div>
+            </div>
+          </div>
+        </div>
         <div class="card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div class="ct" style="margin-bottom:0">🏗️ انبار مواد خام</div>
-            <button class="btn bpri" onclick="openModal('modalEditStock')">✏️ ادیت موجودی</button>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+            <div class="ct" style="margin-bottom:0">📋 فهرست مواد خام</div>
+            <div style="display:flex;gap:6px">
+              <button class="btn bpri" onclick="openModal('modalEditStock')" style="font-size:11px;padding:6px 12px">✏️ ادیت / اضافه ماده</button>
+            </div>
           </div>
           <div class="tw"><table>
-            <thead><tr><th>#</th><th>ماده</th><th>موجودی (کیلو)</th><th>Avg Cost (؋/کیلو)</th><th>ارزش کل</th><th>وضعیت</th></tr></thead>
+            <thead><tr><th>#</th><th>نام ماده</th><th>موجودی (کیلو)</th><th>قیمت/کیلو (؋)</th><th>ارزش کل</th><th>وضعیت</th></tr></thead>
             <tbody id="stock-tbody"><tr><td colspan="6" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
           </table></div>
         </div>
       </div>
-      <!-- جنس تولیدشده -->
+
+      <!-- ══ گدام جنس تولیدشده ══ -->
       <div id="stock-fg-panel" style="display:none">
-        <div class="ib info" style="font-size:10.5px">📦 موجودی جنس تولیدشده | قابل ادیت</div>
-        <div class="card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div class="ct" style="margin-bottom:0">👟 جنس تولیدشده</div>
-            <button class="btn bpri" onclick="openModal('modalAddFG')">+ اضافه کردن</button>
+        <div style="background:linear-gradient(135deg,rgba(155,110,245,.1),rgba(155,110,245,.03));border:1px solid rgba(155,110,245,.25);border-radius:12px;padding:12px;margin-bottom:10px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+            <div style="font-size:20px">👟</div>
+            <div>
+              <div style="font-size:13px;font-weight:800;color:var(--pp)">گدام جنس تولیدشده</div>
+              <div style="font-size:10px;color:var(--t3)">جنس آماده برای فروش | آپدیت از تولید و فروش</div>
+            </div>
           </div>
+        </div>
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:6px">
+            <div class="ct" style="margin-bottom:0">📋 فهرست جنس تولیدشده</div>
+            <div style="display:flex;gap:6px">
+              <button class="btn bpri" onclick="openModal('modalAddFG')" style="font-size:11px;padding:6px 12px">+ ثبت جنس جدید</button>
+            </div>
+          </div>
+          <div id="fg-summary" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px"></div>
           <div class="tw"><table>
-            <thead><tr><th>#</th><th>نام جنس</th><th>سایز</th><th>درجن</th><th>قیمت/درجن</th><th>ارزش کل</th><th></th></tr></thead>
+            <thead><tr><th>#</th><th>نام جنس</th><th>سایز</th><th>موجودی (درجن)</th><th>قیمت/درجن (؋)</th><th>ارزش کل</th><th></th></tr></thead>
             <tbody id="fg-tbody"><tr><td colspan="7" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
           </table></div>
         </div>
       </div>
     </div>
+
     <!-- CUSTOMERS -->
     <div id="page-cust" class="page">
       <div class="kg">
@@ -1193,6 +1232,31 @@ select option{background:#1a1820}
       </div>
     </div>
 
+    <!-- CHEQUE / قرض حسنه -->
+    <div id="page-cheque" class="page">
+      <div class="kg k3">
+        <div class="kc bl"><div class="kl">🏦 قرض گرفتیم</div><div class="kv" id="chq-in-cnt">—</div><div class="ks" id="chq-in-amt">—</div></div>
+        <div class="kc rd"><div class="kl">💸 قرض دادیم</div><div class="kv" id="chq-out-cnt">—</div><div class="ks" id="chq-out-amt">—</div></div>
+        <div class="kc og"><div class="kl">⏳ پرداخت این هفته</div><div class="kv" id="chq-due">—</div></div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <button class="btn bpri" onclick="openModal('modalAddCheque')">+ ثبت قرض جدید</button>
+        <button class="btn bsec" onclick="filterCheque('all')" id="cf-all">همه</button>
+        <button class="btn bsec" onclick="filterCheque('receive')" id="cf-receive">دریافتی</button>
+        <button class="btn bsec" onclick="filterCheque('pay')" id="cf-pay">پرداختی</button>
+        <button class="btn bsec" onclick="filterCheque('pending')" id="cf-pending">⏳ باقی</button>
+        <button class="btn bsec" onclick="filterCheque('cleared')" id="cf-cleared">✅ برگشت شد</button>
+        <button class="btn bsec" onclick="filterCheque('bounced')" id="cf-bounced">❌ پس نداد</button>
+      </div>
+      <div class="card">
+        <div class="ct">💚 دفتر قرض‌های حسنه</div>
+        <div class="tw"><table>
+          <thead><tr><th>#</th><th>تاریخ ثبت</th><th>سررسید</th><th>نوع</th><th>شخص</th><th>شرح</th><th>مبلغ (؋)</th><th>وضعیت</th><th>عملیات</th></tr></thead>
+          <tbody id="chq-tbody"><tr><td colspan="9" style="text-align:center;padding:20px;color:var(--t3)">هنوز قرضی ثبت نشده</td></tr></tbody>
+        </table></div>
+      </div>
+    </div>
+
     <!-- TAX -->
     <div id="page-tax" class="page">
       <div class="kg k3">
@@ -1213,31 +1277,6 @@ select option{background:#1a1820}
         <div class="tw"><table>
           <thead><tr><th>دوره</th><th>نوع</th><th>مبلغ مشمول</th><th>نرخ</th><th>مالیات</th><th>وضعیت</th></tr></thead>
           <tbody id="tax-tbody"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--t3)">هنوز سابقه‌ای ثبت نشده</td></tr></tbody>
-        </table></div>
-      </div>
-    </div>
-
-    <!-- CHEQUE / قرض حسنه -->
-    <div id="page-collect" class="page">
-      <div class="kg k3">
-        <div class="kc bl"><div class="kl">🏦 قرض گرفتیم</div><div class="kv" id="chq-in-cnt">—</div><div class="ks" id="chq-in-amt">—</div></div>
-        <div class="kc rd"><div class="kl">💸 قرض دادیم</div><div class="kv" id="chq-out-cnt">—</div><div class="ks" id="chq-out-amt">—</div></div>
-        <div class="kc og"><div class="kl">⏳ پرداخت این هفته</div><div class="kv" id="chq-due">—</div></div>
-      </div>
-      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-        <button class="btn bpri" onclick="openModal('modalAddCheque')">+ ثبت قرض جدید</button>
-        <button class="btn bsec" onclick="filterCheque('all')" id="cf-all">همه</button>
-        <button class="btn bsec" onclick="filterCheque('receive')" id="cf-receive">دریافتی</button>
-        <button class="btn bsec" onclick="filterCheque('pay')" id="cf-pay">پرداختی</button>
-        <button class="btn bsec" onclick="filterCheque('pending')" id="cf-pending">⏳ ⏳ باقی</button>
-        <button class="btn bsec" onclick="filterCheque('cleared')" id="cf-cleared">✅ ✅ برگشت شد</button>
-        <button class="btn bsec" onclick="filterCheque('bounced')" id="cf-bounced">❌ ❌ پس نداد</button>
-      </div>
-      <div class="card">
-        <div class="ct">💚 دفتر قرض‌های حسنه</div>
-        <div class="tw"><table>
-          <thead><tr><th>#</th><th>تاریخ ثبت</th><th>سررسید</th><th>نوع</th><th>شخص</th><th>شرح</th><th>مبلغ (؋)</th><th>وضعیت</th><th>عملیات</th></tr></thead>
-          <tbody id="chq-tbody"><tr><td colspan="9" style="text-align:center;padding:20px;color:var(--t3)">هنوز قرضی ثبت نشده</td></tr></tbody>
         </table></div>
       </div>
     </div>
@@ -1454,9 +1493,12 @@ select option{background:#1a1820}
       </div>
       <div id="cust-dd" class="ddrop" style="display:none"></div>
       <div id="cust-sel" style="display:none" class="ib ok"></div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 4px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 4px;flex-wrap:wrap;gap:4px">
         <div style="font-size:12px;font-weight:700;color:var(--gd)">📦 اقلام بل</div>
-        <button onclick="addSaleItem()" class="btn bsec" style="padding:5px 12px;font-size:11px">+ اضافه کردن جنس</button>
+        <div style="display:flex;gap:5px">
+          <button onclick="addSaleItem()" class="btn bsec" style="padding:5px 12px;font-size:11px">+ اضافه قلم</button>
+          <button onclick="openModal('modalManageProducts')" class="btn bsec" style="padding:5px 10px;font-size:11px;background:rgba(155,110,245,.15);border-color:rgba(155,110,245,.3);color:var(--pp)">⚙️ مدیریت محصولات</button>
+        </div>
       </div>
       <div id="sale-items-list"></div>
       <div style="background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.15);border-radius:10px;padding:12px;margin-top:8px">
@@ -2482,6 +2524,53 @@ select option{background:#1a1820}
 </div>
 
 <!-- ══ MODAL پرداخت به تامین‌کننده ══ -->
+<!-- ══ MODAL مدیریت محصولات ══ -->
+<div class="modal-overlay" id="modalManageProducts">
+  <div class="modal">
+    <div class="modal-head" style="background:linear-gradient(135deg,rgba(155,110,245,.12),transparent)">
+      <div>
+        <h3 style="color:var(--pp)">⚙️ مدیریت محصولات</h3>
+        <div style="font-size:10px;color:var(--t3);margin-top:2px">اضافه، ویرایش، یا حذف مدل‌های جنس</div>
+      </div>
+      <button class="close-btn" onclick="closeModal('modalManageProducts')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="ib info" style="font-size:11px;margin-bottom:12px">
+        💡 محصولات اضافه‌شده در بل فروش، فرمایش، و تولید نمایش داده می‌شوند
+      </div>
+
+      <!-- اضافه کردن محصول جدید -->
+      <div style="background:rgba(155,110,245,.08);border:1px solid rgba(155,110,245,.2);border-radius:10px;padding:12px;margin-bottom:12px">
+        <div style="font-size:12px;font-weight:700;color:var(--pp);margin-bottom:8px">➕ اضافه کردن مدل جدید</div>
+        <div class="fg" style="margin-bottom:8px">
+          <label>نام مدل / جنس</label>
+          <input id="mp-new-name" placeholder="مثال: چپلک مردانه سیاه، بوت زمستانی..."/>
+        </div>
+        <div class="row2">
+          <div class="fg">
+            <label>اجرت جمشید (؋/درجن)</label>
+            <input type="number" id="mp-new-j" value="22" min="0"/>
+          </div>
+          <div class="fg">
+            <label>اجرت سمیع‌الله (؋/درجن)</label>
+            <input type="number" id="mp-new-s" value="25" min="0"/>
+          </div>
+        </div>
+        <button onclick="addNewProduct()" class="btn bpri btn-full" style="margin-top:4px">➕ اضافه کردن محصول</button>
+        <div id="mp-add-msg" style="margin-top:6px;font-size:11px"></div>
+      </div>
+
+      <!-- لیست محصولات موجود -->
+      <div style="font-size:11px;font-weight:700;color:var(--t2);margin-bottom:8px">📋 محصولات موجود (قابل ویرایش):</div>
+      <div id="mp-list" style="max-height:350px;overflow-y:auto"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn bsec" onclick="closeModal('modalManageProducts')">بستن</button>
+      <button class="btn bpri" onclick="saveProductsList()">💾 ذخیره تغییرات ✓</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modalSuppPay">
   <div class="modal">
     <div class="modal-head"><h3>💵 پرداخت به تامین‌کننده</h3><button class="close-btn" onclick="closeModal('modalSuppPay')">✕</button></div>
@@ -3475,6 +3564,7 @@ async function changePass(type){
 // ── MODAL INITS ──
 function initModal(id){
   if(id==="modalSale") initSaleModal();
+  if(id==="modalManageProducts") initManageProductsModal();
   else if(id==="modalOrder") initOrderModal();
   else if(id==="modalBuy") initBuyModal();
   else if(id==="modalProd") initProdModal();
@@ -4309,6 +4399,7 @@ async function initApp(){
   populateDropdowns();
   setSyncOn();
   await loadVocab();
+  await loadProductsList();
   goPage("dash");
 }
 
@@ -5888,16 +5979,32 @@ async function renderFG(){
   document.getElementById('fg-tbody').innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr>';
   const rows = await sbGet('finished_goods','?order=id.asc')||[];
   const totalVal = rows.reduce((a,r)=>a+(+r.total_value||0),0);
+  const totalDoz = rows.reduce((a,r)=>a+(+r.dozen||0),0);
   document.getElementById('stock-fg-val').textContent = afn(totalVal);
+  document.getElementById('stock-fg-count').textContent = rows.length + " نوع جنس";
+
+  // summary cards
+  const summEl = document.getElementById('fg-summary');
+  if(summEl){
+    summEl.innerHTML = [
+      {l:"جمع درجن",v:totalDoz+" درجن",c:"gd"},
+      {l:"ارزش کل",v:afn(totalVal),c:"pp"},
+      {l:"تعداد مدل",v:rows.length+" مدل",c:"bl"}
+    ].map(k=>`<div style="background:var(--b3);border:1px solid var(--bd);border-radius:8px;padding:10px;text-align:center">
+      <div style="font-size:10px;color:var(--t3)">${k.l}</div>
+      <div style="font-size:14px;font-weight:800;color:var(--${k.c})">${k.v}</div>
+    </div>`).join('');
+  }
+
   if(!rows.length){
-    document.getElementById('fg-tbody').innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:18px">هنوز جنسی ثبت نشده</td></tr>';
+    document.getElementById('fg-tbody').innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:18px">هنوز جنسی ثبت نشده<br><small>روی "+ ثبت جنس جدید" بزن</small></td></tr>';
     return;
   }
   document.getElementById('fg-tbody').innerHTML = rows.map((r,i)=>`<tr>
     <td style="color:var(--t3)">${i+1}</td>
     <td style="font-weight:700">${r.product_name}</td>
     <td><span class="bb bbl">${r.size_range||'—'}</span></td>
-    <td style="font-weight:800;color:var(--gd)">${r.dozen} درجن</td>
+    <td style="font-weight:800;color:${+r.dozen<=0?'var(--rd)':+r.dozen<5?'var(--og)':'var(--gd)'}">${r.dozen} درجن ${+r.dozen<=0?'<span class="bb br2">نیست</span>':+r.dozen<5?'<span class="bb bog">کم</span>':''}</td>
     <td class="tdr" style="color:var(--tl)">${afn(r.unit_price)}</td>
     <td class="tdr" style="font-weight:700">${afn(r.total_value)}</td>
     <td style="display:flex;gap:3px">
@@ -5984,9 +6091,13 @@ async function renderStock(){
   const totalFG = fgRows.reduce((a,r)=>a+(+r.total_value||0),0);
   document.getElementById('stock-fg-val').textContent = afn(totalFG);
 
-  // همه مواد: Supabase + MATS array (بدون تکرار)
+  // count مواد
   const supabaseMats = Object.keys(S.stockMap);
   const allMats = [...new Set([...supabaseMats, ...MATS])];
+  const rawCountEl = document.getElementById('stock-raw-count');
+  if(rawCountEl) rawCountEl.textContent = allMats.length + " نوع ماده";
+  const fgCountEl = document.getElementById('stock-fg-count');
+  if(fgCountEl) fgCountEl.textContent = fgRows.length + " نوع جنس";
 
   document.getElementById('stock-tbody').innerHTML=allMats.map((m,i)=>{
     const st=S.stockMap[m]||{kg:0,avgCost:0,val:0};
@@ -7531,6 +7642,124 @@ async function exportMonthlyCSV(){
   a.download="PCU_گزارش_"+today()+".csv";a.click();showSaved();
 }
 function exportReportPDF(){printReport();}
+
+// ══════════════════════════════════════════════════
+// ══ مدیریت محصولات (اضافه / ویرایش / حذف) ══
+// ══════════════════════════════════════════════════
+
+// لود محصولات از Supabase
+async function loadProductsList(){
+  const r = await sbGet("settings","?key=eq.products_list");
+  if(r && r[0]){
+    try{
+      const saved = JSON.parse(r[0].value);
+      if(Array.isArray(saved) && saved.length > 0){
+        // PRODUCTS_LIST را آپدیت کن
+        PRODUCTS_LIST.length = 0;
+        saved.forEach(p => PRODUCTS_LIST.push(p));
+        // WAGE_RATES ها را هم لود کن
+        await loadWageRates();
+      }
+    }catch(e){}
+  }
+}
+
+// ذخیره محصولات در Supabase
+async function saveProductsList(){
+  // خواندن تغییرات از فرم
+  const rows = document.querySelectorAll('[id^="mp-row-"]');
+  const updatedList = [];
+  rows.forEach(row => {
+    const idx = row.dataset.idx;
+    const nameEl = document.getElementById('mp-name-'+idx);
+    if(nameEl && nameEl.value.trim()){
+      updatedList.push(nameEl.value.trim());
+      // آپدیت WAGE_RATES
+      const j = +(document.getElementById('mp-j-'+idx)?.value)||22;
+      const s = +(document.getElementById('mp-s-'+idx)?.value)||25;
+      WAGE_RATES[nameEl.value.trim()] = {j, s};
+    }
+  });
+
+  // آپدیت PRODUCTS_LIST
+  PRODUCTS_LIST.length = 0;
+  updatedList.forEach(p => PRODUCTS_LIST.push(p));
+
+  // ذخیره در Supabase
+  const existing = await sbGet("settings","?key=eq.products_list");
+  const val = JSON.stringify(PRODUCTS_LIST);
+  if(existing && existing.length > 0){
+    await sbPatch("settings",{value:val,updated_at:new Date().toISOString()},"?key=eq.products_list");
+  } else {
+    await sbPost("settings",{key:"products_list",value:val});
+  }
+  // ذخیره wage rates
+  await saveWageRates();
+  showSaved();
+  closeModal('modalManageProducts');
+  // پیام موفقیت
+  alert('✅ ' + PRODUCTS_LIST.length + ' محصول ذخیره شد!');
+}
+
+// اضافه کردن محصول جدید
+async function addNewProduct(){
+  const name = document.getElementById('mp-new-name').value.trim();
+  const msg = document.getElementById('mp-add-msg');
+  if(!name){ msg.innerHTML='<span style="color:var(--rd)">❌ نام محصول را بنویس</span>'; return; }
+  if(PRODUCTS_LIST.includes(name)){ msg.innerHTML='<span style="color:var(--og)">⚠️ این محصول قبلاً موجود است</span>'; return; }
+  const j = +(document.getElementById('mp-new-j').value)||22;
+  const s = +(document.getElementById('mp-new-s').value)||25;
+  PRODUCTS_LIST.push(name);
+  WAGE_RATES[name] = {j, s};
+  msg.innerHTML='<span style="color:var(--gr)">✅ «'+name+'» اضافه شد — برای ذخیره دکمه "ذخیره تغییرات" را بزن</span>';
+  document.getElementById('mp-new-name').value='';
+  renderProductsList();
+}
+
+// حذف محصول
+function removeProduct(name){
+  if(!confirm('محصول «'+name+'» حذف شود؟\n(این عمل فقط از لیست انتخاب حذف می‌شود، رکوردهای قبلی دست نمی‌خورند)')) return;
+  const idx = PRODUCTS_LIST.indexOf(name);
+  if(idx >= 0) PRODUCTS_LIST.splice(idx, 1);
+  renderProductsList();
+  document.getElementById('mp-add-msg').innerHTML='<span style="color:var(--og)">⚠️ «'+name+'» حذف شد — برای ذخیره دائمی "ذخیره تغییرات" را بزن</span>';
+}
+
+// نمایش لیست محصولات در modal
+function renderProductsList(){
+  const el = document.getElementById('mp-list');
+  if(!el) return;
+  el.innerHTML = PRODUCTS_LIST.map((p, i) => `
+    <div id="mp-row-${i}" data-idx="${i}" style="display:flex;gap:6px;align-items:center;margin-bottom:8px;background:var(--b3);padding:8px;border-radius:8px;border:1px solid var(--bd)">
+      <div style="flex:3">
+        <div style="font-size:10px;color:var(--t2);margin-bottom:2px">نام مدل</div>
+        <input id="mp-name-${i}" value="${p}"
+          style="width:100%;padding:6px 8px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-family:inherit;font-size:12px"/>
+      </div>
+      <div style="flex:1;min-width:55px">
+        <div style="font-size:10px;color:var(--t2);margin-bottom:2px">جمشید</div>
+        <input type="number" id="mp-j-${i}" value="${WAGE_RATES[p]?.j||22}" min="0"
+          style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-weight:700;font-family:inherit;font-size:12px;text-align:center"/>
+      </div>
+      <div style="flex:1;min-width:55px">
+        <div style="font-size:10px;color:var(--t2);margin-bottom:2px">سمیع‌الله</div>
+        <input type="number" id="mp-s-${i}" value="${WAGE_RATES[p]?.s||25}" min="0"
+          style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--bl);font-weight:700;font-family:inherit;font-size:12px;text-align:center"/>
+      </div>
+      <button onclick="removeProduct('${p.replace(/'/g,"\\'")}')"
+        style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:6px 9px;cursor:pointer;font-size:13px;flex-shrink:0;align-self:flex-end">🗑</button>
+    </div>`).join('');
+}
+
+// init modal محصولات
+function initManageProductsModal(){
+  renderProductsList();
+  document.getElementById('mp-new-name').value='';
+  document.getElementById('mp-new-j').value='22';
+  document.getElementById('mp-new-s').value='25';
+  document.getElementById('mp-add-msg').innerHTML='';
+}
+// ══ END PRODUCT MANAGEMENT ══
 
 // ══ END NEW FEATURES ══
 </script>
