@@ -3006,33 +3006,55 @@ async function sbGet(table,params=""){ return sb(table,"GET",null,params); }
 async function sbPost(table,body){ return sb(table,"POST",body); }
 async function sbPatch(table,body,params){ return sb(table,"PATCH",body,params); }
 
-// ذخیره مانده تامین‌کننده — اگر رکورد نبود می‌سازد، اگر بود آپدیت می‌کند
+// ذخیره مانده تامین‌کننده — مستقیم fetch با error کامل
 async function saveSuppBalance(suppId, suppName, balUsd, balAfn){
+  const headers = {
+    "apikey": SB_KEY,
+    "Authorization": "Bearer " + SB_KEY,
+    "Content-Type": "application/json"
+  };
+
+  const body = JSON.stringify({
+    supplier_id: suppId,
+    supplier_name: suppName,
+    balance_usd: +balUsd || 0,
+    balance_afn: +balAfn || 0,
+    updated_at: new Date().toISOString()
+  });
+
   try{
-    // اول چک کن رکورد وجود دارد؟
-    const existing = await sbGet("supplier_balances", `?supplier_id=eq.${suppId}`);
+    // اول چک کن رکورد هست؟
+    const checkRes = await fetch(
+      `${SB_URL}/rest/v1/supplier_balances?supplier_id=eq.${suppId}`,
+      { headers }
+    );
+    const existing = await checkRes.json();
+
+    let saveRes;
     if(existing && existing.length > 0){
       // رکورد هست → PATCH
-      await sbPatch("supplier_balances", {
-        supplier_name: suppName,
-        balance_usd: +balUsd,
-        balance_afn: +balAfn,
-        updated_at: new Date().toISOString()
-      }, `?supplier_id=eq.${suppId}`);
+      saveRes = await fetch(
+        `${SB_URL}/rest/v1/supplier_balances?supplier_id=eq.${suppId}`,
+        { method:"PATCH", headers, body }
+      );
     } else {
-      // رکورد نیست → POST (INSERT)
-      await sbPost("supplier_balances", {
-        supplier_id: suppId,
-        supplier_name: suppName,
-        balance_usd: +balUsd,
-        balance_afn: +balAfn,
-        updated_at: new Date().toISOString()
-      });
+      // رکورد نیست → POST
+      saveRes = await fetch(
+        `${SB_URL}/rest/v1/supplier_balances`,
+        { method:"POST", headers:{ ...headers, "Prefer":"return=minimal" }, body }
+      );
     }
-    return true; // همیشه موفق
+
+    if(!saveRes.ok){
+      const errText = await saveRes.text();
+      console.error("saveSuppBalance HTTP error:", saveRes.status, errText);
+      throw new Error("HTTP " + saveRes.status + ": " + errText);
+    }
+
+    return true;
   }catch(e){
     console.error("saveSuppBalance error:", e);
-    throw e; // خطا را به caller بده
+    throw e;
   }
 }
 
