@@ -3006,8 +3006,32 @@ async function sbGet(table,params=""){ return sb(table,"GET",null,params); }
 async function sbPost(table,body){ return sb(table,"POST",body); }
 async function sbPatch(table,body,params){ return sb(table,"PATCH",body,params); }
 
-// upsert — اگر رکورد نبود INSERT کن، اگر بود UPDATE کن
-async function sbUpsert(table,body,conflictCol){
+// ذخیره مانده تامین‌کننده — اگر رکورد نبود می‌سازد، اگر بود آپدیت می‌کند
+async function saveSuppBalance(suppId, suppName, balUsd, balAfn){
+  // اول چک کن رکورد وجود دارد؟
+  const existing = await sbGet("supplier_balances", `?supplier_id=eq.${suppId}`);
+  if(existing && existing.length > 0){
+    // رکورد هست → PATCH
+    return await sbPatch("supplier_balances", {
+      supplier_name: suppName,
+      balance_usd: +balUsd,
+      balance_afn: +balAfn,
+      updated_at: new Date().toISOString()
+    }, `?supplier_id=eq.${suppId}`);
+  } else {
+    // رکورد نیست → POST (INSERT)
+    return await sbPost("supplier_balances", {
+      supplier_id: suppId,
+      supplier_name: suppName,
+      balance_usd: +balUsd,
+      balance_afn: +balAfn,
+      updated_at: new Date().toISOString()
+    });
+  }
+}
+
+// upsert عمومی (برای جاهای دیگر)
+async function sbUpsert(table,body){
   const url=`${SB_URL}/rest/v1/${table}`;
   try{
     const r=await fetch(url,{
@@ -3022,7 +3046,7 @@ async function sbUpsert(table,body,conflictCol){
     if(!r.ok){const e=await r.text();console.error("Upsert Error:",e);return null;}
     const t=await r.text();
     return t?JSON.parse(t):[];
-  }catch(e){console.error("Upsert network error:",e);return null;}
+  }catch(e){console.error("Upsert error:",e);return null;}
 }
 
 function setSyncOff(){ document.getElementById("syncDot")?.classList.add("off"); }
@@ -3959,16 +3983,11 @@ async function submitBuy(){
     const cur=S.stockMap[mat]||{kg:0,avgCost:0,val:0};
     const newKg=cur.kg+kg,newVal=cur.kg*cur.avgCost+kg*upm,newAvg=newKg>0?newVal/newKg:0;
     await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,avg_cost:newAvg,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(mat)}`);
-    // Update supplier balance — upsert (اگر رکورد نبود می‌سازد)
+    // آپدیت مانده تامین‌کننده
     const curBal=S.suppMap[sid]?.bal||0;
     const curBalAfn=S.suppMap[sid]?.balAfn||0;
-    await sbUpsert("supplier_balances",{
-      supplier_id:sid,
-      supplier_name:SUPPLIERS.find(s=>s.id===sid)?.n||"",
-      balance_usd:+(curBal+remUSD).toFixed(2),
-      balance_afn:curBalAfn,
-      updated_at:new Date().toISOString()
-    });
+    const suppN=SUPPLIERS.find(s=>s.id===sid)?.n||"";
+    await saveSuppBalance(sid, suppN, +(curBal+remUSD).toFixed(2), curBalAfn);
     await refreshStockMap();await refreshSuppMap();
     document.getElementById("buy-msg").innerHTML='<div class="ib ok">✅ خرید در Supabase ذخیره شد!</div>';
     showSaved();setTimeout(()=>{closeModal("modalBuy");renderBuy();},1300);
@@ -4231,14 +4250,8 @@ async function saveEditSupp(){
   const idx=SUPPLIERS.findIndex(s=>s.id===id);
   if(idx>=0) SUPPLIERS[idx].n=name;
 
-  // upsert — اگر رکورد نبود می‌سازد، اگر بود آپدیت می‌کند
-  const res=await sbUpsert("supplier_balances",{
-    supplier_id:id,
-    supplier_name:name,
-    balance_usd:bal,
-    balance_afn:balAfn,
-    updated_at:new Date().toISOString()
-  });
+  // ذخیره — اگر رکورد نبود می‌سازد، اگر بود آپدیت می‌کند
+  const res=await saveSuppBalance(id, name, bal, balAfn);
 
   if(res!==null){
     await refreshSuppMap();
@@ -4273,13 +4286,7 @@ async function saveAddSupp(){
   document.getElementById("as-btn").textContent="در حال ذخیره...";
   const newId="s"+(SUPPLIERS.length+1)+"x"+Date.now().toString().slice(-4);
   SUPPLIERS.push({id:newId,n:name});
-  const res=await sbUpsert("supplier_balances",{
-    supplier_id:newId,
-    supplier_name:name,
-    balance_usd:bal,
-    balance_afn:balAfn,
-    updated_at:new Date().toISOString()
-  });
+  const res=await saveSuppBalance(newId, name, bal, balAfn);
   document.getElementById("as-btn").disabled=false;
   document.getElementById("as-btn").textContent="اضافه کردن ✓";
   if(res!==null){
@@ -7672,13 +7679,7 @@ async function submitSuppPay(){
       description:"پرداخت افغانی به "+name+(note?" | "+note:""),
       amount_in:0,amount_out:amtAfn
     });
-    await sbUpsert("supplier_balances",{
-      supplier_id:id,
-      supplier_name:name,
-      balance_usd:S.suppMap[id]?.bal||0,
-      balance_afn:Math.round(newBalAfn),
-      updated_at:new Date().toISOString()
-    });
+    await saveSuppBalance(id, name, S.suppMap[id]?.bal||0, Math.round(newBalAfn));
     await refreshSuppMap();
     const waMsg="سلام "+name+"\nپرداخت افغانی ثبت شد:\n📅 "+payDate+"\n💵 "+afn(amtAfn)+"\n✅ مانده افغانی: "+afn(newBalAfn)+"\nتشکر — فابریکه حیات‌زاده";
     const waPhone=phone?"93"+phone.replace(/^0/,""):"";
@@ -7698,13 +7699,7 @@ async function submitSuppPay(){
       description:"پرداخت به "+name+(note?" | "+note:"")+" | نرخ: "+rate,
       amount_in:0,amount_out:amtAfn
     });
-    await sbUpsert("supplier_balances",{
-      supplier_id:id,
-      supplier_name:name,
-      balance_usd:+newBal.toFixed(2),
-      balance_afn:S.suppMap[id]?.balAfn||0,
-      updated_at:new Date().toISOString()
-    });
+    await saveSuppBalance(id, name, +newBal.toFixed(2), S.suppMap[id]?.balAfn||0);
     await refreshSuppMap();
     const waMsg="سلام "+name+"\nپرداخت ثبت شد:\n📅 "+payDate+"\n💵 "+afn(amtAfn)+"\n≈ $ "+usdPaid.toFixed(2)+"\n✅ مانده: $ "+newBal.toFixed(2)+"\nتشکر — فابریکه حیات‌زاده";
     const waPhone=phone?"93"+phone.replace(/^0/,""):"";
