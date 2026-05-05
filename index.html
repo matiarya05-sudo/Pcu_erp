@@ -3008,25 +3008,31 @@ async function sbPatch(table,body,params){ return sb(table,"PATCH",body,params);
 
 // ذخیره مانده تامین‌کننده — اگر رکورد نبود می‌سازد، اگر بود آپدیت می‌کند
 async function saveSuppBalance(suppId, suppName, balUsd, balAfn){
-  // اول چک کن رکورد وجود دارد؟
-  const existing = await sbGet("supplier_balances", `?supplier_id=eq.${suppId}`);
-  if(existing && existing.length > 0){
-    // رکورد هست → PATCH
-    return await sbPatch("supplier_balances", {
-      supplier_name: suppName,
-      balance_usd: +balUsd,
-      balance_afn: +balAfn,
-      updated_at: new Date().toISOString()
-    }, `?supplier_id=eq.${suppId}`);
-  } else {
-    // رکورد نیست → POST (INSERT)
-    return await sbPost("supplier_balances", {
-      supplier_id: suppId,
-      supplier_name: suppName,
-      balance_usd: +balUsd,
-      balance_afn: +balAfn,
-      updated_at: new Date().toISOString()
-    });
+  try{
+    // اول چک کن رکورد وجود دارد؟
+    const existing = await sbGet("supplier_balances", `?supplier_id=eq.${suppId}`);
+    if(existing && existing.length > 0){
+      // رکورد هست → PATCH
+      await sbPatch("supplier_balances", {
+        supplier_name: suppName,
+        balance_usd: +balUsd,
+        balance_afn: +balAfn,
+        updated_at: new Date().toISOString()
+      }, `?supplier_id=eq.${suppId}`);
+    } else {
+      // رکورد نیست → POST (INSERT)
+      await sbPost("supplier_balances", {
+        supplier_id: suppId,
+        supplier_name: suppName,
+        balance_usd: +balUsd,
+        balance_afn: +balAfn,
+        updated_at: new Date().toISOString()
+      });
+    }
+    return true; // همیشه موفق
+  }catch(e){
+    console.error("saveSuppBalance error:", e);
+    throw e; // خطا را به caller بده
   }
 }
 
@@ -4250,20 +4256,19 @@ async function saveEditSupp(){
   const idx=SUPPLIERS.findIndex(s=>s.id===id);
   if(idx>=0) SUPPLIERS[idx].n=name;
 
-  // ذخیره — اگر رکورد نبود می‌سازد، اگر بود آپدیت می‌کند
-  const res=await saveSuppBalance(id, name, bal, balAfn);
-
-  if(res!==null){
+  try{
+    await saveSuppBalance(id, name, bal, balAfn);
     await refreshSuppMap();
     document.getElementById("es-btn").disabled=false;
     document.getElementById("es-btn").textContent="ذخیره ✓";
-    document.getElementById("es-msg").innerHTML=`<div class="ib ok">✅ ذخیره شد! | دالری: ${usd(bal)} | افغانی: ${afn(balAfn)}</div>`;
+    document.getElementById("es-msg").innerHTML=`<div class="ib ok">✅ ذخیره شد! دالری: ${usd(bal)} | افغانی: ${afn(balAfn)}</div>`;
     showSaved();
     setTimeout(()=>{closeModal("modalEditSupp");renderSupp();},1200);
-  } else {
+  }catch(e){
     document.getElementById("es-btn").disabled=false;
     document.getElementById("es-btn").textContent="ذخیره ✓";
-    document.getElementById("es-msg").innerHTML='<div class="ib err">❌ خطا در ذخیره! دوباره امتحان کن</div>';
+    document.getElementById("es-msg").innerHTML='<div class="ib err">❌ خطا! دوباره امتحان کن</div>';
+    console.error(e);
   }
 }
 
@@ -4286,15 +4291,17 @@ async function saveAddSupp(){
   document.getElementById("as-btn").textContent="در حال ذخیره...";
   const newId="s"+(SUPPLIERS.length+1)+"x"+Date.now().toString().slice(-4);
   SUPPLIERS.push({id:newId,n:name});
-  const res=await saveSuppBalance(newId, name, bal, balAfn);
-  document.getElementById("as-btn").disabled=false;
-  document.getElementById("as-btn").textContent="اضافه کردن ✓";
-  if(res!==null){
+  try{
+    await saveSuppBalance(newId, name, bal, balAfn);
     await refreshSuppMap();
+    document.getElementById("as-btn").disabled=false;
+    document.getElementById("as-btn").textContent="اضافه کردن ✓";
     document.getElementById("as-msg").innerHTML='<div class="ib ok">✅ تامین‌کننده اضافه شد!</div>';
     showSaved();
     setTimeout(()=>{closeModal("modalAddSupp");renderSupp();populateDropdowns();},1000);
-  } else {
+  }catch(e){
+    document.getElementById("as-btn").disabled=false;
+    document.getElementById("as-btn").textContent="اضافه کردن ✓";
     document.getElementById("as-msg").innerHTML='<div class="ib err">❌ خطا! دوباره امتحان کن</div>';
   }
 }
