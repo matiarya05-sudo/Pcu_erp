@@ -4289,8 +4289,10 @@ async function saveEditSupp(){
   }catch(e){
     document.getElementById("es-btn").disabled=false;
     document.getElementById("es-btn").textContent="ذخیره ✓";
-    document.getElementById("es-msg").innerHTML='<div class="ib err">❌ خطا! دوباره امتحان کن</div>';
-    console.error(e);
+    // نشان دادن خطای دقیق
+    const errMsg = e?.message||String(e)||"خطای ناشناخته";
+    document.getElementById("es-msg").innerHTML=`<div class="ib err">❌ ${errMsg}</div>`;
+    console.error("saveEditSupp error:", e);
   }
 }
 
