@@ -4078,45 +4078,82 @@ function initCashModal(){
 }
 function updateCashTypes(){
   const cat=document.getElementById("c-cat").value;
-  document.getElementById("c-type").innerHTML=(cat==="in"?CASH_IN:CASH_OUT).map(t=>`<option>${t}</option>`).join("");
+  const list=cat==="in"?CASH_IN:CASH_OUT;
+  document.getElementById("c-type").innerHTML=
+    list.map(t=>`<option value="${t}">${t}</option>`).join("")+
+    `<option value="__custom__">➕ موضوع جدید...</option>`;
+  checkCustomCashType();
 }
+
+function checkCustomCashType(){
+  const val=document.getElementById("c-type")?.value;
+  const wrap=document.getElementById("c-custom-wrap");
+  if(wrap) wrap.style.display=val==="__custom__"?"block":"none";
+}
+
+function syncCustomType(){
+  const customVal=document.getElementById("c-custom-type")?.value||"";
+  const descEl=document.getElementById("c-desc");
+  if(descEl&&!descEl.value) descEl.value=customVal;
+}
+
+function getCashType(){
+  const sel=document.getElementById("c-type")?.value;
+  if(sel==="__custom__"){
+    const custom=document.getElementById("c-custom-type")?.value?.trim();
+    if(!custom) return null;
+    // اضافه به لیست برای دفعه بعد
+    const cat=document.getElementById("c-cat")?.value;
+    if(cat==="in"&&!CASH_IN.includes(custom)) CASH_IN.push(custom);
+    if(cat==="out"&&!CASH_OUT.includes(custom)) CASH_OUT.push(custom);
+    return custom;
+  }
+  return sel||null;
+}
+
 async function submitCash(){
   const cat=document.getElementById("c-cat").value;
   const amt=+(document.getElementById("c-amt").value)||0;
   if(!amt){alert("مبلغ الزامی است");return;}
 
-  // گرفتن نوع درست — اگر custom باشد از input می‌گیرد
   const cashType=getCashType();
-  if(!cashType){alert("موضوع عملیات را بنویس!");return;}
+  if(!cashType){alert("موضوع عملیات را انتخاب یا بنویس!");return;}
 
   document.getElementById("cash-btn").disabled=true;
   document.getElementById("cash-btn").textContent="در حال ذخیره...";
 
-  const currency=document.getElementById("c-currency").value;
-  const usdAmt=currency==="usd"?(+(document.getElementById("c-usd-amt").value)||0):0;
-  const usdRate=currency==="usd"?(+(document.getElementById("c-usd-rate").value)||70):0;
+  const currency=document.getElementById("c-currency")?.value||"afn";
+  const usdAmt=currency==="usd"?(+(document.getElementById("c-usd-amt")?.value)||0):0;
+  const usdRate=currency==="usd"?(+(document.getElementById("c-usd-rate")?.value)||70):0;
   const person=document.getElementById("c-person")?.value?.trim()||"";
-  const baseDesc=document.getElementById("c-desc").value;
+  const baseDesc=document.getElementById("c-desc")?.value||"";
   const fullDesc=(person?person+" — ":"")+baseDesc+(currency==="usd"?" | $ "+usdAmt+" × "+usdRate:"");
 
-  const res=await sbPost("cash_ledger",{
-    date:document.getElementById("c-date").value||today(),
-    category:cat,
-    type:cashType,
-    description:fullDesc||cashType,
-    amount_in:cat==="in"?amt:0,
-    amount_out:cat==="out"?amt:0
-  });
+  try{
+    const res=await sbPost("cash_ledger",{
+      date:document.getElementById("c-date").value||today(),
+      category:cat,
+      type:cashType,
+      description:fullDesc||cashType,
+      amount_in:cat==="in"?amt:0,
+      amount_out:cat==="out"?amt:0
+    });
 
-  document.getElementById("cash-btn").disabled=false;
-  document.getElementById("cash-btn").textContent="ثبت ✓";
+    document.getElementById("cash-btn").disabled=false;
+    document.getElementById("cash-btn").textContent="ثبت ✓";
 
-  if(res){
-    showSaved();
-    closeModal("modalCash");
-    renderCash();
-  } else {
-    alert("خطا در ذخیره! دوباره امتحان کن");
+    if(res){
+      showSaved();
+      closeModal("modalCash");
+      renderCash();
+    } else {
+      alert("خطا در ذخیره! دوباره امتحان کن");
+    }
+  }catch(e){
+    document.getElementById("cash-btn").disabled=false;
+    document.getElementById("cash-btn").textContent="ثبت ✓";
+    alert("خطا: "+e.message);
+    console.error(e);
   }
 }
 
