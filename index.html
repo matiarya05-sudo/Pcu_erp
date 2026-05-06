@@ -4240,7 +4240,7 @@ async function renderSupp(){
         ${bUsd>0?`<div style="color:var(--bl);font-weight:700">${usd(bUsd)}</div><div style="font-size:10px;color:var(--t3)">≈ ${afn(bUsd*S.usdRate)}</div>`:'<span style="color:var(--t3)">—</span>'}
       </td>
       <td class="tdr">
-        ${bAfn>0?`<div style="color:var(--og);font-weight:700">${afn(bAfn)}</div>`:'<span style="color:var(--t3)">—</span>'}
+        ${bAfn>0?`<div style="color:var(--og);font-weight:700">${afn(bAfn)}</div><div style="font-size:10px;color:var(--t3)">≈ ${usd(bAfn/S.usdRate)}</div>`:'<span style="color:var(--t3)">—</span>'}
       </td>
       <td>${hasDebt?'<span class="bb br2">بدهکار</span>':'<span class="bb bg2">تسویه</span>'}</td>
       <td style="display:flex;gap:4px;flex-wrap:wrap">
