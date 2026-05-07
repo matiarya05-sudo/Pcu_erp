@@ -1365,7 +1365,7 @@ select option{background:#1a1820}
       </div>
       <div class="card">
         <div class="ct">💱 نرخ دالر روزانه</div>
-        <div class="fg"><label>نرخ دالر (افغانی)</label><input type="number" id="rateInput" value="68"/></div>
+        <div class="fg"><label>نرخ دالر (افغانی)</label><input type="number" inputmode="decimal" id="rateInput" value="68" inputmode="decimal"/></div>
         <button class="btn bpri btn-full" onclick="saveRate()">ذخیره نرخ ✓</button>
       </div>
       <div class="card">
@@ -1516,7 +1516,7 @@ select option{background:#1a1820}
         </div>
       </div>
       <div class="row2" style="margin-top:8px">
-        <div class="fg"><label>پول رسیده (؋)</label><input type="number" id="s-paid" min="0" oninput="calcSaleSummaryOnly()"/></div>
+        <div class="fg"><label>پول رسیده (؋)</label><input type="number" inputmode="decimal" id="s-paid" min="0" oninput="calcSaleSummaryOnly()" inputmode="decimal"/></div>
         <div class="fg"><label>باقی طلب</label><input id="s-rem" readonly/></div>
       </div>
     </div>
@@ -1539,17 +1539,17 @@ select option{background:#1a1820}
       <div class="fg"><label>تامین‌کننده (۲۶)</label><select id="b-supp"></select></div>
       <div class="row2">
         <div class="fg"><label>ماده (۱۶)</label><select id="b-mat"></select></div>
-        <div class="fg"><label>کیلو</label><input type="number" id="b-kg" min="0" step="0.1" oninput="calcBuy()"/></div>
+        <div class="fg"><label>کیلو</label><input type="number" inputmode="decimal" id="b-kg" min="0" step="0.1" oninput="calcBuy()" inputmode="decimal"/></div>
       </div>
       <div class="row2">
-        <div class="fg"><label>مبلغ ($)</label><input type="number" id="b-usd" min="0" step="0.01" oninput="calcBuy()"/></div>
-        <div class="fg"><label>نرخ دالر</label><input type="number" id="b-rate" oninput="calcBuy()"/></div>
+        <div class="fg"><label>مبلغ ($)</label><input type="number" inputmode="decimal" id="b-usd" min="0" step="0.01" oninput="calcBuy()" inputmode="decimal"/></div>
+        <div class="fg"><label>نرخ دالر</label><input type="number" inputmode="decimal" id="b-rate" oninput="calcBuy()" inputmode="decimal"/></div>
       </div>
       <div class="row2">
         <div class="fg"><label>مبلغ (؋) اتومات</label><input id="b-afn" readonly/></div>
         <div class="fg"><label>قیمت/کیلو اتومات</label><input id="b-upm" readonly/></div>
       </div>
-      <div class="fg"><label>پرداختی (؋)</label><input type="number" id="b-paid" min="0" oninput="calcBuy()"/></div>
+      <div class="fg"><label>پرداختی (؋)</label><input type="number" inputmode="decimal" id="b-paid" min="0" oninput="calcBuy()" inputmode="decimal"/></div>
       <div id="b-rem" class="ib warn"></div>
     </div>
     <div class="modal-foot">
@@ -1581,13 +1581,13 @@ select option{background:#1a1820}
             <option value="KID">PCU کودکانه ۲۴-۳۵</option>
           </select>
         </div>
-        <div class="fg"><label>درجن</label><input type="number" id="p-doz" min="0" step="0.5" oninput="calcProd()"/></div>
+        <div class="fg"><label>درجن</label><input type="number" inputmode="decimal" id="p-doz" min="0" step="0.5" oninput="calcProd()" inputmode="decimal"/></div>
       </div>
       <div class="row2">
-        <div class="fg"><label>نرخ اجرت فی درجن (؋)</label><input type="number" id="p-rate" min="0" oninput="calcProd()"/></div>
+        <div class="fg"><label>نرخ اجرت فی درجن (؋)</label><input type="number" inputmode="decimal" id="p-rate" min="0" oninput="calcProd()" inputmode="decimal"/></div>
         <div class="fg"><label>اجرت کل اتومات</label><input id="p-wage" readonly/></div>
       </div>
-      <div class="fg"><label>پرداختی (؋)</label><input type="number" id="p-paid" min="0"/></div>
+      <div class="fg"><label>پرداختی (؋)</label><input type="number" inputmode="decimal" id="p-paid" min="0" inputmode="decimal"/></div>
       <div id="p-cogs" class="ib info"></div>
     </div>
     <div class="modal-foot">
@@ -1619,7 +1619,7 @@ select option{background:#1a1820}
         <input id="c-desc" placeholder="مثال: موجودی افتتاحیه، حواله از غزنی..."/>
       </div>
       <div class="fg"><label>مبلغ (؋)</label>
-        <input type="number" id="c-amt" min="0" placeholder="0"/>
+        <input type="number" inputmode="decimal" id="c-amt" min="0" placeholder="0" inputmode="decimal"/>
       </div>
     </div>
     <div class="modal-foot">
@@ -1647,11 +1647,11 @@ select option{background:#1a1820}
       </div>
       <div class="row2">
         <div class="fg"><label>تاریخ خرید</label><input id="fa-date"/></div>
-        <div class="fg"><label>عمر مفید (سال)</label><input type="number" id="fa-life" value="10" min="1"/></div>
+        <div class="fg"><label>عمر مفید (سال)</label><input type="number" inputmode="decimal" id="fa-life" value="10" min="1" inputmode="decimal"/></div>
       </div>
       <div class="row2">
-        <div class="fg"><label>قیمت خرید ($)</label><input type="number" id="fa-price-usd" min="0" step="0.01" oninput="calcAssetDep()"/></div>
-        <div class="fg"><label>قیمت خرید (؋)</label><input type="number" id="fa-price-afn" min="0" oninput="calcAssetDep()"/></div>
+        <div class="fg"><label>قیمت خرید ($)</label><input type="number" inputmode="decimal" id="fa-price-usd" min="0" step="0.01" oninput="calcAssetDep()" inputmode="decimal"/></div>
+        <div class="fg"><label>قیمت خرید (؋)</label><input type="number" inputmode="decimal" id="fa-price-afn" min="0" oninput="calcAssetDep()" inputmode="decimal"/></div>
       </div>
       <div class="fg"><label>استهلاک سالانه (اتومات)</label><input id="fa-dep-yr" readonly/></div>
       <div class="fg"><label>توضیحات</label><input id="fa-desc" placeholder="اختیاری..."/></div>
@@ -1690,13 +1690,13 @@ select option{background:#1a1820}
         <div style="display:flex;gap:8px;margin-bottom:10px">
           <div style="flex:1">
             <label style="display:block;font-size:11px;color:var(--t2);margin-bottom:4px;font-weight:600">موجودی اولیه (کیلو)</label>
-            <input type="number" id="new_mat_kg" placeholder="0" step="0.1" min="0"
-              style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--tx);font-size:13px;font-family:inherit;outline:none"/>
+            <input type="number" inputmode="decimal" id="new_mat_kg" placeholder="0" step="0.1" min="0"
+              style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--tx);font-size:13px;font-family:inherit;outline:none" inputmode="decimal"/>
           </div>
           <div style="flex:1">
             <label style="display:block;font-size:11px;color:var(--t2);margin-bottom:4px;font-weight:600">قیمت فی کیلو (؋)</label>
-            <input type="number" id="new_mat_cost" placeholder="0" step="1" min="0"
-              style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--gd);font-size:13px;font-family:inherit;outline:none"/>
+            <input type="number" inputmode="decimal" id="new_mat_cost" placeholder="0" step="1" min="0"
+              style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--gd);font-size:13px;font-family:inherit;outline:none" inputmode="decimal"/>
           </div>
         </div>
         <button id="add-mat-btn" onclick="addNewMaterial()"
@@ -1720,7 +1720,7 @@ select option{background:#1a1820}
     <div class="modal-body">
       <div id="fg-msg"></div>
       <div class="row2"><div class="fg"><label>نام جنس</label><input id="fg-name" placeholder="مثال: بوت شیما سیاه"/></div><div class="fg"><label>سایز</label><input id="fg-size" placeholder="مثال: ۷-۱۰"/></div></div>
-      <div class="row2"><div class="fg"><label>درجن</label><input type="number" id="fg-dozen" min="0" step="0.5" oninput="calcFG()"/></div><div class="fg"><label>قیمت/درجن (؋)</label><input type="number" id="fg-price" min="0" oninput="calcFG()"/></div></div>
+      <div class="row2"><div class="fg"><label>درجن</label><input type="number" inputmode="decimal" id="fg-dozen" min="0" step="0.5" oninput="calcFG()" inputmode="decimal"/></div><div class="fg"><label>قیمت/درجن (؋)</label><input type="number" inputmode="decimal" id="fg-price" min="0" oninput="calcFG()" inputmode="decimal"/></div></div>
       <div class="fg"><label>ارزش کل (اتومات)</label><input id="fg-total" readonly/></div>
       <div class="fg"><label>یادداشت</label><input id="fg-note" placeholder="اختیاری..."/></div>
       <input type="hidden" id="fg-edit-id" value=""/>
@@ -1770,12 +1770,12 @@ select option{background:#1a1820}
         <div class="fg"><label>تاریخ ارسال</label><input id="d-date"/></div>
         <div class="fg">
           <label>تعداد ارسال (درجن)</label>
-          <input type="number" id="d-doz" min="0.5" step="0.5" placeholder="درجن" oninput="calcDeliverTotal()"/>
+          <input type="number" inputmode="decimal" id="d-doz" min="0.5" step="0.5" placeholder="درجن" oninput="calcDeliverTotal()" inputmode="decimal"/>
         </div>
       </div>
       <div class="fg">
         <label>قیمت فی درجن (؋) — برای بل</label>
-        <input type="number" id="d-price" placeholder="1500" value="1500" oninput="calcDeliverTotal()"/>
+        <input type="number" inputmode="decimal" id="d-price" placeholder="1500" value="1500" oninput="calcDeliverTotal()" inputmode="decimal"/>
       </div>
       <div id="d-total-info" style="font-size:12px;font-weight:700;color:var(--gd);padding:6px 0;margin-bottom:4px"></div>
       <div id="d-rem-info" class="ib info"></div>
@@ -1798,7 +1798,7 @@ select option{background:#1a1820}
         <div class="fg"><label>ولایت</label><select id="ac-prov"><option>کابل</option><option>غزنی</option><option>کندهار</option><option>هرات</option><option>پلخمری</option><option>کندز</option><option>بدخشان</option><option>تخار</option><option>جلال آباد</option><option>خوست</option><option>سایر</option></select></div>
       </div>
       <div class="fg"><label>📞 شماره تماس</label><input id="ac-phone" placeholder="مثال: 0700000000" type="tel"/></div>
-      <div class="fg"><label>موجودی افتتاحیه (؋)</label><input type="number" id="ac-ob" value="0" min="0"/></div>
+      <div class="fg"><label>موجودی افتتاحیه (؋)</label><input type="number" inputmode="decimal" id="ac-ob" value="0" min="0" inputmode="decimal"/></div>
     </div>
     <div class="modal-foot">
       <button class="btn bsec" onclick="closeModal('modalAddCust')">انصراف</button>
@@ -1817,7 +1817,7 @@ select option{background:#1a1820}
         <div class="fg"><label>ولایت</label><select id="ec-prov"><option>کابل</option><option>غزنی</option><option>کندهار</option><option>هرات</option><option>پلخمری</option><option>کندز</option><option>بدخشان</option><option>تخار</option><option>جلال آباد</option><option>خوست</option><option>سایر</option></select></div>
       </div>
       <div class="fg"><label>📞 شماره تماس</label><input id="ec-phone" placeholder="0700000000" type="tel"/></div>
-      <div class="fg"><label>موجودی افتتاحیه (؋)</label><input type="number" id="ec-ob" min="0"/></div>
+      <div class="fg"><label>موجودی افتتاحیه (؋)</label><input type="number" inputmode="decimal" id="ec-ob" min="0" inputmode="decimal"/></div>
       <div class="ib warn">⚠️ این موجودی اول — طلب قبل از شروع سیستم</div>
     </div>
     <div class="modal-foot">
@@ -1845,11 +1845,11 @@ select option{background:#1a1820}
       <div class="row2">
         <div class="fg" id="as-bal-usd-wrap">
           <label>بدهی افتتاحیه ($)</label>
-          <input type="number" id="as-bal" value="0" min="0" step="0.01"/>
+          <input type="number" inputmode="decimal" id="as-bal" value="0" min="0" step="0.01" inputmode="decimal"/>
         </div>
         <div class="fg" id="as-bal-afn-wrap" style="display:none">
           <label>بدهی افتتاحیه (؋)</label>
-          <input type="number" id="as-bal-afn" value="0" min="0" step="1"/>
+          <input type="number" inputmode="decimal" id="as-bal-afn" value="0" min="0" step="1" inputmode="decimal"/>
         </div>
       </div>
     </div>
@@ -1871,12 +1871,12 @@ select option{background:#1a1820}
       <div class="row2">
         <div class="fg">
           <label>بدهی دالری ($)</label>
-          <input type="number" id="es-bal" min="0" step="0.01" placeholder="0.00"/>
+          <input type="number" inputmode="decimal" id="es-bal" min="0" step="0.01" placeholder="0.00" inputmode="decimal"/>
           <div style="font-size:10px;color:var(--t3);margin-top:3px">برای تامین‌کنندگان کیمیکل، اشترک...</div>
         </div>
         <div class="fg">
           <label>بدهی افغانی (؋)</label>
-          <input type="number" id="es-bal-afn" min="0" step="1" placeholder="0"/>
+          <input type="number" inputmode="decimal" id="es-bal-afn" min="0" step="1" placeholder="0" inputmode="decimal"/>
           <div style="font-size:10px;color:var(--t3);margin-top:3px">برای تامین‌کنندگان کرش، داخلی...</div>
         </div>
       </div>
@@ -1925,7 +1925,7 @@ select option{background:#1a1820}
             <option value="daily">روزانه (؋)</option>
           </select>
         </div>
-        <div class="fg"><label id="ae-slabel">مقدار معاش (؋)</label><input type="number" id="ae-sal" min="0" value="0"/></div>
+        <div class="fg"><label id="ae-slabel">مقدار معاش (؋)</label><input type="number" inputmode="decimal" id="ae-sal" min="0" value="0" inputmode="decimal"/></div>
       </div>
       <div class="fg"><label>تاریخ شروع کار</label><input id="ae-hire"/></div>
       <div class="fg"><label>یادداشت</label><input id="ae-notes" placeholder="اختیاری..."/></div>
@@ -1954,7 +1954,7 @@ select option{background:#1a1820}
           </select>
         </div>
       </div>
-      <div class="fg"><label>مبلغ (؋)</label><input type="number" id="ep-amt" min="0"/></div>
+      <div class="fg"><label>مبلغ (؋)</label><input type="number" inputmode="decimal" id="ep-amt" min="0" inputmode="decimal"/></div>
       <div class="fg"><label>یادداشت</label><input id="ep-notes" placeholder="اختیاری..."/></div>
     </div>
     <div class="modal-foot">
@@ -1980,8 +1980,8 @@ select option{background:#1a1820}
         </div>
       </div>
       <div class="row2">
-        <div class="fg"><label>مبلغ مشمول مالیات (؋)</label><input type="number" id="tx-base" min="0" oninput="calcTax()"/></div>
-        <div class="fg"><label>نرخ مالیات (%)</label><input type="number" id="tx-rate" value="2" step="0.1" oninput="calcTax()"/></div>
+        <div class="fg"><label>مبلغ مشمول مالیات (؋)</label><input type="number" inputmode="decimal" id="tx-base" min="0" oninput="calcTax()" inputmode="decimal"/></div>
+        <div class="fg"><label>نرخ مالیات (%)</label><input type="number" inputmode="decimal" id="tx-rate" value="2" step="0.1" oninput="calcTax()" inputmode="decimal"/></div>
       </div>
       <div class="fg"><label>مبلغ مالیات (اتوماتیک)</label><input id="tx-amt" readonly/></div>
       <div class="fg"><label>یادداشت</label><input id="tx-notes" placeholder="اختیاری..."/></div>
@@ -2018,7 +2018,7 @@ select option{background:#1a1820}
         <div class="fg"><label>شماره رسید</label><input id="chq-no" placeholder="شماره رسید..."/></div>
         <div class="fg"><label>از /به کی</label><input id="chq-bank" placeholder="بانک ملی / کابل بانک..."/></div>
       </div>
-      <div class="fg"><label>مبلغ (؋)</label><input type="number" id="chq-amt" min="0"/></div>
+      <div class="fg"><label>مبلغ (؋)</label><input type="number" inputmode="decimal" id="chq-amt" min="0" inputmode="decimal"/></div>
       <div class="fg"><label>شرح</label><input id="chq-desc" placeholder="دلیل قرض..."/></div>
     </div>
     <div class="modal-foot">
@@ -2180,7 +2180,7 @@ select option{background:#1a1820}
       </div>
       <div class="fg">
         <label>مبلغ پرداختی (؋)</label>
-        <input type="number" id="cp-amount" min="0" placeholder="0" oninput="calcCollectRemain()"/>
+        <input type="number" inputmode="decimal" id="cp-amount" min="0" placeholder="0" oninput="calcCollectRemain()" inputmode="decimal"/>
       </div>
       <div id="cp-remain-info" style="font-size:11px;color:var(--t2);padding:4px 0;margin-bottom:8px"></div>
       <div class="fg">
@@ -2230,7 +2230,7 @@ select option{background:#1a1820}
       </div>
       <div class="fg">
         <label>تعداد (درجن)</label>
-        <input type="number" id="co-dozen" min="0.5" step="0.5" placeholder="درجن"/>
+        <input type="number" inputmode="decimal" id="co-dozen" min="0.5" step="0.5" placeholder="درجن" inputmode="decimal"/>
       </div>
       <div class="fg">
         <label>یادداشت</label>
@@ -2272,7 +2272,7 @@ select option{background:#1a1820}
         </div>
         <div class="fg" id="nb-waste-amount-wrap" style="display:none;margin-top:8px;margin-bottom:0">
           <label>چند کیلو کچره اضافه می‌کنی؟</label>
-          <input type="number" id="nb-waste-amount" placeholder="کیلو" step="0.1" oninput="calcBatchCost()"/>
+          <input type="number" inputmode="decimal" id="nb-waste-amount" placeholder="کیلو" step="0.1" oninput="calcBatchCost()" inputmode="decimal"/>
         </div>
       </div>
 
@@ -2317,11 +2317,11 @@ select option{background:#1a1820}
       <div class="row2">
         <div class="fg">
           <label>درجن تولیدشده</label>
-          <input type="number" id="br-dozens" placeholder="0" step="0.5" oninput="calcBatchResult()"/>
+          <input type="number" inputmode="decimal" id="br-dozens" placeholder="0" step="0.5" oninput="calcBatchResult()" inputmode="decimal"/>
         </div>
         <div class="fg">
           <label>کچره (کیلو)</label>
-          <input type="number" id="br-waste" placeholder="0" step="0.1" oninput="calcBatchResult()"/>
+          <input type="number" inputmode="decimal" id="br-waste" placeholder="0" step="0.1" oninput="calcBatchResult()" inputmode="decimal"/>
         </div>
       </div>
 
@@ -2390,7 +2390,7 @@ select option{background:#1a1820}
       <div class="fg"><label>از کدام نوبت؟</label><select id="aw-batch"></select></div>
       <div class="fg">
         <label>وزن کچره (کیلو)</label>
-        <input type="number" id="aw-kg" placeholder="0" step="0.1"/>
+        <input type="number" inputmode="decimal" id="aw-kg" placeholder="0" step="0.1" inputmode="decimal"/>
       </div>
       <div class="fg"><label>تاریخ</label><input id="aw-date"/></div>
       <div class="fg"><label>یادداشت</label><input id="aw-notes" placeholder="اختیاری..."/></div>
@@ -2418,10 +2418,10 @@ select option{background:#1a1820}
       </div>
       <div class="fg"><label>ایمیل / واتساپ</label><input id="ap-email" placeholder="اختیاری..."/></div>
       <div class="row2">
-        <div class="fg"><label>درصد سهم (%)</label><input type="number" id="ap-pct" min="0" max="100" step="0.1" placeholder="مثال: 25"/></div>
-        <div class="fg"><label>سرمایه اولیه (؋)</label><input type="number" id="ap-capital" min="0" placeholder="0"/></div>
+        <div class="fg"><label>درصد سهم (%)</label><input type="number" inputmode="decimal" id="ap-pct" min="0" max="100" step="0.1" placeholder="مثال: 25" inputmode="decimal"/></div>
+        <div class="fg"><label>سرمایه اولیه (؋)</label><input type="number" inputmode="decimal" id="ap-capital" min="0" placeholder="0" inputmode="decimal"/></div>
       </div>
-      <div class="fg"><label>سرمایه اولیه ($)</label><input type="number" id="ap-capital-usd" min="0" step="0.01" placeholder="0"/></div>
+      <div class="fg"><label>سرمایه اولیه ($)</label><input type="number" inputmode="decimal" id="ap-capital-usd" min="0" step="0.01" placeholder="0" inputmode="decimal"/></div>
       <div class="fg"><label>تاریخ شراکت</label><input id="ap-date" placeholder="۱۴۰۲/۰۱/۰۱"/></div>
       <div class="fg"><label>یادداشت</label><input id="ap-notes" placeholder="توضیحات اضافه..."/></div>
       <div class="ib info">💡 مجموع درصد همه شریکان باید ۱۰۰٪ شود</div>
@@ -2458,8 +2458,8 @@ select option{background:#1a1820}
         </div>
       </div>
       <div class="row2">
-        <div class="fg"><label>مبلغ (؋)</label><input type="number" id="ptx-afn" min="0" value="0"/></div>
-        <div class="fg"><label>مبلغ ($)</label><input type="number" id="ptx-usd" min="0" step="0.01" value="0"/></div>
+        <div class="fg"><label>مبلغ (؋)</label><input type="number" inputmode="decimal" id="ptx-afn" min="0" value="0" inputmode="decimal"/></div>
+        <div class="fg"><label>مبلغ ($)</label><input type="number" inputmode="decimal" id="ptx-usd" min="0" step="0.01" value="0" inputmode="decimal"/></div>
       </div>
       <div class="fg"><label>شرح</label><input id="ptx-desc" placeholder="توضیح تراکنش..."/></div>
     </div>
@@ -2482,7 +2482,7 @@ select option{background:#1a1820}
       <div class="ib info" style="margin-bottom:12px">سود خالص شرکت بر اساس درصد هر شریک تقسیم می‌شود</div>
       <div class="fg"><label>📅 دوره تقسیم سود</label><input id="div-period" placeholder="مثال: ۱۴۰۴ - نیم اول"/></div>
       <div class="fg"><label>💰 مجموع سود خالص برای تقسیم (؋)</label>
-        <input type="number" id="div-amount" min="0" oninput="calcDividend()"/>
+        <input type="number" inputmode="decimal" id="div-amount" min="0" oninput="calcDividend()" inputmode="decimal"/>
       </div>
       <div id="div-preview" style="margin-top:12px"></div>
     </div>
@@ -2501,7 +2501,7 @@ select option{background:#1a1820}
       <div id="exp-msg"></div>
       <div class="row2">
         <div class="fg"><label>تاریخ</label><input id="exp-date"/></div>
-        <div class="fg"><label>مبلغ (؋)</label><input type="number" id="exp-amt" min="0" placeholder="0"/></div>
+        <div class="fg"><label>مبلغ (؋)</label><input type="number" inputmode="decimal" id="exp-amt" min="0" placeholder="0" inputmode="decimal"/></div>
       </div>
       <div class="fg"><label>دسته‌بندی</label>
         <select id="exp-cat" onchange="checkCustomExpCat()"
@@ -2590,11 +2590,11 @@ select option{background:#1a1820}
         <div class="row2">
           <div class="fg">
             <label>اجرت جمشید (؋/درجن)</label>
-            <input type="number" id="mp-new-j" value="22" min="0"/>
+            <input type="number" inputmode="decimal" id="mp-new-j" value="22" min="0" inputmode="decimal"/>
           </div>
           <div class="fg">
             <label>اجرت سمیع‌الله (؋/درجن)</label>
-            <input type="number" id="mp-new-s" value="25" min="0"/>
+            <input type="number" inputmode="decimal" id="mp-new-s" value="25" min="0" inputmode="decimal"/>
           </div>
         </div>
         <button onclick="addNewProduct()" class="btn bpri btn-full" style="margin-top:4px">➕ اضافه کردن محصول</button>
@@ -2634,10 +2634,10 @@ select option{background:#1a1820}
       <div id="sp-usd-section">
         <div class="row2">
           <div class="fg"><label>مبلغ پرداختی (؋)</label>
-            <input type="number" id="sp-amt" min="0" oninput="calcSuppPay()" placeholder="؋ 0"/>
+            <input type="number" inputmode="decimal" id="sp-amt" min="0" oninput="calcSuppPay()" placeholder="؋ 0" inputmode="decimal"/>
           </div>
           <div class="fg"><label>نرخ دالر (؋)</label>
-            <input type="number" id="sp-rate" min="0" oninput="calcSuppPay()"/>
+            <input type="number" inputmode="decimal" id="sp-rate" min="0" oninput="calcSuppPay()" inputmode="decimal"/>
           </div>
         </div>
         <div id="sp-calc" class="ib info" style="font-size:11px"></div>
@@ -2645,7 +2645,7 @@ select option{background:#1a1820}
       <!-- بخش افغانی -->
       <div id="sp-afn-section" style="display:none">
         <div class="fg"><label>مبلغ پرداختی (؋)</label>
-          <input type="number" id="sp-amt-afn" min="0" oninput="calcSuppPayAfn()" placeholder="؋ 0"/>
+          <input type="number" inputmode="decimal" id="sp-amt-afn" min="0" oninput="calcSuppPayAfn()" placeholder="؋ 0" inputmode="decimal"/>
         </div>
         <div id="sp-calc-afn" class="ib info" style="font-size:11px"></div>
       </div>
@@ -2726,10 +2726,10 @@ function renderOrderItemInputs(){
       </div>
       <div style="flex:1">
         <div style="font-size:10px;color:var(--t2);margin-bottom:3px">درجن</div>
-        <input type="number" min="0.5" step="0.5" value="${it.doz}"
+        <input type="number" inputmode="decimal" min="0.5" step="0.5" value="${it.doz}"
           oninput="updateOrderItem(${i},'doz',+this.value)"
           style="width:100%;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-weight:700;font-family:inherit;font-size:13px"
-          placeholder="درجن"/>
+          placeholder="درجن" inputmode="decimal"/>
       </div>
       <button onclick="removeOrderItem(${i})" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:6px 10px;cursor:pointer;font-size:14px;flex-shrink:0;align-self:flex-end">🗑</button>
     </div>`).join("");
@@ -3752,14 +3752,14 @@ function renderWageRatesTable(){
     <tr>
       <td style="font-weight:700;font-size:12px">${p}</td>
       <td style="text-align:center">
-        <input type="number" id="wj_${p.replace(/[^a-zA-Z0-9]/g,'_')}"
+        <input type="number" inputmode="decimal" id="wj_${p.replace(/[^a-zA-Z0-9]/g,'_')}"
           value="${WAGE_RATES[p]?.j||22}" min="0" step="1"
-          style="width:80px;padding:5px 8px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-weight:700;font-family:inherit;font-size:13px;text-align:center"/>
+          style="width:80px;padding:5px 8px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-weight:700;font-family:inherit;font-size:13px;text-align:center" inputmode="decimal"/>
       </td>
       <td style="text-align:center">
-        <input type="number" id="ws_${p.replace(/[^a-zA-Z0-9]/g,'_')}"
+        <input type="number" inputmode="decimal" id="ws_${p.replace(/[^a-zA-Z0-9]/g,'_')}"
           value="${WAGE_RATES[p]?.s||25}" min="0" step="1"
-          style="width:80px;padding:5px 8px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--bl);font-weight:700;font-family:inherit;font-size:13px;text-align:center"/>
+          style="width:80px;padding:5px 8px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--bl);font-weight:700;font-family:inherit;font-size:13px;text-align:center" inputmode="decimal"/>
       </td>
     </tr>`).join("");
 }
@@ -3826,9 +3826,9 @@ function renderSaleItems(){
     '<button onclick="removeSaleItem('+it.idx+')" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:5px 8px;cursor:pointer;font-size:12px;flex-shrink:0">🗑</button></div>'+
     '<div style="display:flex;gap:6px">'+
     '<div style="flex:1"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">درجن</div>'+
-    '<input type="number" value="'+( it.doz||"")+'" min="0" step="0.5" placeholder="0" oninput="updateSaleItem('+it.idx+',&quot;doz&quot;,this.value)" style="width:100%;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-weight:700;font-family:inherit;font-size:13px"/></div>'+
+    '<input type="number" inputmode="decimal" value="'+( it.doz||"")+'" min="0" step="0.5" placeholder="0" oninput="updateSaleItem('+it.idx+',&quot;doz&quot;,this.value)" style="width:100%;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-weight:700;font-family:inherit;font-size:13px" inputmode="decimal"/></div>'+
     '<div style="flex:1"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">قیمت فی درجن (؋)</div>'+
-    '<input type="number" value="'+( it.prc||"")+'" min="0" placeholder="0" oninput="updateSaleItem('+it.idx+',&quot;prc&quot;,this.value)" style="width:100%;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--bl);font-weight:700;font-family:inherit;font-size:13px"/></div>'+
+    '<input type="number" inputmode="decimal" value="'+( it.prc||"")+'" min="0" placeholder="0" oninput="updateSaleItem('+it.idx+',&quot;prc&quot;,this.value)" style="width:100%;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--bl);font-weight:700;font-family:inherit;font-size:13px" inputmode="decimal"/></div>'+
     '<div style="flex:1"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">جمله</div>'+
     '<div id="sale-item-tot-'+it.idx+'" style="padding:7px;background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.15);border-radius:6px;font-size:12px;font-weight:700;color:var(--gd);text-align:center">'+
     (it.doz&&it.prc?Math.round(it.doz*it.prc).toLocaleString("fa-IR"):"—")+
@@ -5100,11 +5100,11 @@ async function initEditStockModal(){
     <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;padding:8px;background:var(--b3);border-radius:8px;border:1px solid var(--bd)">
       <div style="flex:2;font-size:12px;font-weight:700">${r.material}</div>
       <div style="flex:1"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">کیلو</div>
-      <input type="number" id="esk_kg_${r.material.replace(/[^a-zA-Z0-9]/g,'_')}" value="${r.total_kg||0}" step="0.1"
-        style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:inherit"/></div>
+      <input type="number" inputmode="decimal" id="esk_kg_${r.material.replace(/[^a-zA-Z0-9]/g,'_')}" value="${r.total_kg||0}" step="0.1"
+        style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:inherit" inputmode="decimal"/></div>
       <div style="flex:1"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">قیمت/کیلو (؋)</div>
-      <input type="number" id="esk_cost_${r.material.replace(/[^a-zA-Z0-9]/g,'_')}" value="${r.avg_cost||0}" step="1"
-        style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-size:12px;font-family:inherit"/></div>
+      <input type="number" inputmode="decimal" id="esk_cost_${r.material.replace(/[^a-zA-Z0-9]/g,'_')}" value="${r.avg_cost||0}" step="1"
+        style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-size:12px;font-family:inherit" inputmode="decimal"/></div>
     </div>`).join('');
   window._stockEditRows=rows;
 }
@@ -5302,9 +5302,9 @@ async function openEditRecord(table,id){
   if(!rows||!rows.length){alert("رکورد پیدا نشد!");return;}
   const r=rows[0];
   let fields="";
-  if(table==="sales"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>مشتری</label><input id="ef-cust_name" value="${r.cust_name||""}"/></div></div><div class="row2"><div class="fg"><label>درجن</label><input type="number" id="ef-dozen" value="${r.dozen||0}"/></div><div class="fg"><label>قیمت فی درجن</label><input type="number" id="ef-price_per_doz" value="${r.price_per_doz||0}"/></div></div><div class="fg"><label>وصول (؋)</label><input type="number" id="ef-paid" value="${r.paid||0}"/></div>`;}
-  else if(table==="cash_ledger"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>نوع</label><select id="ef-category"><option value="in" ${r.category==="in"?"selected":""}>ورودی</option><option value="out" ${r.category==="out"?"selected":""}>خروجی</option></select></div></div><div class="fg"><label>موضوع</label><input id="ef-type" value="${r.type||""}"/></div><div class="fg"><label>شرح</label><input id="ef-description" value="${r.description||""}"/></div><div class="row2"><div class="fg"><label>مبلغ ورودی</label><input type="number" id="ef-amount_in" value="${r.amount_in||0}"/></div><div class="fg"><label>مبلغ خروجی</label><input type="number" id="ef-amount_out" value="${r.amount_out||0}"/></div></div>`;}
-  else if(table==="production"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>سرکاریگر</label><input id="ef-worker" value="${r.worker||""}"/></div></div><div class="row2"><div class="fg"><label>درجن</label><input type="number" id="ef-dozen" value="${r.dozen||0}"/></div><div class="fg"><label>اجرت کل</label><input type="number" id="ef-total_wage" value="${r.total_wage||0}"/></div></div><div class="fg"><label>پرداختی</label><input type="number" id="ef-paid_wage" value="${r.paid_wage||0}"/></div>`;}
+  if(table==="sales"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>مشتری</label><input id="ef-cust_name" value="${r.cust_name||""}"/></div></div><div class="row2"><div class="fg"><label>درجن</label><input type="number" inputmode="decimal" id="ef-dozen" value="${r.dozen||0}" inputmode="decimal"/></div><div class="fg"><label>قیمت فی درجن</label><input type="number" inputmode="decimal" id="ef-price_per_doz" value="${r.price_per_doz||0}" inputmode="decimal"/></div></div><div class="fg"><label>وصول (؋)</label><input type="number" inputmode="decimal" id="ef-paid" value="${r.paid||0}" inputmode="decimal"/></div>`;}
+  else if(table==="cash_ledger"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>نوع</label><select id="ef-category"><option value="in" ${r.category==="in"?"selected":""}>ورودی</option><option value="out" ${r.category==="out"?"selected":""}>خروجی</option></select></div></div><div class="fg"><label>موضوع</label><input id="ef-type" value="${r.type||""}"/></div><div class="fg"><label>شرح</label><input id="ef-description" value="${r.description||""}"/></div><div class="row2"><div class="fg"><label>مبلغ ورودی</label><input type="number" inputmode="decimal" id="ef-amount_in" value="${r.amount_in||0}" inputmode="decimal"/></div><div class="fg"><label>مبلغ خروجی</label><input type="number" inputmode="decimal" id="ef-amount_out" value="${r.amount_out||0}" inputmode="decimal"/></div></div>`;}
+  else if(table==="production"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>سرکاریگر</label><input id="ef-worker" value="${r.worker||""}"/></div></div><div class="row2"><div class="fg"><label>درجن</label><input type="number" inputmode="decimal" id="ef-dozen" value="${r.dozen||0}" inputmode="decimal"/></div><div class="fg"><label>اجرت کل</label><input type="number" inputmode="decimal" id="ef-total_wage" value="${r.total_wage||0}" inputmode="decimal"/></div></div><div class="fg"><label>پرداختی</label><input type="number" inputmode="decimal" id="ef-paid_wage" value="${r.paid_wage||0}" inputmode="decimal"/></div>`;}
   document.getElementById("em-title").textContent=`✏️ ویرایش #${id}`;
   document.getElementById("ef-fields").innerHTML=fields;
   document.getElementById("ef-msg").innerHTML="";
@@ -5459,6 +5459,24 @@ async function saveDividend(){
   document.getElementById("div-msg").innerHTML='<div class="ib ok">✅ سود تقسیم شد!</div>';
   showSaved();setTimeout(()=>{closeModal("modalDividend");renderPartners();},1000);
 }
+
+
+// ── فیکس عدد فارسی → انگلیسی ──
+function toEn(s){
+  return String(s||'')
+    .replace(/[۰-۹]/g,d=>String(d.charCodeAt(0)-1776))
+    .replace(/[٠-٩]/g,d=>String(d.charCodeAt(0)-1632));
+}
+// تبدیل فارسی به انگلیسی هنگام تایپ
+document.addEventListener('input',function(e){
+  const el=e.target;
+  if(el.tagName==='INPUT'&&el.inputMode==='decimal'){
+    const v=el.value;
+    const en=toEn(v);
+    if(en!==v) el.value=en;
+  }
+});
+// ──────────────────────
 
 document.addEventListener("keydown",e=>{
   if(e.key==="Enter"&&document.getElementById("loginPage").style.display!=="none") doLogin();
