@@ -1129,10 +1129,28 @@ select option{background:#1a1820}
     </div>
     <!-- CASH -->
     <div id="page-cash" class="page">
-      <div class="kg k3">
+      <div class="kg k4">
         <div class="kc gr"><div class="kl">ورودی کل</div><div class="kv" id="cash-in-kpi">—</div></div>
         <div class="kc rd"><div class="kl">خروجی کل</div><div class="kv" id="cash-out-kpi">—</div></div>
-        <div class="kc gd"><div class="kl">موجودی نقد</div><div class="kv" id="cash-bal-kpi">—</div></div>
+        <div class="kc gd"><div class="kl">موجودی افغانی</div><div class="kv" id="cash-bal-kpi">—</div><div style="font-size:10px;color:var(--t3);margin-top:2px" id="cash-bal-usd-equiv">—</div></div>
+        <div class="kc bl"><div class="kl">موجودی دالری</div><div class="kv" id="cash-usd-kpi">—</div><div style="font-size:10px;color:var(--t3);margin-top:2px" id="cash-usd-afn-equiv">—</div></div>
+      </div>
+      <!-- موجودی دالری -->
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <div class="ct" style="margin-bottom:0">💵 موجودی دالری صندوق</div>
+          <button class="btn bpri" onclick="openEditUsdBalance()" style="font-size:11px;padding:6px 14px">✏️ ادیت</button>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="background:var(--bl2);border:1px solid rgba(91,138,245,.25);border-radius:12px;padding:14px;text-align:center">
+            <div style="font-size:10px;color:var(--t2);margin-bottom:4px">موجودی دالر</div>
+            <div style="font-size:20px;font-weight:800;color:var(--bl)" id="usd-bal-display">—</div>
+          </div>
+          <div style="background:var(--g3);border:1px solid rgba(212,168,67,.25);border-radius:12px;padding:14px;text-align:center">
+            <div style="font-size:10px;color:var(--t2);margin-bottom:4px">معادل افغانی (نرخ روز)</div>
+            <div style="font-size:20px;font-weight:800;color:var(--gd)" id="usd-bal-afn-display">—</div>
+          </div>
+        </div>
       </div>
       <div class="card">
         <div class="ct">💵 صندوق افغانی</div>
@@ -3580,9 +3598,18 @@ async function renderCash(){
   allCash=await sbGet("cash_ledger","?order=id.asc")||[];
   const inT=allCash.filter(r=>r.category==="in").reduce((a,r)=>a+(+r.amount_in||0),0);
   const outT=allCash.filter(r=>r.category==="out").reduce((a,r)=>a+(+r.amount_out||0),0);
+  const afnBal=inT-outT;
   document.getElementById("cash-in-kpi").textContent=afn(inT);
   document.getElementById("cash-out-kpi").textContent=afn(outT);
-  document.getElementById("cash-bal-kpi").textContent=afn(inT-outT);
+  document.getElementById("cash-bal-kpi").textContent=afn(afnBal);
+  document.getElementById("cash-bal-usd-equiv").textContent="≈ "+usd(afnBal/S.usdRate);
+  // لود موجودی دالر
+  const usdRow=await sbGet("settings","?key=eq.usd_cash_balance")||[];
+  const usdBal=usdRow.length>0?(+usdRow[0].value||0):0;
+  document.getElementById("cash-usd-kpi").textContent=usd(usdBal);
+  document.getElementById("cash-usd-afn-equiv").textContent="≈ "+afn(usdBal*S.usdRate);
+  document.getElementById("usd-bal-display").textContent=usd(usdBal);
+  document.getElementById("usd-bal-afn-display").textContent=afn(usdBal*S.usdRate);
   let run=0;
   document.getElementById("cash-tbody").innerHTML=allCash.map((r,i)=>{
     run+=r.category==="in"?(+r.amount_in||0):-(+r.amount_out||0);
@@ -3599,6 +3626,23 @@ async function renderCash(){
       </td>
     </tr>`;
   }).join("");
+}
+
+// ── USD CASH BALANCE ──
+async function openEditUsdBalance(){
+  const usdRow=await sbGet("settings","?key=eq.usd_cash_balance")||[];
+  const cur=usdRow.length>0?(+usdRow[0].value||0):0;
+  const val=prompt("موجودی دالر صندوق ($):",cur);
+  if(val===null||val==="") return;
+  const num=parseFloat(val);
+  if(isNaN(num)){alert("عدد درست وارد کن");return;}
+  if(usdRow.length>0){
+    await sbPatch("settings",{value:String(num),updated_at:new Date().toISOString()},"?key=eq.usd_cash_balance");
+  } else {
+    await sbPost("settings",{key:"usd_cash_balance",value:String(num)});
+  }
+  showToast("موجودی دالر ذخیره شد ✓");
+  renderCash();
 }
 
 // ── REPORT ──
@@ -5356,6 +5400,12 @@ async function submitSuppPay(){
     const newUsd=Math.max(0,(curBal.bal||0)-amt);
     await sbPatch("supplier_balances",{balance_usd:newUsd,updated_at:new Date().toISOString()},`?supplier_id=eq.${_suppPayId}`);
     await sbPost("cash_ledger",{date,category:"out",type:"پرداخت به تامین‌کننده",description:desc,amount_in:0,amount_out:amt*S.usdRate});
+    // کم کردن از موجودی دالر صندوق
+    const usdRow=await sbGet("settings","?key=eq.usd_cash_balance")||[];
+    const curUsdBal=usdRow.length>0?(+usdRow[0].value||0):0;
+    const newUsdBal=Math.max(0,curUsdBal-amt);
+    if(usdRow.length>0) await sbPatch("settings",{value:String(newUsdBal),updated_at:new Date().toISOString()},"?key=eq.usd_cash_balance");
+    else await sbPost("settings",{key:"usd_cash_balance",value:String(newUsdBal)});
   }
   await refreshSuppMap();
   document.getElementById("sp-btn").disabled=false;document.getElementById("sp-btn").textContent="ثبت پرداخت ✓";
