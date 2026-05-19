@@ -5434,14 +5434,14 @@ async function renderPartners(){
     const prof=txs.filter(t=>t.partner_id===p.id&&t.type==="profit").reduce((a,r)=>a+(+r.amount_afn||0),0);
     return`<div class="card" style="border:1px solid rgba(212,168,67,.2)">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--gd),var(--g2));display:flex;align-items:center;justify-content:center;font-size:18px;color:#000;font-weight:800">${p.name.slice(0,1)}</div>
-        <div style="text-align:right"><div style="font-size:14px;font-weight:800">${p.name}</div><div style="font-size:11px;color:var(--t3)">${p.share_percent||0}٪ سهم</div></div>
+        <div style="width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--gd),var(--g2));display:flex;align-items:center;justify-content:center;font-size:18px;color:#000;font-weight:800">${( p.name_fa||p.name||'؟').slice(0,1)}</div>
+        <div style="text-align:right"><div style="font-size:14px;font-weight:800">${p.name_fa||p.name||'—'}</div><div style="font-size:11px;color:var(--t3)">${p.ownership_percentage||0}٪ سهم</div></div>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
         <div style="background:rgba(212,168,67,.08);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--t3)">مانده</div><div style="font-size:13px;font-weight:800;color:var(--gd)">${afn(cap+prof-draw)}</div></div>
         <div style="background:rgba(46,204,122,.08);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--t3)">سرمایه</div><div style="font-size:13px;font-weight:800;color:var(--gr)">${afn(cap)}</div></div>
       </div>
-      <button onclick="openPartnerTx(${p.id},'${p.name}')" style="width:100%;background:var(--g3);border:1px solid rgba(212,168,67,.3);color:var(--gd);border-radius:7px;padding:7px;cursor:pointer;font-size:11px;font-family:inherit">💳 ثبت تراکنش</button>
+      <button onclick="openPartnerTx(${p.id},'${p.name_fa||p.name||'—'}')" style="width:100%;background:var(--g3);border:1px solid rgba(212,168,67,.3);color:var(--gd);border-radius:7px;padding:7px;cursor:pointer;font-size:11px;font-family:inherit">💳 ثبت تراکنش</button>
     </div>`;
   }).join("");
   document.getElementById("prt-tbody").innerHTML=txs.length?txs.map((t,i)=>`<tr>
@@ -5453,7 +5453,7 @@ async function renderPartners(){
     <td><button onclick="deleteRecord('partner_transactions',${t.id},'renderPartners')" style="${_editBtnStyle('rd')}">🗑️</button></td>
   </tr>`).join(""):'<tr><td colspan="8" style="text-align:center;padding:16px;color:var(--t3)">هنوز تراکنشی ثبت نشده</td></tr>';
   const sel=document.getElementById("ptx-partner");
-  if(sel) sel.innerHTML='<option value="">— انتخاب کن —</option>'+partners.map(p=>`<option value="${p.id}">${p.name}</option>`).join("");
+  if(sel) sel.innerHTML='<option value="">— انتخاب کن —</option>'+partners.map(p=>`<option value="${p.id}">${p.name_fa||p.name||'—'}</option>`).join("");
 }
 function openPartnerTx(id,name){
   document.getElementById("ptx-partner").value=id;
@@ -5481,9 +5481,9 @@ async function saveAddPartner(){
   const name=document.getElementById("ap-name").value.trim();
   if(!name){document.getElementById("ap-msg").innerHTML='<div class="ib err">نام الزامی</div>';return;}
   document.getElementById("ap-btn").disabled=true;
-  const res=await sbPost("partners",{name,phone:document.getElementById("ap-phone").value,share_percent:+(document.getElementById("ap-pct").value)||0,initial_capital_afn:+(document.getElementById("ap-capital").value)||0,join_date:document.getElementById("ap-date").value||today(),notes:document.getElementById("ap-notes").value,is_active:true});
-  const cap=+(document.getElementById("ap-capital").value)||0;
-  if(res&&cap>0) await sbPost("partner_transactions",{partner_id:res[0]?.id,partner_name:name,date:today(),type:"capital",amount_afn:cap,amount_usd:0,description:"سرمایه اولیه"});
+  const capAfn=+(document.getElementById("ap-capital").value)||0;const capUsd=+(document.getElementById("ap-capital-usd").value)||0;const res=await sbPost("partners",{name_fa:name,phone:document.getElementById("ap-phone").value,email_whatsapp:document.getElementById("ap-email").value,ownership_percentage:+(document.getElementById("ap-pct").value)||0,initial_capital:capAfn,initial_capital_usd:capUsd,partnership_date:document.getElementById("ap-date").value||today(),notes:document.getElementById("ap-notes").value,is_active:true});
+  const cap=capAfn;
+  if(res&&cap>0) await sbPost("partner_transactions",{partner_id:res[0]?.id,partner_name:name,date:today(),type:"capital",amount_afn:cap,amount_usd:capUsd,description:"سرمایه اولیه"});
   document.getElementById("ap-btn").disabled=false;
   if(res){document.getElementById("ap-msg").innerHTML='<div class="ib ok">✅ ثبت شد!</div>';showSaved();setTimeout(()=>{closeModal("modalAddPartner");renderPartners();},1000);}
   else document.getElementById("ap-msg").innerHTML='<div class="ib err">خطا!</div>';
@@ -5492,8 +5492,8 @@ function calcDividend(){
   const total=+(document.getElementById("div-amount").value)||0;
   if(!total||!_partners.length){document.getElementById("div-preview").innerHTML="";return;}
   document.getElementById("div-preview").innerHTML=_partners.map(p=>{
-    const share=total*(p.share_percent||0)/100;
-    return`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:rgba(46,204,122,.08);border-radius:8px;margin-bottom:6px"><span style="font-weight:700;color:var(--gr)">${afn(share)}</span><span>${p.name} — ${p.share_percent}٪</span></div>`;
+    const share=total*(p.ownership_percentage||0)/100;
+    return`<div style="display:flex;justify-content:space-between;padding:8px 12px;background:rgba(46,204,122,.08);border-radius:8px;margin-bottom:6px"><span style="font-weight:700;color:var(--gr)">${afn(share)}</span><span>${p.name_fa||p.name||'—'} — ${p.ownership_percentage}٪</span></div>`;
   }).join("");
 }
 async function saveDividend(){
@@ -5502,7 +5502,7 @@ async function saveDividend(){
   if(!total){document.getElementById("div-msg").innerHTML='<div class="ib err">مبلغ الزامی</div>';return;}
   document.getElementById("div-btn").disabled=true;
   for(const p of _partners){
-    const share=total*(p.share_percent||0)/100;
+    const share=total*(p.ownership_percentage||0)/100;
     if(share>0) await sbPost("partner_transactions",{partner_id:p.id,partner_name:p.name,date:today(),type:"profit",amount_afn:share,amount_usd:0,description:`تقسیم سود: ${period||today()}`});
   }
   document.getElementById("div-btn").disabled=false;
