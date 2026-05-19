@@ -3286,10 +3286,10 @@ function populateDropdowns(){
   if(document.getElementById("b-mat"))
     document.getElementById("b-mat").innerHTML=MATS.map(m=>`<option>${m}</option>`).join("");
   // Load workers from employees table
-  sbGet("employees","?is_active=eq.true&role=eq.worker&select=id,name,salary_amount").then(emps=>{
+  sbGet("employees","?is_active=eq.true&type=eq.worker&select=id,name_fa,salary_amount").then(emps=>{
     const sel=document.getElementById("p-worker");
     if(sel&&emps&&emps.length){
-      sel.innerHTML=emps.map(e=>`<option value="${e.name}">${e.name} — ؋${e.salary_amount}/درجن</option>`).join("");
+      sel.innerHTML=emps.map(e=>`<option value="${e.name_fa}">${e.name_fa} — ؋${e.salary_amount}/درجن</option>`).join("");
     }
   });
 }
@@ -3984,10 +3984,10 @@ async function submitSale(){
   }
   if(savedRows.length===validItems.length){
     // اجرت
-    const emps=await sbGet("employees","?select=id,name");
+    const emps=await sbGet("employees","?select=id,name_fa");
     if(emps){
-      const jamshid=emps.find(e=>e.name&&e.name.includes("جمشید"));
-      const samiullah=emps.find(e=>e.name&&e.name.includes("سمیع"));
+      const jamshid=emps.find(e=>e.name_fa&&e.name_fa.includes("جمشید"));
+      const samiullah=emps.find(e=>e.name_fa&&e.name_fa.includes("سمیع"));
       const wn="اجرت بل "+(billNo||"—")+" | "+custName;
       if(jamshid&&totalWageJ>0)await sbPost("employee_payments",{employee_id:jamshid.id,employee_name:"جمشید",date:saleDate,amount_afn:totalWageJ,type:"salary",notes:wn});
       if(samiullah&&totalWageS>0)await sbPost("employee_payments",{employee_id:samiullah.id,employee_name:"سمیع‌الله",date:saleDate,amount_afn:totalWageS,type:"salary",notes:wn});
@@ -4463,22 +4463,22 @@ async function renderEmp(){
   document.getElementById("emp-wage").textContent=afn(totalWage);
   document.getElementById("emp-rem").textContent=afn(Math.max(0,totalWage-totalPaid));
   let list=rows;
-  if(_empFilter!=="all") list=list.filter(r=>r.role===_empFilter);
+  if(_empFilter!=="all") list=list.filter(r=>r.type===_empFilter);
   document.getElementById("emp-tbody").innerHTML=list.length?list.map((e,i)=>{
     const pd=payMap[e.id]?.paid||0;
     const rem=Math.max(0,(+e.salary_amount||0)-pd);
     return`<tr>
       <td style="color:var(--t3)">${i+1}</td>
-      <td style="font-weight:700">${e.name}</td>
-      <td><span class="bb bbl">${EMP_ROLE_LABEL[e.role]||e.role}</span></td>
+      <td style="font-weight:700">${e.name_fa||e.name||"—"}</td>
+      <td><span class="bb bbl">${EMP_ROLE_LABEL[e.type]||e.type}</span></td>
       <td style="color:var(--t2)">${e.department||"—"}</td>
       <td style="color:var(--t2)">${EMP_STYPE_LABEL[e.salary_type]||e.salary_type}</td>
       <td class="tdr" style="color:var(--gd);font-weight:700">${afn(e.salary_amount||0)}</td>
       <td class="tdr" style="color:var(--gr)">${afn(pd)}</td>
       <td class="tdr">${rem>0?`<span class="bb br2">${afn(rem)}</span>`:'<span class="bb bg2">تسویه</span>'}</td>
       <td style="display:flex;gap:4px">
-        <button onclick="openEmpPay(${e.id},'${e.name}')" style="background:var(--gr2);border:1px solid rgba(34,197,94,.3);color:var(--gr);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit">💵</button>
-        <button onclick="showEmpPays(${e.id},'${e.name}')" style="background:var(--bl2);border:1px solid rgba(59,158,255,.3);color:var(--bl);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit">📋</button>
+        <button onclick="openEmpPay(${e.id},'${e.name_fa||e.name||""}')" style="background:var(--gr2);border:1px solid rgba(34,197,94,.3);color:var(--gr);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit">💵</button>
+        <button onclick="showEmpPays(${e.id},'${e.name_fa||e.name||""}')" style="background:var(--bl2);border:1px solid rgba(59,158,255,.3);color:var(--bl);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit">📋</button>
       </td>
     </tr>`;
   }).join(""):'<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--t3)">هنوز کارمندی ثبت نشده — از دکمه + اضافه کن</td></tr>';
@@ -4502,12 +4502,12 @@ async function saveAddEmp(){
   if(!name){document.getElementById("ae-msg").innerHTML='<div class="ib err">نام الزامی</div>';return;}
   document.getElementById("ae-btn").disabled=true;document.getElementById("ae-btn").textContent="در حال ذخیره...";
   const res=await sbPost("employees",{
-    name,
-    role:document.getElementById("ae-role").value,
+    name_fa:name,
+    type:document.getElementById("ae-role").value,
     department:document.getElementById("ae-dept").value,
     salary_type:document.getElementById("ae-stype").value,
     salary_amount:+(document.getElementById("ae-sal").value)||0,
-    hire_date:document.getElementById("ae-hire").value||today(),
+    start_date:document.getElementById("ae-hire").value||today(),
     phone:document.getElementById("ae-phone").value,
     notes:document.getElementById("ae-notes").value,
     is_active:true
@@ -5531,6 +5531,60 @@ document.addEventListener('input',function(e){
 document.addEventListener("keydown",e=>{
   if(e.key==="Enter"&&document.getElementById("loginPage").style.display!=="none") doLogin();
 });
+
+// ══ VOCAB & PRODUCTS ══
+let _vocabData={};
+async function loadVocab(){
+  try{
+    const rows=await sbGet("settings","?key=eq.vocab_data")||[];
+    if(rows.length>0&&rows[0].value){
+      _vocabData=JSON.parse(rows[0].value)||{};
+      applyVocab();
+    }
+  }catch(e){}
+}
+function applyVocab(){
+  Object.entries(_vocabData).forEach(([k,v])=>{
+    const el=document.getElementById("vocab-target-"+k);
+    if(el) el.textContent=v;
+  });
+}
+function switchVocabTab(tab){
+  ["menu","cheque","product","status","batch"].forEach(t=>{
+    const p=document.getElementById("vocab-"+t);
+    const b=document.getElementById("vt-"+t);
+    if(p) p.style.display=t===tab?"block":"none";
+    if(b){b.className=t===tab?"btn bpri":"btn bsec";}
+  });
+}
+async function saveVocab(){
+  const msg=document.getElementById("vocab-msg");
+  msg.innerHTML='<div class="ib info">در حال ذخیره...</div>';
+  const existing=await sbGet("settings","?key=eq.vocab_data")||[];
+  const val=JSON.stringify(_vocabData);
+  if(existing.length>0) await sbPatch("settings",{value:val,updated_at:new Date().toISOString()},"?key=eq.vocab_data");
+  else await sbPost("settings",{key:"vocab_data",value:val});
+  msg.innerHTML='<div class="ib ok">✅ ذخیره شد!</div>';
+  setTimeout(()=>msg.innerHTML="",2000);
+}
+async function resetVocab(){
+  if(!confirm("همه تغییرات واژه‌ها پاک شود؟")) return;
+  _vocabData={};
+  await sbPatch("settings",{value:"{}",updated_at:new Date().toISOString()},"?key=eq.vocab_data");
+  document.getElementById("vocab-msg").innerHTML='<div class="ib ok">✅ بازگشت به پیش‌فرض</div>';
+  setTimeout(()=>document.getElementById("vocab-msg").innerHTML="",2000);
+}
+
+// ── Products List ──
+let _productsList=[];
+async function loadProductsList(){
+  try{
+    const rows=await sbGet("settings","?key=eq.products_list")||[];
+    if(rows.length>0&&rows[0].value){
+      _productsList=JSON.parse(rows[0].value)||[];
+    }
+  }catch(e){}
+}
 
 // ══ END ══
 </script>
