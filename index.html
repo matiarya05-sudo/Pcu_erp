@@ -1907,6 +1907,43 @@ select option{background:#1a1820}
   </div>
 </div>
 
+<!-- ادیت کارمند -->
+<div class="modal-overlay" id="modalEditEmp">
+  <div class="modal-box">
+    <div class="modal-head"><h3>✏️ ادیت کارمند</h3><button class="close-btn" onclick="closeModal('modalEditEmp')">✕</button></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div><label class="lbl">نام</label><input class="inp" id="ee-name" placeholder="نام کارمند"></div>
+      <div><label class="lbl">تلفون</label><input class="inp" id="ee-phone" placeholder="07..."></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div><label class="lbl">نوع</label>
+        <select class="inp" id="ee-type">
+          <option value="worker">سرکاریگر</option>
+          <option value="office">کارمند دفتر</option>
+          <option value="manager">مدیر</option>
+          <option value="apprentice">شاگرد</option>
+        </select>
+      </div>
+      <div><label class="lbl">نوع معاش</label>
+        <select class="inp" id="ee-stype">
+          <option value="monthly">ماهانه</option>
+          <option value="per_dozen">فی درجن</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div><label class="lbl">مقدار معاش (؋)</label><input class="inp" id="ee-salary" type="number" placeholder="15000"></div>
+      <div><label class="lbl">تاریخ شروع</label><input class="inp" id="ee-date" placeholder="1405/01/01"></div>
+    </div>
+    <div style="margin-bottom:10px"><label class="lbl">یادداشت</label><input class="inp" id="ee-notes" placeholder="..."></div>
+    <div id="ee-msg"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn bsec" onclick="closeModal('modalEditEmp')">انصراف</button>
+      <button class="btn bpri" onclick="saveEditEmp()" id="ee-btn">ذخیره ✓</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ EMPLOYEE MODALS ══ -->
 <div class="modal-overlay" id="modalAddEmp">
   <div class="modal">
@@ -4490,10 +4527,54 @@ let _empFilter="all",_empList=[];
 const EMP_ROLE_LABEL={manager:"👨‍💼 مدیر",worker:"👨‍🔧 سرکاریگر",staff:"📋 کارمند دفتر",apprentice:"👦 شاگرد"};
 const EMP_STYPE_LABEL={monthly:"ماهانه",per_dozen:"فی درجن",daily:"روزانه"};
 
+
+// ── EDIT EMPLOYEE ──
+let _editEmpId=null;
+let _allEmps=[];
+async function openEditEmp(id){
+  _editEmpId=id;
+  const e=_allEmps.find(x=>x.id===id);
+  if(!e) return;
+  document.getElementById("ee-name").value=e.name_fa||e.name||"";
+  document.getElementById("ee-phone").value=e.phone||"";
+  document.getElementById("ee-type").value=e.type||"worker";
+  document.getElementById("ee-stype").value=e.salary_type||"monthly";
+  document.getElementById("ee-salary").value=e.salary_amount||"";
+  document.getElementById("ee-date").value=e.start_date||"";
+  document.getElementById("ee-notes").value=e.notes||"";
+  document.getElementById("ee-msg").innerHTML="";
+  openModal("modalEditEmp");
+}
+async function saveEditEmp(){
+  const name=document.getElementById("ee-name").value.trim();
+  if(!name){alert("نام را وارد کن");return;}
+  const btn=document.getElementById("ee-btn");
+  if(btn){btn.disabled=true;btn.textContent="در حال ذخیره...";}
+  const res=await sbPatch("employees",{
+    name_fa:name,
+    phone:document.getElementById("ee-phone").value,
+    type:document.getElementById("ee-type").value,
+    salary_type:document.getElementById("ee-stype").value,
+    salary_amount:+(document.getElementById("ee-salary").value)||0,
+    start_date:document.getElementById("ee-date").value,
+    notes:document.getElementById("ee-notes").value,
+    updated_at:new Date().toISOString()
+  },`?id=eq.${_editEmpId}`);
+  if(btn){btn.disabled=false;btn.textContent="ذخیره ✓";}
+  if(res){
+    document.getElementById("ee-msg").innerHTML='<div class="ib ok">✅ ذخیره شد!</div>';
+    showSaved();
+    setTimeout(()=>{closeModal("modalEditEmp");renderEmp();},800);
+  } else {
+    document.getElementById("ee-msg").innerHTML='<div class="ib err">❌ خطا!</div>';
+  }
+}
+
 async function renderEmp(){
   document.getElementById("emp-tbody").innerHTML='<tr><td colspan="9" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr>';
   const rows=await sbGet("employees","?order=id.asc")||[];
   _empList=rows;
+  _allEmps=rows;
   document.getElementById("emp-cnt").textContent=rows.filter(r=>r.is_active!==false).length;
   const pays=await sbGet("employee_payments")||[];
   const payMap={};
@@ -4523,6 +4604,8 @@ async function renderEmp(){
       <td style="display:flex;gap:4px">
         <button onclick="openEmpPay(${e.id},'${e.name_fa||e.name||""}')" style="background:var(--gr2);border:1px solid rgba(34,197,94,.3);color:var(--gr);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit">💵</button>
         <button onclick="showEmpPays(${e.id},'${e.name_fa||e.name||""}')" style="background:var(--bl2);border:1px solid rgba(59,158,255,.3);color:var(--bl);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit">📋</button>
+        <button onclick="openEditEmp(${e.id})" style="background:var(--g3);border:1px solid rgba(212,168,67,.3);color:var(--gd);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit">✏️</button>
+        <button onclick="deleteRecord('employees',${e.id},'renderEmp')" style="background:var(--r2);border:1px solid rgba(239,68,68,.3);color:var(--rd);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit">🗑️</button>
       </td>
     </tr>`;
   }).join(""):'<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--t3)">هنوز کارمندی ثبت نشده — از دکمه + اضافه کن</td></tr>';
