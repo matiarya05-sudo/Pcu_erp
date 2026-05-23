@@ -2421,6 +2421,26 @@ select option{background:#1a1820}
 </div>
 
 <!-- ══ PARTNER MODALS ══ -->
+<!-- ادیت شریک -->
+<div class="modal-overlay" id="modalEditPartner">
+  <div class="modal-box">
+    <div class="modal-head"><h3>✏️ ادیت شریک</h3><button class="close-btn" onclick="closeModal('modalEditPartner')">✕</button></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div><label class="lbl">نام شریک</label><input class="inp" id="ep-name" placeholder="نام"></div>
+      <div><label class="lbl">تلفون</label><input class="inp" id="ep-phone" placeholder="07..."></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div><label class="lbl">درصد سهم (%)</label><input class="inp" id="ep-pct" type="number" placeholder="25"></div>
+      <div><label class="lbl">تاریخ شراکت</label><input class="inp" id="ep-date" placeholder="1405/01/01"></div>
+    </div>
+    <div style="margin-bottom:10px"><label class="lbl">یادداشت</label><input class="inp" id="ep-notes" placeholder="..."></div>
+    <div id="ep-msg"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn bsec" onclick="closeModal('modalEditPartner')">انصراف</button>
+      <button class="btn bpri" onclick="saveEditPartner()">ذخیره ✓</button>
+    </div>
+  </div>
+</div>
 <!-- اضافه کردن شریک جدید -->
 <div class="modal-overlay" id="modalAddPartner">
   <div class="modal">
@@ -3645,6 +3665,30 @@ async function openEditUsdBalance(){
   renderCash();
 }
 
+// ── EDIT PARTNER ──
+let _editPartnerId=null;
+async function openEditPartner(id){
+  _editPartnerId=id;
+  const p=partners.find(x=>x.id===id);
+  if(!p) return;
+  document.getElementById("ep-name").value=p.name_fa||p.name||"";
+  document.getElementById("ep-phone").value=p.phone||"";
+  document.getElementById("ep-pct").value=p.ownership_percentage||"";
+  document.getElementById("ep-date").value=p.partnership_date||"";
+  document.getElementById("ep-notes").value=p.notes||"";
+  document.getElementById("ep-msg").innerHTML="";
+  openModal("modalEditPartner");
+}
+async function saveEditPartner(){
+  const name=document.getElementById("ep-name").value.trim();
+  if(!name){alert("نام را وارد کن");return;}
+  const btn=document.getElementById("ep-btn");
+  if(btn){btn.disabled=true;btn.textContent="در حال ذخیره...";}
+  const res=await sbPatch("partners",{name_fa:name,phone:document.getElementById("ep-phone").value,ownership_percentage:+(document.getElementById("ep-pct").value)||0,partnership_date:document.getElementById("ep-date").value,notes:document.getElementById("ep-notes").value,updated_at:new Date().toISOString()},`?id=eq.${_editPartnerId}`);
+  if(btn){btn.disabled=false;btn.textContent="ذخیره ✓";}
+  if(res){document.getElementById("ep-msg").innerHTML='<div class="ib ok">✅ ذخیره شد!</div>';showSaved();setTimeout(()=>{closeModal("modalEditPartner");renderPartners();},800);}
+  else{document.getElementById("ep-msg").innerHTML='<div class="ib err">❌ خطا!</div>';}
+}
 // ── REPORT ──
 async function renderReport(){
   document.getElementById("report-kpis").innerHTML='<div class="loading" style="grid-column:1/-1"><div class="spinner"></div></div>';
@@ -5441,7 +5485,7 @@ async function renderPartners(){
         <div style="background:rgba(212,168,67,.08);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--t3)">مانده</div><div style="font-size:13px;font-weight:800;color:var(--gd)">${afn(cap+prof-draw)}</div></div>
         <div style="background:rgba(46,204,122,.08);border-radius:8px;padding:8px;text-align:center"><div style="font-size:9px;color:var(--t3)">سرمایه</div><div style="font-size:13px;font-weight:800;color:var(--gr)">${afn(cap)}</div></div>
       </div>
-      <button onclick="openPartnerTx(${p.id},'${p.name_fa||p.name||'—'}')" style="width:100%;background:var(--g3);border:1px solid rgba(212,168,67,.3);color:var(--gd);border-radius:7px;padding:7px;cursor:pointer;font-size:11px;font-family:inherit">💳 ثبت تراکنش</button>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:6px"><button onclick="openPartnerTx(${p.id},'${p.name_fa||p.name||'—'}')" style="background:var(--g3);border:1px solid rgba(212,168,67,.3);color:var(--gd);border-radius:7px;padding:7px;cursor:pointer;font-size:11px;font-family:inherit">💳 ثبت تراکنش</button><button onclick="openEditPartner(${p.id})" style="background:var(--b3);border:1px solid rgba(91,138,245,.3);color:var(--bl);border-radius:7px;padding:7px 10px;cursor:pointer;font-size:13px;font-family:inherit">✏️</button></div>
     </div>`;
   }).join("");
   document.getElementById("prt-tbody").innerHTML=txs.length?txs.map((t,i)=>`<tr>
