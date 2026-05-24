@@ -4224,8 +4224,9 @@ async function submitBuy(){
   const sn=SUPPLIERS.find(s=>s.id===sid)?.n||"";
   document.getElementById("buy-btn").disabled=true;document.getElementById("buy-btn").textContent="در حال ذخیره...";
   const _pdate=document.getElementById("b-date").value;
+  const _suppIdInt=(()=>{const n=parseInt(sid);return n>0?n:null;})();
   const res=await sbPost("purchases",{
-    date:_pdate,purchase_date:_pdate,supplier_id:sid,supplier_name:sn,material_id:mat,
+    date:_pdate,purchase_date:_pdate,supplier_id:_suppIdInt,supplier_name:sn,material_id:mat,
     bill:document.getElementById("b-bill").value,material:mat,kg,quantity_kg:kg,
     amount_usd:usdAmt,exchange_rate:rate,usd_rate:rate,amount_afn:tAfn,paid_afn:pAfn,paid_amount:pAfn,
     remaining_usd:remUSD,cost_per_kg:upm,price_per_kg:upm,status:"pending"
