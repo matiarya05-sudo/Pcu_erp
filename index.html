@@ -2924,9 +2924,11 @@ async function submitOrder(){
 
   // ذخیره order سر
   const _odate=document.getElementById("o-date").value;
+  const _custIdRaw=_selCustOrd?.id||null;
+  const _custIdInt=(typeof _custIdRaw==="number")?_custIdRaw:(parseInt(_custIdRaw)>0?parseInt(_custIdRaw):null);
   const orderRes=await sbPost("orders",{
     date:_odate,order_date:_odate,
-    cust_id:_selCustOrd?.id||null,customer_id:_selCustOrd?.id||null,
+    cust_id:_custIdRaw,customer_id:_custIdInt,
     cust_name:cn,province:cp,
     status:"pending",notes:document.getElementById("o-note").value,note:document.getElementById("o-note").value
   });
@@ -4142,7 +4144,7 @@ async function submitSale(){
     const it=validItems[i];
     const tot=it.doz*it.prc;
     const itemPaid=i===validItems.length-1?Math.max(0,paid-savedRows.reduce((a,r)=>a+r._paid,0)):Math.round(paid*(tot/totAll));
-    const res=await sbPost("sales",{date:saleDate,sale_date:saleDate,cust_id:_selCust?.id||"new",customer_id:_selCust?.id||null,cust_name:custName,province:custProv,
+    const res=await sbPost("sales",{date:saleDate,sale_date:saleDate,cust_id:_selCust?.id||null,customer_id:(()=>{const _id=_selCust?.id||null;return(typeof _id==="number")?_id:(parseInt(_id)>0?parseInt(_id):null);})(),cust_name:custName,province:custProv,
       bill:billNo,bill_number:billNo,product:it.prod,dozen:it.doz,price_per_doz:it.prc,total:tot,total_amount:tot,paid:itemPaid,amount_received:itemPaid,remaining:Math.max(0,tot-itemPaid),remaining_debt:Math.max(0,tot-itemPaid),status:"pending"});
     if(res)savedRows.push({...res[0],_paid:itemPaid});
   }
