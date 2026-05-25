@@ -1817,6 +1817,7 @@ select option{background:#1a1820}
       </div>
       <div id="d-total-info" style="font-size:12px;font-weight:700;color:var(--gd);padding:6px 0;margin-bottom:4px"></div>
       <div id="d-rem-info" class="ib info"></div>
+      <div id="del-msg"></div>
     </div>
     <div class="modal-foot">
       <button class="btn bsec" onclick="closeModal('modalDeliver')">انصراف</button>
@@ -3095,26 +3096,28 @@ async function submitDelivery(){
     await sbPatch("orders",{status:ordStatus},`?id=eq.${cur.order_id}`);
 
     // ── بل نوشتن: ثبت در sales ──
-    // پیدا کردن مشتری از فرمایش
-    const orderRow=await sbGet("orders",`?id=eq.${cur.order_id}&select=cust_id,cust_name,province`);
+    const orderRow=await sbGet("orders",`?id=eq.${cur.order_id}&select=cust_id,cust_name,province,customer_id`);
     if(orderRow&&orderRow[0]){
       const o=orderRow[0];
-      // قیمت پیش‌فرض بر اساس مدل
       const pricePerDoz=+(document.getElementById("d-price").value)||1500;
-      const total=doz*pricePerDoz;
-      await sbPost("sales",{
-        date:document.getElementById("d-date").value||today(),
-        cust_id:o.cust_id,
-        cust_name:o.cust_name,
-        province:o.province||'',
-        product:cur.product,
-        dozen:doz,
-        price_per_dozen:pricePerDoz,
-        total:total,
-        paid:0,
-        remaining:total,
-        note:`از فرمایش #${cur.order_id}`
+      const _sdate=document.getElementById("d-date").value||today();
+      const _tot=doz*pricePerDoz;
+      const _custIdInt=(()=>{const n=parseInt(o.customer_id||o.cust_id);return n>0?n:null;})();
+      const saleRes=await sbPost("sales",{
+        date:_sdate,sale_date:_sdate,
+        cust_id:o.cust_id,customer_id:_custIdInt,
+        cust_name:o.cust_name,province:o.province||"",
+        product:cur.product,dozen:doz,
+        price_per_doz:pricePerDoz,
+        total:_tot,total_amount:_tot,
+        paid:0,amount_received:0,
+        remaining:_tot,remaining_debt:_tot,
+        bill_number:"FRM-"+cur.order_id,bill:"FRM-"+cur.order_id,
+        status:"pending",notes:"از فرمایش #"+cur.order_id
       });
+      if(saleRes) {
+        document.getElementById("del-msg")?document.getElementById("del-msg").innerHTML='<div class="ib ok">✅ بل فروش هم ثبت شد!</div>':null;
+      }
     }
 
     showSaved();closeModal("modalDeliver");renderOrders();
