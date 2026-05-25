@@ -4234,7 +4234,12 @@ async function submitBuy(){
     // Update moving average in mat_stock
     const cur=S.stockMap[mat]||{kg:0,avgCost:0,val:0};
     const newKg=cur.kg+kg,newVal=cur.kg*cur.avgCost+kg*upm,newAvg=newKg>0?newVal/newKg:0;
-    await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,avg_cost:newAvg,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(mat)}`);
+    const existStock=await sbGet("mat_stock",`?material=eq.${encodeURIComponent(mat)}`)||[];
+    if(existStock.length>0){
+      await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,avg_cost:newAvg,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(mat)}`);
+    } else {
+      await sbPost("mat_stock",{material:mat,total_kg:newKg,total_value_afn:newVal,avg_cost:newAvg,updated_at:new Date().toISOString()});
+    }
     // آپدیت مانده تامین‌کننده
     const curBal=S.suppMap[sid]?.bal||0;
     const curBalAfn=S.suppMap[sid]?.balAfn||0;
