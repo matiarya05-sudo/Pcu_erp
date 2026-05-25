@@ -3020,12 +3020,10 @@ async function renderOrders(){
               <td><span class="bb bpp" style="font-size:10px">${PRD_SHORT[it.product]||it.product}</span></td>
               <td style="font-weight:800;color:var(--gd)">${it.quantity_dozen||it.dozen_ordered||0} درجن</td>
               <td style="color:var(--gr);font-weight:700">${it.dozen_delivered||0} درجن</td>
-              <td>${+it.dozen_remaining>0
-                ?`<span class="bb br2" style="font-size:10px">${it.dozen_remaining} درجن</span>`
-                :'<span class="bb bg2" style="font-size:10px">تکمیل</span>'}</td>
+              <td>${(()=>{const _rem=+(it.dozen_remaining)||Math.max(0,(+(it.quantity_dozen||it.dozen_ordered)||0)-(+(it.dozen_delivered)||0));return _rem>0?`<span class="bb br2" style="font-size:10px">${_rem} درجن</span>`:'<span class="bb bg2" style="font-size:10px">تکمیل</span>';})()}</td>
               <td>${STATUS_BADGE[it.status]||it.status}</td>
               <td>${it.status!=="done"
-                ?`<button onclick="openDeliverItem(${it.id},${it.dozen_remaining},'${it.product}','${o.cust_name}')" 
+                ?`<button onclick="openDeliverItem(${it.id},${+(it.dozen_remaining)||Math.max(0,(+(it.quantity_dozen||it.dozen_ordered)||0)-(+(it.dozen_delivered)||0))},'${it.product}','${o.cust_name}')" 
                    style="background:var(--gd);color:#000;border:none;border-radius:5px;padding:4px 9px;font-size:10px;font-weight:700;cursor:pointer;font-family:inherit">🚚 ارسال</button>`
                 :'—'}</td>
             </tr>`).join("")}
