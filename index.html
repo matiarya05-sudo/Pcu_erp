@@ -4422,7 +4422,7 @@ async function submitProd(){
   const _emprows=await sbGet("employees","?name_fa=eq."+encodeURIComponent(worker)+"&select=id")||[];
   const _empid=_emprows[0]?.id||null;
   const res=await sbPost("production",{
-    date:_prdate,production_date:_prdate,worker,employee_id:_empid,product:prod,product_id:prod,dozen:doz,quantity_dozen:doz,
+    date:_prdate,production_date:_prdate,worker,employee_id:_empid,product:prod,product_id:null,dozen:doz,quantity_dozen:doz,
     wage_rate:wRate,total_wage:wage,paid_wage:paid,remaining_wage:wage-paid,mat_cogs:cg,status:"pending"
   });
   if(res){
