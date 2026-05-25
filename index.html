@@ -3815,6 +3815,136 @@ async function saveEditPartner(){
   if(res){document.getElementById("ep-msg").innerHTML='<div class="ib ok">✅ ذخیره شد!</div>';showSaved();setTimeout(()=>{closeModal("modalEditPartner");renderPartners();},800);}
   else{document.getElementById("ep-msg").innerHTML='<div class="ib err">❌ خطا!</div>';}
 }
+
+// ── PERSON STATEMENT ──
+let _stmtData=[];
+async function openPersonStatement(type,id,name){
+  document.getElementById("stmt-title").textContent=(type==="supp"?"🏭 تاریخچه تامین‌کننده: ":"👤 تاریخچه مشتری: ")+name;
+  document.getElementById("stmt-body").innerHTML='<div class="loading"><div class="spinner"></div>در حال بارگذاری...</div>';
+  document.getElementById("stmt-kpi").innerHTML="";
+  document.getElementById("stmt-final-bal").textContent="...";
+  openModal("modalStatement");
+
+  let rows=[];
+  if(type==="supp"){
+    // خریدهای این تامین‌کننده
+    const buys=await sbGet("purchases",`?supplier_name=eq.${encodeURIComponent(name)}&order=date.asc`)||[];
+    buys.forEach(r=>rows.push({
+      date:r.date||r.purchase_date||"—",
+      type:"خرید",
+      desc:r.material||"—",
+      debit:+(r.amount_afn||0),
+      credit:+(r.paid_afn||0),
+      usd:+(r.amount_usd||0)
+    }));
+    // پرداخت‌های صندوق به این تامین‌کننده
+    const pays=await sbGet("cash_ledger",`?description=like.*${encodeURIComponent(name)}*&category=eq.out&order=date.asc`)||[];
+    pays.forEach(r=>rows.push({
+      date:r.date||"—",
+      type:"پرداخت",
+      desc:r.description||"—",
+      debit:0,
+      credit:+(r.amount_out||0),
+      usd:0
+    }));
+    // مرتب کردن بر اساس تاریخ
+    rows.sort((a,b)=>a.date.localeCompare(b.date));
+    const totDebit=rows.reduce((a,r)=>a+r.debit,0);
+    const totCredit=rows.reduce((a,r)=>a+r.credit,0);
+    const totUsd=rows.filter(r=>r.type==="خرید").reduce((a,r)=>a+r.usd,0);
+    const bal=totDebit-totCredit;
+    document.getElementById("stmt-kpi").innerHTML=`
+      <div style="background:var(--r2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:10px;color:var(--t2)">جمع خرید (؋)</div>
+        <div style="font-weight:800;color:var(--rd)">${afn(totDebit)}</div>
+      </div>
+      <div style="background:var(--gr2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:10px;color:var(--t2)">جمع پرداخت (؋)</div>
+        <div style="font-weight:800;color:var(--gr)">${afn(totCredit)}</div>
+      </div>
+      <div style="background:var(--g3);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:10px;color:var(--t2)">مانده (؋)</div>
+        <div style="font-weight:800;color:var(--gd)">${afn(bal)}</div>
+      </div>`;
+    document.getElementById("stmt-final-bal").textContent=afn(bal);
+  } else {
+    // فروش‌های این مشتری
+    const sales=await sbGet("sales",`?cust_name=eq.${encodeURIComponent(name)}&order=date.asc`)||[];
+    sales.forEach(r=>rows.push({
+      date:r.date||r.sale_date||"—",
+      type:"فروش",
+      desc:(r.product||"—")+" | "+(r.dozen||0)+" درجن",
+      debit:+(r.total||r.total_amount||0),
+      credit:+(r.paid||r.amount_received||0),
+      usd:0
+    }));
+    rows.sort((a,b)=>a.date.localeCompare(b.date));
+    const totSale=rows.reduce((a,r)=>a+r.debit,0);
+    const totPaid=rows.reduce((a,r)=>a+r.credit,0);
+    const bal=totSale-totPaid;
+    document.getElementById("stmt-kpi").innerHTML=`
+      <div style="background:var(--bl2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:10px;color:var(--t2)">جمع فروش (؋)</div>
+        <div style="font-weight:800;color:var(--bl)">${afn(totSale)}</div>
+      </div>
+      <div style="background:var(--gr2);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:10px;color:var(--t2)">جمع وصول (؋)</div>
+        <div style="font-weight:800;color:var(--gr)">${afn(totPaid)}</div>
+      </div>
+      <div style="background:var(--g3);border-radius:10px;padding:10px;text-align:center">
+        <div style="font-size:10px;color:var(--t2)">طلب (؋)</div>
+        <div style="font-weight:800;color:var(--gd)">${afn(bal)}</div>
+      </div>`;
+    document.getElementById("stmt-final-bal").textContent=afn(bal);
+  }
+
+  _stmtData=rows;
+  renderStmtRows(rows);
+}
+
+function renderStmtRows(rows){
+  if(!rows.length){
+    document.getElementById("stmt-body").innerHTML='<div style="text-align:center;padding:20px;color:var(--t3)">هیچ معامله‌ای ثبت نشده</div>';
+    return;
+  }
+  document.getElementById("stmt-body").innerHTML=`
+    <table style="width:100%;border-collapse:collapse;font-size:11px">
+      <thead><tr style="background:var(--b3)">
+        <th style="padding:7px;text-align:right">تاریخ</th>
+        <th style="padding:7px;text-align:right">نوع</th>
+        <th style="padding:7px;text-align:right">شرح</th>
+        <th style="padding:7px;text-align:right">بدهکار (؋)</th>
+        <th style="padding:7px;text-align:right">بستانکار (؋)</th>
+      </tr></thead>
+      <tbody>
+        ${rows.map(r=>`<tr style="border-bottom:1px solid var(--bd)">
+          <td style="padding:6px">${r.date}</td>
+          <td style="padding:6px"><span class="bb ${r.type==="فروش"||r.type==="خرید"?"bbl":"bg2"}" style="font-size:9px">${r.type}</span></td>
+          <td style="padding:6px;color:var(--t2)">${r.desc}</td>
+          <td style="padding:6px;color:var(--rd);font-weight:700">${r.debit>0?afn(r.debit):"—"}</td>
+          <td style="padding:6px;color:var(--gr);font-weight:700">${r.credit>0?afn(r.credit):"—"}</td>
+        </tr>`).join("")}
+      </tbody>
+    </table>`;
+}
+
+function filterStmt(){
+  const q=document.getElementById("stmt-search").value.toLowerCase();
+  const f=document.getElementById("stmt-filter").value;
+  let filtered=_stmtData;
+  if(f!=="all") filtered=filtered.filter(r=>r.type.includes(f==="sale"?"فروش":f==="collect"?"وصول":f==="purchase"?"خرید":"پرداخت"));
+  if(q) filtered=filtered.filter(r=>r.desc.toLowerCase().includes(q)||r.date.includes(q));
+  renderStmtRows(filtered);
+}
+
+function printStatement(){
+  const content=document.getElementById("stmt-body").innerHTML;
+  const title=document.getElementById("stmt-title").textContent;
+  const w=window.open("","_blank");
+  w.document.write(`<html dir="rtl"><head><title>${title}</title><style>body{font-family:Vazirmatn,sans-serif;padding:20px}table{width:100%;border-collapse:collapse}th,td{padding:8px;border:1px solid #ddd;text-align:right}th{background:#f5f5f5}</style></head><body><h2>${title}</h2>${content}</body></html>`);
+  w.print();
+}
+
 // ── REPORT ──
 async function renderReport(){
   document.getElementById("report-kpis").innerHTML='<div class="loading" style="grid-column:1/-1"><div class="spinner"></div></div>';
@@ -4450,7 +4580,8 @@ function renderCustTable(salesMap){
       <td class="tdr" style="color:var(--gr)">${afn(sm.paid+collected)}</td>
       <td>${tot>0?`<span class="bb br2">${afn(tot)}</span>`:'<span class="bb bg2">تسویه ✅</span>'}</td>
       <td style="display:flex;gap:4px">${isAdmin?`<button onclick="openEditCust('${c.id}')" style="background:var(--g3);border:1px solid rgba(232,160,32,.3);color:var(--gd);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">✏️</button>
-        <button onclick="openCustCRM('${c.id}','${c.n.replace(/'/g,'')}')" style="background:var(--bl2);border:1px solid rgba(59,158,255,.3);color:var(--bl);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">📝</button>`:"—"}</td>
+        <button onclick="openCustCRM('${c.id}','${c.n.replace(/'/g,'')}')" style="background:var(--bl2);border:1px solid rgba(59,158,255,.3);color:var(--bl);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">📝</button>
+        <button onclick="openPersonStatement('cust','${c.id}','${c.n.replace(/'/g,'')}')" style="background:var(--gr2);border:1px solid rgba(46,204,122,.3);color:var(--gr);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">📊</button>`:"—"}</td>
     </tr>`;
   }).join("");
 }
