@@ -2979,7 +2979,7 @@ async function renderOrders(){
   let html="";
   for(const o of orders){
     const items=await sbGet("order_items",`?order_id=eq.${o.id}&order=id.asc`)||[];
-    const totOrd=items.reduce((a,r)=>a+(+r.dozen_ordered||0),0);
+    const totOrd=items.reduce((a,r)=>a+(+(r.quantity_dozen||r.dozen_ordered)||0),0);
     const totDel=items.reduce((a,r)=>a+(+r.dozen_delivered||0),0);
     const totRem=totOrd-totDel;
     const pct=totOrd>0?Math.round(totDel/totOrd*100):0;
@@ -3018,7 +3018,7 @@ async function renderOrders(){
           <tbody>
             ${items.map(it=>`<tr>
               <td><span class="bb bpp" style="font-size:10px">${PRD_SHORT[it.product]||it.product}</span></td>
-              <td style="font-weight:800;color:var(--gd)">${it.dozen_ordered} درجن</td>
+              <td style="font-weight:800;color:var(--gd)">${it.quantity_dozen||it.dozen_ordered||0} درجن</td>
               <td style="color:var(--gr);font-weight:700">${it.dozen_delivered||0} درجن</td>
               <td>${+it.dozen_remaining>0
                 ?`<span class="bb br2" style="font-size:10px">${it.dozen_remaining} درجن</span>`
@@ -3079,7 +3079,7 @@ async function submitDelivery(){
   if(rows&&rows[0]){
     const cur=rows[0];
     const newDel=(+cur.dozen_delivered||0)+doz;
-    const newRem=(+cur.dozen_ordered||0)-newDel;
+    const newRem=(+(cur.quantity_dozen||cur.dozen_ordered)||0)-newDel;
     const newStatus=newRem<=0?"done":newDel>0?"partial":"pending";
 
     await sbPatch("order_items",{
