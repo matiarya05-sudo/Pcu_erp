@@ -4292,6 +4292,16 @@ async function submitSale(){
       if(jamshid&&totalWageJ>0)await sbPost("employee_payments",{employee_id:jamshid.id,employee_name:"جمشید",date:saleDate,payment_date:saleDate,amount_afn:totalWageJ,total_payment:totalWageJ,payment_type:"salary",type:"salary",notes:wn});
       if(samiullah&&totalWageS>0)await sbPost("employee_payments",{employee_id:samiullah.id,employee_name:"سمیع‌الله",date:saleDate,payment_date:saleDate,amount_afn:totalWageS,total_payment:totalWageS,payment_type:"salary",type:"salary",notes:wn});
     }
+    // کسر از انبار جنس تولیدشده
+    for(const it of validItems){
+      const fgRows=await sbGet("finished_goods",`?product_name=eq.${encodeURIComponent(it.prod)}`)||[];
+      if(fgRows.length>0){
+        const fg=fgRows[0];
+        const newDoz=Math.max(0,(+fg.dozen||0)-it.doz);
+        const newVal=newDoz*(+fg.unit_price||0);
+        await sbPatch("finished_goods",{dozen:newDoz,total_value:newVal,updated_at:new Date().toISOString()},`?product_name=eq.${encodeURIComponent(it.prod)}`);
+      }
+    }
     // صندوق
     if(paid>0)await sbPost("cash_ledger",{date:saleDate,category:"in",type:"وصول از مشتری",
       description:"فروش — بل "+(billNo||"—")+" | "+custName,amount_in:paid,amount_out:0});
@@ -4423,6 +4433,16 @@ async function submitProd(){
       const newKg=Math.max(0,cur.kg-usedKg);
       const newVal=newKg*cur.avgCost;
       await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(r.m)}`);
+    }
+    // اضافه کردن به انبار جنس تولیدشده
+    const fgRows=await sbGet("finished_goods",`?product_name=eq.${encodeURIComponent(prod)}`)||[];
+    if(fgRows.length>0){
+      const fg=fgRows[0];
+      const newDoz=(+fg.dozen||0)+doz;
+      const newVal=newDoz*(+fg.unit_price||0);
+      await sbPatch("finished_goods",{dozen:newDoz,total_value:newVal,updated_at:new Date().toISOString()},`?product_name=eq.${encodeURIComponent(prod)}`);
+    } else {
+      await sbPost("finished_goods",{product_name:prod,dozen:doz,unit_price:0,total_value:0});
     }
     await refreshStockMap();
     document.getElementById("prod-msg").innerHTML='<div class="ib ok">✅ تولید در Supabase ذخیره شد!</div>';
