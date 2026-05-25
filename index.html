@@ -3998,6 +3998,21 @@ async function renderReport(){
 }
 
 // ── SETTINGS ──
+async function fetchUsdRate(){
+  try{
+    const r=await fetch("https://api.exchangerate-api.com/v4/latest/USD");
+    const d=await r.json();
+    const rate=d?.rates?.AFN||0;
+    if(rate>0){
+      const el=document.getElementById("usd-rate-online");
+      if(el) el.textContent="نرخ آنلاین: "+rate.toFixed(1)+" افغانی";
+    }
+  }catch(e){
+    const el=document.getElementById("usd-rate-online");
+    if(el) el.textContent="";
+  }
+}
+
 async function renderSettings(){
   document.getElementById("rateInput").value=S.usdRate;
   // نرخ آنلاین دالر
@@ -4219,7 +4234,7 @@ async function pickCust(id){
   try{
     const [sales,collects]=await Promise.all([
       sbGet("sales","?cust_id=eq."+id+"&select=total,paid"),
-      sbGet("collection_payments","?cust_id=eq."+id+"&select=amount")
+      sbGet("sales","?cust_id=eq."+id+"&select=paid,amount_received")
     ]);
     const ob=+(_selCust.ob)||0;
     const totS=(sales||[]).reduce((a,r)=>a+(+r.total||0),0);
@@ -4544,7 +4559,7 @@ async function submitCash(){
 let _provF="همه",_custSrch="";
 async function renderCust(){
   const salesRows=await sbGet("sales","?select=cust_id,total,paid,remaining")||[];
-  const payments=await sbGet("collection_payments","?select=cust_id,amount")||[];
+  const payments=await sbGet("sales","?select=cust_id,paid,amount_received")||[];
 
   // جمع پرداخت‌های ✅ برگشت شد برای هر مشتری
   const collectMap={};
@@ -5617,7 +5632,7 @@ function calcYearsUsed(d){try{const p=d.split("/");return Math.max(0,new Date().
 function calcBookValue(price,life,yr,salvage=0){const ann=(price-salvage)/life;const acc=Math.min(ann*yr,price-salvage);return Math.max(salvage,price-acc);}
 async function renderAssets(){
   document.getElementById("assets-tbody").innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr>';
-  const rows=await sbGet("fixed_assets","?order=id.asc&is_active=eq.true")||[];
+  const rows=await sbGet("fixed_assets","?order=id.asc")||[];
   document.getElementById("fa-count").textContent=rows.length;
   let tC=0,tB=0,tD=0;
   document.getElementById("assets-tbody").innerHTML=rows.map((r,i)=>{
@@ -5695,7 +5710,7 @@ async function submitAsset(){
 }
 async function deleteAsset(id){
   if(!confirm("این دارایی پاک شود؟")) return;
-  await sbPatch("fixed_assets",{is_active:false},`?id=eq.${id}`);
+  await sbPatch("fixed_assets",{status:"inactive",updated_at:new Date().toISOString()},`?id=eq.${id}`);
   renderAssets();
 }
 
