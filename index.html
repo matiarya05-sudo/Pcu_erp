@@ -5539,7 +5539,7 @@ async function addNewMaterial(){
     if(document.getElementById("new_mat_kg")) document.getElementById("new_mat_kg").value="";
     if(document.getElementById("new_mat_cost")) document.getElementById("new_mat_cost").value="";
     await refreshStockMap();
-    renderStockRows();
+    renderStock();
     setTimeout(()=>{if(msg)msg.innerHTML="";},2000);
   } else {
     if(msg)msg.innerHTML='<span style="color:var(--rd)">❌ خطا! دوباره امتحان کن</span>';
