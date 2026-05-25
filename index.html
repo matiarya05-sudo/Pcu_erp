@@ -4366,7 +4366,7 @@ async function submitBuy(){
   document.getElementById("buy-btn").disabled=true;document.getElementById("buy-btn").textContent="در حال ذخیره...";
   const _pdate=document.getElementById("b-date").value;
   const res=await sbPost("purchases",{
-    date:_pdate,purchase_date:_pdate,supplier_id:null,supplier_name:sn,material_id:mat,
+    date:_pdate,purchase_date:_pdate,supplier_id:null,supplier_name:sn,material_id:null,
     bill:document.getElementById("b-bill").value,material:mat,kg,quantity_kg:kg,
     amount_usd:usdAmt,exchange_rate:rate,usd_rate:rate,amount_afn:tAfn,paid_afn:pAfn,paid_amount:pAfn,
     remaining_usd:remUSD,cost_per_kg:upm,price_per_kg:upm,status:"pending"
