@@ -5565,28 +5565,44 @@ async function renderStock(){
   }).join('');
 }
 async function initEditStockModal(){
+  const MATS_LIST=["دی‌اوپی (DOP)","ریزن","کرش سیاه","کرش آبی","کرش چاکلیتی","کرش براون","کرش سفید","اشترک","تیتانیوم","لایت","ای سی (AC)","پلاستیک (۹/۱۲)","پلاستیک (۱۱/۱۴)","پلاستیک (۱۲/۱۴)","بکل","نگینه"];
   const rows=await sbGet('mat_stock','?order=material.asc')||[];
-  document.getElementById('edit-stock-list').innerHTML=rows.map(r=>`
-    <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;padding:8px;background:var(--b3);border-radius:8px;border:1px solid var(--bd)">
-      <div style="flex:2;font-size:12px;font-weight:700">${r.material}</div>
+  const stockMap={};
+  rows.forEach(r=>stockMap[r.material]=r);
+  // همه مواد را نشان بده — چه در انبار باشد چه نباشد
+  const allMats=[...new Set([...MATS_LIST,...rows.map(r=>r.material)])];
+  document.getElementById('edit-stock-list').innerHTML=allMats.map(mat=>{
+    const r=stockMap[mat]||{material:mat,total_kg:0,avg_cost:0};
+    const key=mat.replace(/[^a-zA-Z0-9]/g,'_');
+    return`<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;padding:8px;background:var(--b3);border-radius:8px;border:1px solid var(--bd)">
+      <div style="flex:2;font-size:12px;font-weight:700">${mat}</div>
       <div style="flex:1"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">کیلو</div>
-      <input type="number" inputmode="decimal" id="esk_kg_${r.material.replace(/[^a-zA-Z0-9]/g,'_')}" value="${r.total_kg||0}" step="0.1"
-        style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:inherit" inputmode="decimal"/></div>
+      <input type="number" inputmode="decimal" id="esk_kg_${key}" value="${r.total_kg||0}" step="0.1"
+        style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:inherit"/></div>
       <div style="flex:1"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">قیمت/کیلو (؋)</div>
-      <input type="number" inputmode="decimal" id="esk_cost_${r.material.replace(/[^a-zA-Z0-9]/g,'_')}" value="${r.avg_cost||0}" step="1"
-        style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-size:12px;font-family:inherit" inputmode="decimal"/></div>
-    </div>`).join('');
+      <input type="number" inputmode="decimal" id="esk_cost_${key}" value="${r.avg_cost||0}" step="1"
+        style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-size:12px;font-family:inherit"/></div>
+    </div>`;
+  }).join('');
+  window._stockEditMats=allMats;
   window._stockEditRows=rows;
 }
 async function saveStockEdits(){
   document.getElementById('edit-stock-btn').disabled=true;
   document.getElementById('edit-stock-btn').textContent='در حال ذخیره…';
-  const rows=window._stockEditRows||[];
-  for(const r of rows){
-    const key=r.material.replace(/[^a-zA-Z0-9]/g,'_');
+  const mats=window._stockEditMats||[];
+  const existingRows=window._stockEditRows||[];
+  const existingMap={};
+  existingRows.forEach(r=>existingMap[r.material]=true);
+  for(const mat of mats){
+    const key=mat.replace(/[^a-zA-Z0-9]/g,'_');
     const kg=+(document.getElementById('esk_kg_'+key)?.value)||0;
     const cost=+(document.getElementById('esk_cost_'+key)?.value)||0;
-    await sbPatch('mat_stock',{total_kg:kg,avg_cost:cost,total_value_afn:kg*cost,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(r.material)}`);
+    if(existingMap[mat]){
+      await sbPatch('mat_stock',{total_kg:kg,avg_cost:cost,total_value_afn:kg*cost,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(mat)}`);
+    } else if(kg>0||cost>0){
+      await sbPost('mat_stock',{material:mat,total_kg:kg,avg_cost:cost,total_value_afn:kg*cost,updated_at:new Date().toISOString()});
+    }
   }
   await refreshStockMap();
   showSaved();closeModal('modalEditStock');renderStock();
