@@ -2938,7 +2938,7 @@ async function submitOrder(){
     // ذخیره آیتم‌ها
     for(const it of validItems){
       const _itemRes=await sbPost("order_items",{
-        order_id:orderId,product:it.prod,product_id:it.prod,
+        order_id:orderId,product:it.prod,product_id:null,
         quantity_dozen:it.doz,notes:it.note||""
       });
       if(!_itemRes) console.error("order_item failed for",it.prod);
