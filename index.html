@@ -5513,6 +5513,39 @@ function switchStockTab(tab){
   document.getElementById('tab-fg').className='btn '+(isRaw?'bsec':'bpri');
   if(!isRaw) renderFG();
 }
+
+// ── ADD NEW MATERIAL ──
+async function addNewMaterial(){
+  const name=document.getElementById("new_mat_name")?.value?.trim();
+  const kg=+(document.getElementById("new_mat_kg")?.value)||0;
+  const cost=+(document.getElementById("new_mat_cost")?.value)||0;
+  const msg=document.getElementById("new-mat-msg");
+  if(!name){if(msg)msg.innerHTML='<span style="color:var(--rd)">نام ماده را وارد کن</span>';return;}
+  const btn=document.getElementById("add-mat-btn");
+  if(btn){btn.disabled=true;btn.textContent="در حال ذخیره...";}
+  // چک کن ماده قبلاً هست یا نه
+  const existing=await sbGet("mat_stock",`?material=eq.${encodeURIComponent(name)}`)||[];
+  let res;
+  if(existing.length>0){
+    res=await sbPatch("mat_stock",{total_kg:kg,avg_cost:cost,total_value_afn:kg*cost,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(name)}`);
+  } else {
+    res=await sbPost("mat_stock",{material:name,total_kg:kg,avg_cost:cost,total_value_afn:kg*cost,updated_at:new Date().toISOString()});
+  }
+  if(btn){btn.disabled=false;btn.textContent="➕ اضافه کردن ماده جدید";}
+  if(res!==null){
+    if(msg)msg.innerHTML='<span style="color:var(--gr)">✅ ذخیره شد!</span>';
+    // پاک کردن فرم
+    if(document.getElementById("new_mat_name")) document.getElementById("new_mat_name").value="";
+    if(document.getElementById("new_mat_kg")) document.getElementById("new_mat_kg").value="";
+    if(document.getElementById("new_mat_cost")) document.getElementById("new_mat_cost").value="";
+    await refreshStockMap();
+    renderStockRows();
+    setTimeout(()=>{if(msg)msg.innerHTML="";},2000);
+  } else {
+    if(msg)msg.innerHTML='<span style="color:var(--rd)">❌ خطا! دوباره امتحان کن</span>';
+  }
+}
+
 async function renderStock(){
   await refreshStockMap();
   const totalRaw=Object.values(S.stockMap).reduce((a,m)=>a+(m.kg*m.avgCost),0);
