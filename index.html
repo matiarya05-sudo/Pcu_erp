@@ -3529,7 +3529,7 @@ async function renderDash(){
     const todayDoz=todaySales.reduce((a,r)=>a+(+r.dozen||0),0);
     const todayAmt=todaySales.reduce((a,r)=>a+(+r.total||0),0);
     const invVal=Object.values(S.stockMap).reduce((a,m)=>a+(m.kg*m.avgCost),0);
-    const myProd=(prodData||[]).filter(p=>p.date===today());
+    const myProd=(prodData||[]).filter(p=>p.date===today()&&p.worker&&!p.worker.includes("سمیع"));
     const myDoz=myProd.reduce((a,r)=>a+(+r.dozen||0),0);
 
     document.getElementById("dash-alerts").innerHTML=
@@ -3688,11 +3688,13 @@ async function renderProd(){
   // ── KPI تولید ──
   const todayStr=today();
   const monthStr=todayStr.slice(0,7);
+  // فقط جمشید (ماشین‌کار) را بشمار — سمیع‌الله بسته‌بندی است نه تولید
+  const isProducer=r=>r.worker&&!r.worker.includes("سمیع");
   const todayRecs=allProd.filter(r=>r.date===todayStr);
   const monthRecs=allProd.filter(r=>(r.date||"").slice(0,7)===monthStr);
-  const todayDoz=todayRecs.reduce((a,r)=>a+(+r.dozen||0),0);
-  const monthDoz=monthRecs.reduce((a,r)=>a+(+r.dozen||0),0);
-  const totalDoz=allProd.reduce((a,r)=>a+(+r.dozen||0),0);
+  const todayDoz=todayRecs.filter(isProducer).reduce((a,r)=>a+(+r.dozen||0),0);
+  const monthDoz=monthRecs.filter(isProducer).reduce((a,r)=>a+(+r.dozen||0),0);
+  const totalDoz=allProd.filter(isProducer).reduce((a,r)=>a+(+r.dozen||0),0);
   const el1=document.getElementById("prod-today-doz");
   const el2=document.getElementById("prod-month-doz");
   const el3=document.getElementById("prod-total-doz");
