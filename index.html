@@ -2937,11 +2937,11 @@ async function submitOrder(){
     const orderId=orderRes[0].id;
     // ذخیره آیتم‌ها
     for(const it of validItems){
-      await sbPost("order_items",{
+      const _itemRes=await sbPost("order_items",{
         order_id:orderId,product:it.prod,product_id:it.prod,
-        quantity_dozen:it.doz,dozen_ordered:it.doz,dozen_delivered:0,dozen_remaining:it.doz,
-        notes:it.note||""
+        quantity_dozen:it.doz,notes:it.note||""
       });
+      if(!_itemRes) console.error("order_item failed for",it.prod);
     }
     document.getElementById("ord-msg").innerHTML='<div class="ib ok">✅ فرمایش با '+validItems.length+' قلم جنس ثبت شد!</div>';
     showSaved();
