@@ -3179,6 +3179,7 @@ async function sb(table, method="GET", body=null, params=""){
 async function sbGet(table,params=""){ return sb(table,"GET",null,params); }
 async function sbPost(table,body){ return sb(table,"POST",body); }
 async function sbPatch(table,body,params){ return sb(table,"PATCH",body,params); }
+async function sbDelete(table,params){ return sb(table,"DELETE",null,params); }
 
 // ذخیره مانده تامین‌کننده — مستقیم fetch با error کامل
 async function saveSuppBalance(suppId, suppName, balUsd, balAfn){
@@ -5571,21 +5572,34 @@ async function initEditStockModal(){
   rows.forEach(r=>stockMap[r.material]=r);
   // همه مواد را نشان بده — چه در انبار باشد چه نباشد
   const allMats=[...new Set([...MATS_LIST,...rows.map(r=>r.material)])];
+  window._stockEditMats=allMats;
+  window._stockEditRows=rows;
+  renderEditStockList(MATS_LIST,allMats,stockMap);
+}
+function renderEditStockList(MATS_LIST,allMats,stockMap){
   document.getElementById('edit-stock-list').innerHTML=allMats.map(mat=>{
     const r=stockMap[mat]||{material:mat,total_kg:0,avg_cost:0};
     const key=mat.replace(/[^a-zA-Z0-9]/g,'_');
-    return`<div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;padding:8px;background:var(--b3);border-radius:8px;border:1px solid var(--bd)">
-      <div style="flex:2;font-size:12px;font-weight:700">${mat}</div>
+    const isExtra=!MATS_LIST.includes(mat);
+    return`<div id="row_${key}" style="display:flex;gap:6px;align-items:center;margin-bottom:8px;padding:8px;background:var(--b3);border-radius:8px;border:1px solid ${isExtra?'rgba(240,82,82,.4)':'var(--bd)'}">
+      <div style="flex:2;font-size:12px;font-weight:700">${mat}${isExtra?'<span style="font-size:9px;color:var(--rd);margin-right:4px"> ✦</span>':''}</div>
       <div style="flex:1"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">کیلو</div>
       <input type="number" inputmode="decimal" id="esk_kg_${key}" value="${r.total_kg||0}" step="0.1"
         style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:inherit"/></div>
       <div style="flex:1"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">قیمت/کیلو (؋)</div>
       <input type="number" inputmode="decimal" id="esk_cost_${key}" value="${r.avg_cost||0}" step="1"
         style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-size:12px;font-family:inherit"/></div>
+      ${isExtra?`<button onclick="deleteExtraMat('${mat.replace(/'/g,"\\'")}','${key}')" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:6px 8px;font-size:13px;cursor:pointer;flex-shrink:0" title="حذف این ماده">🗑️</button>`:''}
     </div>`;
   }).join('');
-  window._stockEditMats=allMats;
-  window._stockEditRows=rows;
+}
+async function deleteExtraMat(mat,key){
+  if(!confirm(`"${mat}" حذف شود؟`))return;
+  await sbDelete('mat_stock',`?material=eq.${encodeURIComponent(mat)}`);
+  // از لیست حذف کن
+  window._stockEditMats=(window._stockEditMats||[]).filter(m=>m!==mat);
+  document.getElementById('row_'+key)?.remove();
+  showSaved();
 }
 async function saveStockEdits(){
   document.getElementById('edit-stock-btn').disabled=true;
