@@ -5578,6 +5578,11 @@ async function addNewMaterial(){
     await refreshStockMap();
     await initEditStockModal();
     renderStock();
+    // scroll به ماده جدید
+    setTimeout(()=>{
+      const list=document.getElementById('edit-stock-list');
+      if(list) list.scrollTop=list.scrollHeight;
+    },100);
     setTimeout(()=>{if(msg)msg.innerHTML="";},2000);
   } else {
     if(msg)msg.innerHTML='<span style="color:var(--rd)">❌ خطا! console را چک کن</span>';
