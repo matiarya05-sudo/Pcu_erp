@@ -1725,16 +1725,24 @@ select option{background:#1a1820}
           <input id="new_mat_name" placeholder="مثال: رنگ آبی، کرش قرمز، DOP..."
             style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--tx);font-size:13px;font-family:inherit;outline:none"/>
         </div>
+        <div style="margin-bottom:8px">
+          <label style="display:block;font-size:11px;color:var(--t2);margin-bottom:4px;font-weight:600">واحد</label>
+          <select id="new_mat_unit" onchange="onNewMatUnitChange()"
+            style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--tx);font-size:13px;font-family:inherit;outline:none">
+            <option value="kg">کیلو</option>
+            <option value="piece">دانه</option>
+          </select>
+        </div>
         <div style="display:flex;gap:8px;margin-bottom:10px">
           <div style="flex:1">
-            <label style="display:block;font-size:11px;color:var(--t2);margin-bottom:4px;font-weight:600">موجودی اولیه (کیلو)</label>
+            <label id="new_mat_kg_lbl" style="display:block;font-size:11px;color:var(--t2);margin-bottom:4px;font-weight:600">موجودی اولیه (کیلو)</label>
             <input type="number" inputmode="decimal" id="new_mat_kg" placeholder="0" step="0.1" min="0"
-              style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--tx);font-size:13px;font-family:inherit;outline:none" inputmode="decimal"/>
+              style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--tx);font-size:13px;font-family:inherit;outline:none"/>
           </div>
           <div style="flex:1">
-            <label style="display:block;font-size:11px;color:var(--t2);margin-bottom:4px;font-weight:600">قیمت فی کیلو (؋)</label>
+            <label id="new_mat_cost_lbl" style="display:block;font-size:11px;color:var(--t2);margin-bottom:4px;font-weight:600">قیمت فی کیلو (؋)</label>
             <input type="number" inputmode="decimal" id="new_mat_cost" placeholder="0" step="1" min="0"
-              style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--gd);font-size:13px;font-family:inherit;outline:none" inputmode="decimal"/>
+              style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--gd);font-size:13px;font-family:inherit;outline:none"/>
           </div>
         </div>
         <button id="add-mat-btn" onclick="addNewMaterial()"
@@ -5529,31 +5537,44 @@ function switchStockTab(tab){
 }
 
 // ── ADD NEW MATERIAL ──
+function onNewMatUnitChange(){
+  const unit=document.getElementById("new_mat_unit")?.value||"kg";
+  const isPiece=unit==="piece";
+  const kgLbl=document.getElementById("new_mat_kg_lbl");
+  const costLbl=document.getElementById("new_mat_cost_lbl");
+  const kgInp=document.getElementById("new_mat_kg");
+  if(kgLbl) kgLbl.textContent=isPiece?"موجودی اولیه (دانه)":"موجودی اولیه (کیلو)";
+  if(costLbl) costLbl.textContent=isPiece?"قیمت فی دانه (؋)":"قیمت فی کیلو (؋)";
+  if(kgInp) kgInp.step=isPiece?"1":"0.1";
+}
 async function addNewMaterial(){
   const name=document.getElementById("new_mat_name")?.value?.trim();
   const kg=+(document.getElementById("new_mat_kg")?.value)||0;
   const cost=+(document.getElementById("new_mat_cost")?.value)||0;
+  const unit=document.getElementById("new_mat_unit")?.value||"kg";
   const msg=document.getElementById("new-mat-msg");
   if(!name){if(msg)msg.innerHTML='<span style="color:var(--rd)">نام ماده را وارد کن</span>';return;}
   const btn=document.getElementById("add-mat-btn");
   if(btn){btn.disabled=true;btn.textContent="در حال ذخیره...";}
-  // چک کن ماده قبلاً هست یا نه
-  const existing=await sbGet("mat_stock",`?material=eq.${encodeURIComponent(name)}`)||[];
   let res;
-  if(existing.length>0){
-    res=await sbPatch("mat_stock",{total_kg:kg,avg_cost:cost,total_value_afn:kg*cost,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(name)}`);
-  } else {
-    res=await sbPost("mat_stock",{material:name,total_kg:kg,avg_cost:cost,total_value_afn:kg*cost,updated_at:new Date().toISOString()});
-  }
+  try{
+    const existing=await sbGet("mat_stock",`?material=eq.${encodeURIComponent(name)}`)||[];
+    if(existing.length>0){
+      res=await sbPatch("mat_stock",{total_kg:kg,avg_cost:cost,total_value_afn:kg*cost,unit,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(name)}`);
+    } else {
+      res=await sbPost("mat_stock",{material:name,total_kg:kg,avg_cost:cost,total_value_afn:kg*cost,unit,updated_at:new Date().toISOString()});
+    }
+  } catch(e){ res=null; console.error(e); }
   if(btn){btn.disabled=false;btn.textContent="➕ اضافه کردن ماده جدید";}
   if(res!==null){
     if(msg)msg.innerHTML='<span style="color:var(--gr)">✅ ذخیره شد!</span>';
-    // پاک کردن فرم
-    if(document.getElementById("new_mat_name")) document.getElementById("new_mat_name").value="";
-    if(document.getElementById("new_mat_kg")) document.getElementById("new_mat_kg").value="";
-    if(document.getElementById("new_mat_cost")) document.getElementById("new_mat_cost").value="";
+    document.getElementById("new_mat_name").value="";
+    document.getElementById("new_mat_kg").value="";
+    document.getElementById("new_mat_cost").value="";
+    document.getElementById("new_mat_unit").value="kg";
+    onNewMatUnitChange();
     await refreshStockMap();
-    renderStock();
+    await initEditStockModal();
     setTimeout(()=>{if(msg)msg.innerHTML="";},2000);
   } else {
     if(msg)msg.innerHTML='<span style="color:var(--rd)">❌ خطا! دوباره امتحان کن</span>';
