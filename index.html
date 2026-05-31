@@ -5629,23 +5629,28 @@ function renderEditStockList(MATS_LIST,allMats,stockMap){
     const unitLabel=unit==='piece'?'دانه':'کیلو';
     const costLabel=unit==='piece'?'قیمت/دانه (؋)':'قیمت/کیلو (؋)';
     return`<div id="row_${key}" style="margin-bottom:10px;padding:10px;background:var(--b3);border-radius:8px;border:1px solid ${isExtra?'rgba(240,82,82,.4)':'var(--bd)'}">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <div style="font-size:12px;font-weight:700">${mat}${isExtra?'<span style="font-size:9px;color:var(--rd);margin-right:4px"> ✦</span>':''}</div>
-        <div style="display:flex;align-items:center;gap:6px">
+      <div style="display:flex;align-items:flex-end;gap:6px;margin-bottom:8px">
+        <div style="flex:1">
+          <div style="font-size:10px;color:var(--t2);margin-bottom:2px">نام ماده${isExtra?'<span style="color:var(--rd)"> ✦</span>':''}</div>
+          <input type="text" id="esk_name_${key}" value="${mat.replace(/"/g,'&quot;')}"
+            style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:inherit;font-weight:700"/>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--t2);margin-bottom:2px">واحد</div>
           <select id="esk_unit_${key}" onchange="renderUnitLabel('${key}')"
-            style="padding:4px 6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:11px;font-family:inherit">
+            style="padding:6px 8px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:inherit">
             <option value="kg" ${unit==='kg'?'selected':''}>کیلو</option>
             <option value="piece" ${unit==='piece'?'selected':''}>دانه</option>
           </select>
-          <button onclick="deleteExtraMat('${mat.replace(/'/g,"\'")}','${key}')" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:5px 8px;font-size:12px;cursor:pointer" title="حذف / صفر کردن">🗑️</button>
         </div>
+        <button onclick="deleteExtraMat('${mat.replace(/'/g,"\'")}','${key}')" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:6px 8px;font-size:13px;cursor:pointer;flex-shrink:0" title="حذف / صفر کردن">🗑️</button>
       </div>
       <div style="display:flex;gap:6px">
         <div style="flex:1"><div id="esk_kg_lbl_${key}" style="font-size:10px;color:var(--t2);margin-bottom:2px">${unitLabel}</div>
         <input type="number" inputmode="decimal" id="esk_kg_${key}" value="${r.total_kg||0}" step="${unit==='piece'?'1':'0.1'}"
           style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:inherit"/></div>
         <div style="flex:1"><div id="esk_cost_lbl_${key}" style="font-size:10px;color:var(--t2);margin-bottom:2px">${costLabel}</div>
-        <input type="number" inputmode="decimal" id="esk_cost_${key}" value="${r.avg_cost||0}" step="1"
+        <input type="number" inputmode="decimal" id="esk_cost_${key}" value="${r.avg_cost||0}" step="0.01"
           style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-size:12px;font-family:inherit"/></div>
       </div>
     </div>`;
@@ -5689,13 +5694,20 @@ async function saveStockEdits(){
   existingRows.forEach(r=>existingMap[r.material]=true);
   for(const mat of mats){
     const key=mat.replace(/[^a-zA-Z0-9]/g,'_');
+    const newName=(document.getElementById('esk_name_'+key)?.value||mat).trim()||mat;
     const kg=+(document.getElementById('esk_kg_'+key)?.value)||0;
     const cost=+(document.getElementById('esk_cost_'+key)?.value)||0;
     const unit=document.getElementById('esk_unit_'+key)?.value||'kg';
     if(existingMap[mat]){
-      await sbPatch('mat_stock',{total_kg:kg,avg_cost:cost,total_value_afn:kg*cost,unit,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(mat)}`);
-    } else if(kg>0||cost>0){
-      await sbPost('mat_stock',{material:mat,total_kg:kg,avg_cost:cost,total_value_afn:kg*cost,unit,updated_at:new Date().toISOString()});
+      if(newName!==mat){
+        // نام تغییر کرده: حذف قدیم + درج جدید
+        await sbDelete('mat_stock',`?material=eq.${encodeURIComponent(mat)}`);
+        await sbPost('mat_stock',{material:newName,total_kg:kg,avg_cost:cost,total_value_afn:kg*cost,unit,updated_at:new Date().toISOString()});
+      } else {
+        await sbPatch('mat_stock',{total_kg:kg,avg_cost:cost,total_value_afn:kg*cost,unit,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(mat)}`);
+      }
+    } else if(kg>0||cost>0||newName!==mat){
+      await sbPost('mat_stock',{material:newName,total_kg:kg,avg_cost:cost,total_value_afn:kg*cost,unit,updated_at:new Date().toISOString()});
     }
   }
   await refreshStockMap();
