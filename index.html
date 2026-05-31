@@ -5634,10 +5634,10 @@ function renderEditStockList(MATS_LIST,allMats,stockMap){
     const unitLabel=unit==='piece'?'دانه':'کیلو';
     const costLabel=unit==='piece'?'قیمت/دانه (؋)':'قیمت/کیلو (؋)';
     const safemat=mat.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    return`<div id="row_${key}" style="margin-bottom:10px;padding:10px;background:var(--b3);border-radius:8px;border:1px solid ${isExtra?'rgba(240,82,82,.4)':'var(--bd)'}">
+    return`<div id="row_${key}" style="margin-bottom:10px;padding:10px;background:var(--b3);border-radius:8px;border:1px solid var(--bd)">
       <div style="display:flex;align-items:flex-end;gap:6px;margin-bottom:8px">
         <div style="flex:1">
-          <div style="font-size:10px;color:var(--t2);margin-bottom:2px">نام ماده${isExtra?'<span style="color:var(--rd)"> ✦</span>':''}</div>
+          <div style="font-size:10px;color:var(--t2);margin-bottom:2px">نام ماده</div>
           <input type="text" id="esk_name_${key}" value="${mat.replace(/"/g,'&quot;')}"
             style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:inherit;font-weight:700"/>
         </div>
