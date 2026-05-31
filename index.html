@@ -3355,7 +3355,7 @@ const CASH_IN=["وصول از مشتری","سرمایه شریک","قرض دری
 const CASH_OUT=["خرید مواد (افغانی)","اجرت جمشید","اجرت سمیع‌الله","کرایه","برق","مصارف اداری","سایر خروجی"];
 
 // ── Helpers ──
-const afn=n=>"؋ "+Math.round(n||0).toLocaleString("fa-IR");
+const afn=(n,dec=0)=>{const v=+(n||0);const d=dec||(v>0&&v<100?2:0);return"؋ "+(d?v.toFixed(d):Math.round(v)).toLocaleString("fa-IR");};
 const usd=n=>"$ "+(+(n||0)).toFixed(2);
 const n2=n=>(+(n||0)).toFixed(2);
 function today(){const d=new Date();return`${d.getFullYear()-621}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}`;}
@@ -5559,12 +5559,14 @@ async function addNewMaterial(){
   let res;
   try{
     const existing=await sbGet("mat_stock",`?material=eq.${encodeURIComponent(name)}`)||[];
+    console.log("existing:",existing,"name:",name,"kg:",kg,"cost:",cost,"unit:",unit);
     if(existing.length>0){
       res=await sbPatch("mat_stock",{total_kg:kg,avg_cost:cost,total_value_afn:kg*cost,unit,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(name)}`);
     } else {
       res=await sbPost("mat_stock",{material:name,total_kg:kg,avg_cost:cost,total_value_afn:kg*cost,unit,updated_at:new Date().toISOString()});
     }
-  } catch(e){ res=null; console.error(e); }
+    console.log("res:",res);
+  } catch(e){ res=null; console.error("addNewMaterial error:",e); }
   if(btn){btn.disabled=false;btn.textContent="➕ اضافه کردن ماده جدید";}
   if(res!==null){
     if(msg)msg.innerHTML='<span style="color:var(--gr)">✅ ذخیره شد!</span>';
@@ -5575,9 +5577,10 @@ async function addNewMaterial(){
     onNewMatUnitChange();
     await refreshStockMap();
     await initEditStockModal();
+    renderStock();
     setTimeout(()=>{if(msg)msg.innerHTML="";},2000);
   } else {
-    if(msg)msg.innerHTML='<span style="color:var(--rd)">❌ خطا! دوباره امتحان کن</span>';
+    if(msg)msg.innerHTML='<span style="color:var(--rd)">❌ خطا! console را چک کن</span>';
   }
 }
 
@@ -5600,7 +5603,7 @@ async function renderStock(){
     const sta=st.kg<=0?'🔴 ندارد':st.kg<threshold?'🟡 کم':'🟢 کافی';
     return`<tr><td style="color:var(--t3)">${i+1}</td><td style="font-weight:700">${m}</td>
     <td style="font-weight:800;color:${st.kg<=0?'var(--rd)':st.kg<threshold?'var(--gd)':'var(--tx)'}">${qty} ${unitLbl}</td>
-    <td class="tdr" style="color:var(--tl);font-weight:700">${afn(st.avgCost)}</td>
+    <td class="tdr" style="color:var(--tl);font-weight:700">${afn(st.avgCost,st.avgCost>0&&st.avgCost<100?2:0)}</td>
     <td class="tdr" style="font-weight:700">${afn(st.kg*st.avgCost)}</td>
     <td>${sta}</td></tr>`;
   }).join('');
