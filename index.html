@@ -5589,16 +5589,26 @@ function renderEditStockList(MATS_LIST,allMats,stockMap){
       <div style="flex:1"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">قیمت/کیلو (؋)</div>
       <input type="number" inputmode="decimal" id="esk_cost_${key}" value="${r.avg_cost||0}" step="1"
         style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-size:12px;font-family:inherit"/></div>
-      ${isExtra?`<button onclick="deleteExtraMat('${mat.replace(/'/g,"\\'")}','${key}')" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:6px 8px;font-size:13px;cursor:pointer;flex-shrink:0" title="حذف این ماده">🗑️</button>`:''}
+      <button onclick="deleteExtraMat('${mat.replace(/'/g,"\\'")}','${key}')" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:6px 8px;font-size:13px;cursor:pointer;flex-shrink:0" title="حذف / صفر کردن">🗑️</button>
     </div>`;
   }).join('');
 }
 async function deleteExtraMat(mat,key){
-  if(!confirm(`"${mat}" حذف شود؟`))return;
-  await sbDelete('mat_stock',`?material=eq.${encodeURIComponent(mat)}`);
-  // از لیست حذف کن
-  window._stockEditMats=(window._stockEditMats||[]).filter(m=>m!==mat);
-  document.getElementById('row_'+key)?.remove();
+  const MATS_LIST=["دی‌اوپی (DOP)","ریزن","کرش سیاه","کرش آبی","کرش چاکلیتی","کرش براون","کرش سفید","اشترک","تیتانیوم","لایت","ای سی (AC)","پلاستیک (۹/۱۲)","پلاستیک (۱۱/۱۴)","پلاستیک (۱۲/۱۴)","بکل","نگینه"];
+  const isStandard=MATS_LIST.includes(mat);
+  if(isStandard){
+    if(!confirm(`"${mat}" صفر شود؟`))return;
+    await sbPatch('mat_stock',{total_kg:0,avg_cost:0,total_value_afn:0,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(mat)}`);
+    const kgEl=document.getElementById('esk_kg_'+key);
+    const costEl=document.getElementById('esk_cost_'+key);
+    if(kgEl)kgEl.value=0;
+    if(costEl)costEl.value=0;
+  } else {
+    if(!confirm(`"${mat}" حذف شود؟`))return;
+    await sbDelete('mat_stock',`?material=eq.${encodeURIComponent(mat)}`);
+    window._stockEditMats=(window._stockEditMats||[]).filter(m=>m!==mat);
+    document.getElementById('row_'+key)?.remove();
+  }
   showSaved();
 }
 async function saveStockEdits(){
