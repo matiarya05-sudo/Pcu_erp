@@ -5604,7 +5604,7 @@ async function renderStock(){
     const isPiece=st.unit==='piece';
     const unitLbl=isPiece?'دانه':'کیلو';
     const threshold=isPiece?10:5;
-    const qty=isPiece?Math.round(+st.kg||0):(+st.kg||0).toFixed(2);
+    const qty=isPiece?Math.round(+st.kg||0).toLocaleString("fa-IR"):(+st.kg||0).toLocaleString("fa-IR",{minimumFractionDigits:2,maximumFractionDigits:2});
     const sta=st.kg<=0?'🔴 ندارد':st.kg<threshold?'🟡 کم':'🟢 کافی';
     return`<tr><td style="color:var(--t3)">${i+1}</td><td style="font-weight:700">${m}</td>
     <td style="font-weight:800;color:${st.kg<=0?'var(--rd)':st.kg<threshold?'var(--gd)':'var(--tx)'}">${qty} ${unitLbl}</td>
