@@ -3355,7 +3355,7 @@ const CASH_IN=["وصول از مشتری","سرمایه شریک","قرض دری
 const CASH_OUT=["خرید مواد (افغانی)","اجرت جمشید","اجرت سمیع‌الله","کرایه","برق","مصارف اداری","سایر خروجی"];
 
 // ── Helpers ──
-const afn=(n,dec=0)=>{const v=+(n||0);const d=dec||(v>0&&v<100?2:0);return"؋ "+(d?v.toFixed(d):Math.round(v)).toLocaleString("fa-IR");};
+const afn=(n,dec=0)=>{const v=+(n||0);const d=dec||(v>0&&v<100?2:0);const rounded=d?Math.round(v*Math.pow(10,d))/Math.pow(10,d):Math.round(v);return"؋ "+rounded.toLocaleString("fa-IR",{minimumFractionDigits:d,maximumFractionDigits:d});};
 const usd=n=>"$ "+(+(n||0)).toFixed(2);
 const n2=n=>(+(n||0)).toFixed(2);
 function today(){const d=new Date();return`${d.getFullYear()-621}/${String(d.getMonth()+1).padStart(2,"0")}/${String(d.getDate()).padStart(2,"0")}`;}
