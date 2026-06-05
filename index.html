@@ -1737,12 +1737,12 @@ select option{background:#1a1820}
           <div style="flex:1">
             <label id="new_mat_kg_lbl" style="display:block;font-size:11px;color:var(--t2);margin-bottom:4px;font-weight:600">موجودی اولیه (کیلو)</label>
             <input type="number" inputmode="decimal" id="new_mat_kg" placeholder="0" step="0.1" min="0"
-              style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--tx);font-size:13px;font-family:inherit;outline:none"/>
+              style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--tx);font-size:13px;font-family:inherit;outline:none;direction:ltr;text-align:right"/>
           </div>
           <div style="flex:1">
             <label id="new_mat_cost_lbl" style="display:block;font-size:11px;color:var(--t2);margin-bottom:4px;font-weight:600">قیمت فی کیلو (؋)</label>
             <input type="number" inputmode="decimal" id="new_mat_cost" placeholder="0" step="1" min="0"
-              style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--gd);font-size:13px;font-family:inherit;outline:none"/>
+              style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--gd);font-size:13px;font-family:inherit;outline:none;direction:ltr;text-align:right"/>
           </div>
         </div>
         <button id="add-mat-btn" onclick="addNewMaterial()"
@@ -5597,8 +5597,8 @@ async function renderStock(){
   const totalFG=fgRows.reduce((a,r)=>a+(+r.total_value||0),0);
   document.getElementById('stock-fg-val').textContent=afn(totalFG);
   const MATS_LIST=["دی‌اوپی (DOP)","ریزن","کرش سیاه","کرش آبی","کرش چاکلیتی","کرش براون","کرش سفید","اشترک","تیتانیوم","لایت","ای سی (AC)","پلاستیک (۹/۱۲)","پلاستیک (۱۱/۱۴)","پلاستیک (۱۲/۱۴)","بکل","نگینه"];
-  // همه مواد از stockMap نشان بده (شامل دانه‌ای‌ها)
-  const allStockMats=[...new Set([...MATS_LIST,...Object.keys(S.stockMap)])];
+  // همه مواد از stockMap — مرتب الفبایی
+  const allStockMats=[...new Set([...MATS_LIST,...Object.keys(S.stockMap)])].sort((a,b)=>a.localeCompare(b,'fa'));
   document.getElementById('stock-tbody').innerHTML=allStockMats.map((m,i)=>{
     const st=S.stockMap[m]||{kg:0,avgCost:0,unit:'kg'};
     const isPiece=st.unit==='piece';
@@ -5606,11 +5606,14 @@ async function renderStock(){
     const threshold=isPiece?10:5;
     const qty=isPiece?Math.round(+st.kg||0):(+st.kg||0).toFixed(2);
     const sta=st.kg<=0?'🔴 ندارد':st.kg<threshold?'🟡 کم':'🟢 کافی';
-    return`<tr><td style="color:var(--t3)">${i+1}</td><td style="font-weight:700">${m}</td>
+    const safemat=m.replace(/\/g,'\\').replace(/'/g,"\'");
+    return`<tr id="stock-row-${i}"><td style="color:var(--t3)">${i+1}</td><td style="font-weight:700">${m}</td>
     <td style="font-weight:800;color:${st.kg<=0?'var(--rd)':st.kg<threshold?'var(--gd)':'var(--tx)'}">${qty} ${unitLbl}</td>
     <td class="tdr" style="color:var(--tl);font-weight:700">${afn(st.avgCost,st.avgCost>0&&st.avgCost<100?2:0)}</td>
     <td class="tdr" style="font-weight:700">${afn(st.kg*st.avgCost)}</td>
-    <td>${sta}</td></tr>`;
+    <td style="display:flex;align-items:center;gap:6px">${sta}
+      <button onclick="deleteStockRow('${safemat}',${i})" style="background:transparent;border:none;color:var(--rd);font-size:14px;cursor:pointer;padding:2px 4px;opacity:0.7" title="حذف">🗑️</button>
+    </td></tr>`;
   }).join('');
 }
 async function initEditStockModal(){
@@ -5654,10 +5657,10 @@ function renderEditStockList(MATS_LIST,allMats,stockMap){
       <div style="display:flex;gap:6px">
         <div style="flex:1"><div id="esk_kg_lbl_${key}" style="font-size:10px;color:var(--t2);margin-bottom:2px">${unitLabel}</div>
         <input type="number" inputmode="decimal" id="esk_kg_${key}" value="${r.total_kg||0}" step="${unit==='piece'?'1':'0.1'}"
-          style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:inherit"/></div>
+          style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:inherit;direction:ltr;text-align:right"/></div>
         <div style="flex:1"><div id="esk_cost_lbl_${key}" style="font-size:10px;color:var(--t2);margin-bottom:2px">${costLabel}</div>
         <input type="number" inputmode="decimal" id="esk_cost_${key}" value="${r.avg_cost||0}" step="0.01"
-          style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-size:12px;font-family:inherit"/></div>
+          style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-size:12px;font-family:inherit;direction:ltr;text-align:right"/></div>
       </div>
     </div>`;
   }).join('');
@@ -5674,6 +5677,19 @@ function renderUnitLabel(key){
   if(klbl) klbl.textContent=lbl;
   const clbl=document.getElementById('esk_cost_lbl_'+key);
   if(clbl) clbl.textContent=costLbl;
+}
+async function deleteStockRow(mat,rowIdx){
+  const MATS_LIST=["دی‌اوپی (DOP)","ریزن","کرش سیاه","کرش آبی","کرش چاکلیتی","کرش براون","کرش سفید","اشترک","تیتانیوم","لایت","ای سی (AC)","پلاستیک (۹/۱۲)","پلاستیک (۱۱/۱۴)","پلاستیک (۱۲/۱۴)","بکل","نگینه"];
+  const isStandard=MATS_LIST.includes(mat);
+  if(isStandard){
+    if(!confirm(`"${mat}" صفر شود؟`))return;
+    await sbPatch('mat_stock',{total_kg:0,avg_cost:0,total_value_afn:0,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(mat)}`);
+  } else {
+    if(!confirm(`"${mat}" کاملاً حذف شود؟`))return;
+    await sbDelete('mat_stock',`?material=eq.${encodeURIComponent(mat)}`);
+  }
+  await refreshStockMap();
+  renderStock();
 }
 async function deleteExtraMat(mat,key){
   const MATS_LIST=["دی‌اوپی (DOP)","ریزن","کرش سیاه","کرش آبی","کرش چاکلیتی","کرش براون","کرش سفید","اشترک","تیتانیوم","لایت","ای سی (AC)","پلاستیک (۹/۱۲)","پلاستیک (۱۱/۱۴)","پلاستیک (۱۲/۱۴)","بکل","نگینه"];
