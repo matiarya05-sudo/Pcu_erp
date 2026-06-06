@@ -3701,7 +3701,7 @@ async function renderProd(){
   // ── KPI تولید ──
   const todayStr=today();
   const monthStr=todayStr.slice(0,7);
-  // فقط جمشید (ماشین‌کار) را بشمار — سمیع‌الله بسته‌بندی است نه تولید
+  // فقط جمشید (ماشین‌کار) را بشمار — دفتر (بسته‌بندی) جداگانه حساب می‌شود
   const isProducer=r=>r.worker&&r.worker!=="دفتر";
   const todayRecs=allProd.filter(r=>r.date===todayStr);
   const monthRecs=allProd.filter(r=>(r.date||"").slice(0,7)===monthStr);
@@ -4119,6 +4119,81 @@ async function loadWageRates(){
 }
 function getWageForProduct(prod){return WAGE_RATES[prod]||{j:22,s:25};}
 
+function initManageProductsModal(){
+  renderMpList();
+  const n=document.getElementById('mp-new-name');
+  const j=document.getElementById('mp-new-j');
+  const s=document.getElementById('mp-new-s');
+  if(n)n.value='';
+  if(j)j.value='22';
+  if(s)s.value='25';
+  const m=document.getElementById('mp-add-msg');
+  if(m)m.innerHTML='';
+}
+
+function renderMpList(){
+  const el=document.getElementById('mp-list');
+  if(!el)return;
+  el.innerHTML=PRODUCTS_LIST.map((p,i)=>{
+    const w=WAGE_RATES[p]||{j:22,s:25};
+    return`<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:8px;background:var(--b3);border-radius:8px;border:1px solid var(--bd)">
+      <div style="flex:2;font-size:12px;font-weight:700">${p}</div>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:9px;color:var(--t2);margin-bottom:2px">جمشید</div>
+        <input type="number" id="mpe_${i}_j" value="${w.j}" min="0" step="1"
+          style="width:100%;padding:4px 6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-size:12px;font-family:inherit;text-align:center;direction:ltr"/>
+      </div>
+      <div style="flex:1;text-align:center">
+        <div style="font-size:9px;color:var(--t2);margin-bottom:2px">دفتر</div>
+        <input type="number" id="mpe_${i}_s" value="${w.s}" min="0" step="1"
+          style="width:100%;padding:4px 6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--bl);font-size:12px;font-family:inherit;text-align:center;direction:ltr"/>
+      </div>
+      <button onclick="deleteMpItem(${i})" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:4px 7px;font-size:12px;cursor:pointer;flex-shrink:0">🗑️</button>
+    </div>`;
+  }).join('');
+}
+
+function deleteMpItem(i){
+  if(!confirm('"'+PRODUCTS_LIST[i]+'" حذف شود؟'))return;
+  const name=PRODUCTS_LIST[i];
+  PRODUCTS_LIST.splice(i,1);
+  delete WAGE_RATES[name];
+  renderMpList();
+}
+
+async function addNewProduct(){
+  const name=(document.getElementById('mp-new-name')?.value||'').trim();
+  const j=+(document.getElementById('mp-new-j')?.value)||22;
+  const s=+(document.getElementById('mp-new-s')?.value)||25;
+  const msg=document.getElementById('mp-add-msg');
+  if(!name){if(msg)msg.innerHTML='<span style="color:var(--rd)">نام را وارد کن</span>';return;}
+  if(PRODUCTS_LIST.includes(name)){if(msg)msg.innerHTML='<span style="color:var(--rd)">قبلاً هست</span>';return;}
+  PRODUCTS_LIST.push(name);
+  WAGE_RATES[name]={j,s};
+  document.getElementById('mp-new-name').value='';
+  if(msg)msg.innerHTML='<span style="color:var(--gr)">✅ اضافه شد</span>';
+  renderMpList();
+  setTimeout(()=>{if(msg)msg.innerHTML='';},1500);
+}
+
+async function saveProductsList(){
+  PRODUCTS_LIST.forEach((p,i)=>{
+    const j=+(document.getElementById('mpe_'+i+'_j')?.value)||22;
+    const s=+(document.getElementById('mpe_'+i+'_s')?.value)||25;
+    WAGE_RATES[p]={j,s};
+  });
+  const wVal=JSON.stringify(WAGE_RATES);
+  const pVal=JSON.stringify(PRODUCTS_LIST);
+  const eW=await sbGet('settings','?key=eq.wage_rates')||[];
+  if(eW.length>0) await sbPatch('settings',{value:wVal,updated_at:new Date().toISOString()},'?key=eq.wage_rates');
+  else await sbPost('settings',{key:'wage_rates',value:wVal});
+  const eP=await sbGet('settings','?key=eq.products_list')||[];
+  if(eP.length>0) await sbPatch('settings',{value:pVal,updated_at:new Date().toISOString()},'?key=eq.products_list');
+  else await sbPost('settings',{key:'products_list',value:pVal});
+  showSaved();
+  closeModal('modalManageProducts');
+}
+
 // نمایش جدول نرخ‌ها در تنظیمات
 function renderWageRatesTable(){
   const tbody=document.getElementById("wage-rates-tbody");
@@ -4318,10 +4393,10 @@ async function submitSale(){
     const emps=await sbGet("employees","?select=id,name_fa");
     if(emps){
       const jamshid=emps.find(e=>e.name_fa&&e.name_fa.includes("جمشید"));
-      const samiullah=emps.find(e=>e.name_fa&&e.name_fa.includes("سمیع"));
       const wn="اجرت بل "+(billNo||"—")+" | "+custName;
       if(jamshid&&totalWageJ>0)await sbPost("employee_payments",{employee_id:jamshid.id,employee_name:"جمشید",date:saleDate,payment_date:saleDate,amount_afn:totalWageJ,total_payment:totalWageJ,payment_type:"salary",type:"salary",notes:wn});
-      if(samiullah&&totalWageS>0)await sbPost("employee_payments",{employee_id:samiullah.id,employee_name:"سمیع‌الله",date:saleDate,payment_date:saleDate,amount_afn:totalWageS,total_payment:totalWageS,payment_type:"salary",type:"salary",notes:wn});
+      // اجرت دفتر (بسته‌بندی) → در cash_ledger ثبت می‌شود
+      if(totalWageS>0)await sbPost("cash_ledger",{date:saleDate,category:"اجرت دفتر",type:"out",description:wn,amount_out:totalWageS,amount_in:0,notes:"اجرت بسته‌بندی"});
     }
     // کسر از انبار جنس تولیدشده
     for(const it of validItems){
