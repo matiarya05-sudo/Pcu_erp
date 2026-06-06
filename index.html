@@ -849,7 +849,7 @@ select option{background:#1a1820}
         <div class="ct" style="margin-bottom:8px">🏭 تولید امروز به تفکیک سرکاریگر</div>
         <div id="prod-machines-today" style="color:var(--t3);font-size:12px;text-align:center;padding:8px">هنوز تولیدی ثبت نشده</div>
       </div>
-      <div class="ib info">☁️ جمشید = ماشین‌کار | سمیع‌الله = بسته‌بندی | مواد اتومات کسر</div>
+      <div class="ib info">☁️ جمشید = ماشین‌کار | دفتر = بسته‌بندی (معاش شاگردان جداگانه) | مواد اتومات کسر</div>
       <div class="card">
         <div class="ct">🏭 دفتر تولید | <span id="prod-count" style="color:var(--gd)">—</span></div>
         <div class="tw"><table>
@@ -1199,12 +1199,16 @@ select option{background:#1a1820}
           <div class="ct" style="margin-bottom:0">👨‍💼 کارمندان و شاگردان</div>
           <button class="btn bpri" onclick="openModal('modalAddEmp')">+ کارمند جدید</button>
         </div>
+        <div id="apprentice-kpi" style="display:none;background:rgba(212,168,67,.08);border:1px solid rgba(212,168,67,.2);border-radius:10px;padding:10px;margin-bottom:10px">
+          <div style="font-size:11px;font-weight:800;color:var(--gd);margin-bottom:8px">👦 شاگردان بسته‌بندی این ماه</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap" id="apprentice-kpi-list"></div>
+        </div>
         <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
           <button onclick="filterEmp('all')" class="bb bbl" id="ef-all" style="cursor:pointer;padding:4px 10px">همه</button>
           <button onclick="filterEmp('manager')" class="bb bbl" id="ef-manager" style="cursor:pointer;padding:4px 10px">👨‍💼 مدیر</button>
           <button onclick="filterEmp('worker')" class="bb bbl" id="ef-worker" style="cursor:pointer;padding:4px 10px">👨‍🔧 سرکاریگر</button>
           <button onclick="filterEmp('staff')" class="bb bbl" id="ef-staff" style="cursor:pointer;padding:4px 10px">📋 کارمند دفتر</button>
-          <button onclick="filterEmp('apprentice')" class="bb bbl" id="ef-apprentice" style="cursor:pointer;padding:4px 10px">👦 شاگرد</button>
+          <button onclick="filterEmp('apprentice')" class="bb bbl" id="ef-apprentice" style="cursor:pointer;padding:4px 10px">👦 شاگردان بسته‌بندی</button>
         </div>
         <div class="tw"><table>
           <thead><tr><th>#</th><th>نام</th><th>وظیفه</th><th>بخش</th><th>نوع معاش</th><th>معاش</th><th>پرداخت شده</th><th>باقی</th><th></th></tr></thead>
@@ -1402,12 +1406,12 @@ select option{background:#1a1820}
       <!-- نرخ اجرت به تفکیک مدل -->
       <div class="card">
         <div class="ct">💰 نرخ اجرت فی درجن — به تفکیک مدل</div>
-        <div class="ib info" style="font-size:10.5px;margin-bottom:12px">💡 نرخ جمشید (ماشینری) و سمیع‌الله (بسته‌بندی) — وقتی مدل را در فروش انتخاب کنی اتومات پر می‌شود</div>
+        <div class="ib info" style="font-size:10.5px;margin-bottom:12px">💡 نرخ جمشید (ماشینری) و دفتر (بسته‌بندی) — وقتی مدل را در فروش انتخاب کنی اتومات پر می‌شود</div>
         <div class="tw"><table>
           <thead><tr>
             <th>مدل جنس</th>
             <th style="text-align:center">جمشید (؋/درجن)</th>
-            <th style="text-align:center">سمیع‌الله (؋/درجن)</th>
+            <th style="text-align:center">دفتر (؋/درجن)</th>
           </tr></thead>
           <tbody id="wage-rates-tbody"></tbody>
         </table></div>
@@ -1529,7 +1533,7 @@ select option{background:#1a1820}
           <span id="s-wage-j-display" style="color:var(--tl)">؋ 0</span>
         </div>
         <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px">
-          <span style="color:var(--t2)">اجرت سمیع‌الله:</span>
+          <span style="color:var(--t2)">اجرت دفتر:</span>
           <span id="s-wage-s-display" style="color:var(--tl)">؋ 0</span>
         </div>
       </div>
@@ -1587,7 +1591,7 @@ select option{background:#1a1820}
         <div class="fg"><label>سرکاریگر</label>
           <select id="p-worker">
             <option value="جمشید">جمشید — ماشین‌کار</option>
-            <option value="سمیع‌الله">سمیع‌الله — بسته‌بندی</option>
+            <option value="دفتر">دفتر — بسته‌بندی</option>
           </select>
         </div>
       </div>
@@ -2737,7 +2741,7 @@ select option{background:#1a1820}
             <input type="number" inputmode="decimal" id="mp-new-j" value="22" min="0" inputmode="decimal"/>
           </div>
           <div class="fg">
-            <label>اجرت سمیع‌الله (؋/درجن)</label>
+            <label>اجرت دفتر (؋/درجن)</label>
             <input type="number" inputmode="decimal" id="mp-new-s" value="25" min="0" inputmode="decimal"/>
           </div>
         </div>
@@ -3352,7 +3356,7 @@ const RECIPES={
   کودکانه:[{m:"دی‌اوپی (DOP)",q:0.6},{m:"ریزن",q:0.2},{m:"تیتانیوم",q:0.04},{m:"ای سی (AC)",q:0.08},{m:"کرش سیاه",q:0.15}],
 };
 const CASH_IN=["وصول از مشتری","سرمایه شریک","قرض دریافتی","سایر ورودی"];
-const CASH_OUT=["خرید مواد (افغانی)","اجرت جمشید","اجرت سمیع‌الله","کرایه","برق","مصارف اداری","سایر خروجی"];
+const CASH_OUT=["خرید مواد (افغانی)","اجرت جمشید","اجرت دفتر","معاش شاگردان","کرایه","برق","مصارف اداری","سایر خروجی"];
 
 // ── Helpers ──
 const afn=(n,dec=0)=>{const v=+(n||0);const d=dec||(v>0&&v<100?2:0);const rounded=d?Math.round(v*Math.pow(10,d))/Math.pow(10,d):Math.round(v);return"؋ "+rounded.toLocaleString("fa-IR",{minimumFractionDigits:d,maximumFractionDigits:d});};
@@ -3538,7 +3542,7 @@ async function renderDash(){
     const todayDoz=todaySales.reduce((a,r)=>a+(+r.dozen||0),0);
     const todayAmt=todaySales.reduce((a,r)=>a+(+r.total||0),0);
     const invVal=Object.values(S.stockMap).reduce((a,m)=>a+(m.kg*m.avgCost),0);
-    const myProd=(prodData||[]).filter(p=>p.date===today()&&p.worker&&!p.worker.includes("سمیع"));
+    const myProd=(prodData||[]).filter(p=>p.date===today()&&p.worker&&p.worker!=="دفتر");
     const myDoz=myProd.reduce((a,r)=>a+(+r.dozen||0),0);
 
     document.getElementById("dash-alerts").innerHTML=
@@ -3698,7 +3702,7 @@ async function renderProd(){
   const todayStr=today();
   const monthStr=todayStr.slice(0,7);
   // فقط جمشید (ماشین‌کار) را بشمار — سمیع‌الله بسته‌بندی است نه تولید
-  const isProducer=r=>r.worker&&!r.worker.includes("سمیع");
+  const isProducer=r=>r.worker&&r.worker!=="دفتر";
   const todayRecs=allProd.filter(r=>r.date===todayStr);
   const monthRecs=allProd.filter(r=>(r.date||"").slice(0,7)===monthStr);
   const todayDoz=todayRecs.filter(isProducer).reduce((a,r)=>a+(+r.dozen||0),0);
@@ -4032,11 +4036,11 @@ async function renderSettings(){
   // نرخ اجرت
   renderWageRatesTable();
   const pRows=await sbGet("production","?select=worker,total_wage,paid_wage")||[];
-  const staffMap={جمشید:{e:0,p:0},"سمیع‌الله":{e:0,p:0}};
+  const staffMap={جمشید:{e:0,p:0},"دفتر":{e:0,p:0}};
   pRows.forEach(r=>{if(staffMap[r.worker]){staffMap[r.worker].e+=+r.total_wage||0;staffMap[r.worker].p+=+r.paid_wage||0;}});
   document.getElementById("staff-tbl").innerHTML=`
     <table><thead><tr><th>نام</th><th>بخش</th><th>جمع اجرت</th><th>پرداخت</th><th>باقی</th></tr></thead>
-    <tbody>${["جمشید","سمیع‌الله"].map(w=>{
+    <tbody>${["جمشید","دفتر"].map(w=>{
       const d=w==="جمشید"?"ماشین‌کار":"بسته‌بندی",s=staffMap[w];
       return`<tr><td style="font-weight:700;color:var(--gd)">${w}</td>
         <td><span class="bb bbl">${d}</span></td>
@@ -4280,7 +4284,7 @@ function calcSaleWage(){
   const tj=doz*wj, ts=doz*ws;
   const info=document.getElementById("s-wage-info");
   if(doz>0&&(wj>0||ws>0)){
-    info.innerHTML=`💰 جمشید: <strong style="color:var(--gd)">${afn(tj)}</strong> | سمیع‌الله: <strong style="color:var(--gd)">${afn(ts)}</strong>`;
+    info.innerHTML=`💰 جمشید: <strong style="color:var(--gd)">${afn(tj)}</strong> | دفتر: <strong style="color:var(--gd)">${afn(ts)}</strong>`;
   } else {
     info.innerHTML="";
   }
@@ -4876,6 +4880,28 @@ async function renderEmp(){
   const totalPaid=Object.values(payMap).reduce((a,r)=>a+(r.paid||0),0);
   document.getElementById("emp-wage").textContent=afn(totalWage);
   document.getElementById("emp-rem").textContent=afn(Math.max(0,totalWage-totalPaid));
+  // KPI شاگردان بسته‌بندی
+  const apprentices=rows.filter(r=>r.type==="apprentice");
+  const kpiEl=document.getElementById("apprentice-kpi");
+  const kpiList=document.getElementById("apprentice-kpi-list");
+  if(kpiEl&&kpiList&&apprentices.length>0){
+    kpiEl.style.display="block";
+    kpiList.innerHTML=apprentices.map(a=>{
+      const pd=payMap[a.id]?.paid||0;
+      const rem=Math.max(0,(+a.salary_amount||0)-pd);
+      return`<div style="background:var(--b3);border-radius:8px;padding:8px 12px;flex:1;min-width:120px">
+        <div style="font-size:12px;font-weight:700;margin-bottom:4px">${a.name_fa||a.name||"—"}</div>
+        <div style="font-size:10px;color:var(--t2)">معاش ماهانه: <span style="color:var(--gd);font-weight:700">${afn(a.salary_amount||0)}</span></div>
+        <div style="font-size:10px;color:var(--t2)">پرداخت شده: <span style="color:var(--gr);font-weight:700">${afn(pd)}</span></div>
+        <div style="font-size:10px;margin-top:4px">${rem>0?`<span style="color:var(--rd);font-weight:700">باقی: ${afn(rem)}</span>`:'<span style="color:var(--gr)">✅ تسویه</span>'}</div>
+        <div style="display:flex;gap:4px;margin-top:6px">
+          <button onclick="openEmpPay(${a.id},'${(a.name_fa||a.name||"").replace(/'/g,"")}')" style="background:var(--gr2);border:1px solid rgba(34,197,94,.3);color:var(--gr);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit;flex:1">💵 پرداخت</button>
+          <button onclick="showEmpPays(${a.id},'${(a.name_fa||a.name||"").replace(/'/g,"")}')" style="background:var(--bl2);border:1px solid rgba(59,158,255,.3);color:var(--bl);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit;flex:1">📋 تاریخچه</button>
+        </div>
+      </div>`;
+    }).join("");
+  } else if(kpiEl) kpiEl.style.display="none";
+
   let list=rows;
   if(_empFilter!=="all") list=list.filter(r=>r.type===_empFilter);
   document.getElementById("emp-tbody").innerHTML=list.length?list.map((e,i)=>{
