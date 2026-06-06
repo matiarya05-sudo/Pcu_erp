@@ -3828,6 +3828,7 @@ async function saveEditPartner(){
 }
 
 // ── PERSON STATEMENT ──
+function openCustCRM(id,name){openPersonStatement("cust",id,name);}
 let _stmtData=[];
 async function openPersonStatement(type,id,name){
   document.getElementById("stmt-title").textContent=(type==="supp"?"🏭 تاریخچه تامین‌کننده: ":"👤 تاریخچه مشتری: ")+name;
