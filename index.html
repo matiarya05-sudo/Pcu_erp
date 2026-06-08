@@ -6,12 +6,16 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="PCU ERP">
-<meta name="theme-color" content="#070d14">
+<link rel="manifest" href="data:application/json,{%22name%22:%22PCU+ERP%22,%22short_name%22:%22PCU+ERP%22,%22start_url%22:%22./%22,%22display%22:%22standalone%22,%22background_color%22:%22%231a1108%22,%22theme_color%22:%22%23d4a843%22,%22icons%22:[{%22src%22:%22https://matiarya05-sudo.github.io/Pcu_erp/icon-192.png%22,%22sizes%22:%22192x192%22,%22type%22:%22image/png%22},{%22src%22:%22https://matiarya05-sudo.github.io/Pcu_erp/icon-512.png%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}">
+  <meta name="theme-color" content="#070d14">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 <title>PCU ERP v9.1 | فابریکه حیات‌زاده</title>
-<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap');
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -1378,6 +1382,9 @@ select option{background:#1a1820}
 
     <!-- SETTINGS -->
     <div id="page-settings" class="page">
+      <div id="pwa-install-btn" onclick="installPWA()" style="display:none;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#d4a843,#b8860b);border:none;border-radius:12px;padding:12px 20px;color:#1a1108;font-weight:800;font-size:14px;cursor:pointer;margin-bottom:12px;font-family:inherit;width:100%">
+        📲 نصب PCU ERP روی گوشی
+      </div>
       <div class="card">
         <div class="ct">🏭 اطلاعات شرکت</div>
         <div class="fg"><label>نام فابریکه</label><input type="text" id="factoryNameInput" value="فابریکه حیات‌زاده"/></div>
@@ -5182,6 +5189,51 @@ async function saveCompanyInfo(){
 
 // ── INIT APP آپدیت برای لود customer data ──
 const _origInitApp=initApp;
+// ── PWA Setup ──
+(function setupPWA(){
+  const manifest={
+    name:"PCU ERP — فابریکه حیات‌زاده",
+    short_name:"PCU ERP",
+    description:"سیستم مدیریت فابریکه",
+    start_url:"./",
+    display:"standalone",
+    orientation:"portrait",
+    background_color:"#1a1108",
+    theme_color:"#d4a843",
+    lang:"fa",
+    dir:"rtl",
+    icons:[
+      {src:"https://raw.githubusercontent.com/matiarya05-sudo/Pcu_erp/main/icon-192.png",sizes:"192x192",type:"image/png",purpose:"any maskable"},
+      {src:"https://raw.githubusercontent.com/matiarya05-sudo/Pcu_erp/main/icon-512.png",sizes:"512x512",type:"image/png",purpose:"any maskable"}
+    ]
+  };
+  try{
+    const mBlob=new Blob([JSON.stringify(manifest)],{type:"application/json"});
+    const mUrl=URL.createObjectURL(mBlob);
+    let link=document.getElementById("pwa-manifest");
+    if(!link){link=document.createElement("link");link.rel="manifest";link.id="pwa-manifest";document.head.appendChild(link);}
+    link.href=mUrl;
+  }catch(e){}
+  if("serviceWorker" in navigator){
+    const swCode=`const C="pcu-v4";
+self.addEventListener("install",e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(["./"])).then(()=>self.skipWaiting()));});
+self.addEventListener("activate",e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k!==C).map(k=>caches.delete(k)))).then(()=>self.clients.claim()));});
+self.addEventListener("fetch",e=>{if(e.request.method!=="GET")return;e.respondWith(fetch(e.request).then(r=>{const cl=r.clone();caches.open(C).then(c=>c.put(e.request,cl));return r;}).catch(()=>caches.match(e.request)));});`;
+    const swBlob=new Blob([swCode],{type:"application/javascript"});
+    navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>{});
+  }
+  // دکمه نصب PWA
+  let _deferredPrompt=null;
+  window.addEventListener("beforeinstallprompt",e=>{
+    e.preventDefault();_deferredPrompt=e;
+    const btn=document.getElementById("pwa-install-btn");
+    if(btn)btn.style.display="flex";
+  });
+  window.installPWA=function(){
+    if(_deferredPrompt){_deferredPrompt.prompt();_deferredPrompt.userChoice.then(()=>{_deferredPrompt=null;const btn=document.getElementById("pwa-install-btn");if(btn)btn.style.display="none";});}
+  };
+})();
+
 async function initApp(){
   document.getElementById("userAv").textContent=currentUser.av;
   document.getElementById("userAv").style.background=`linear-gradient(135deg,${currentUser.color},${currentUser.color}aa)`;
@@ -5325,7 +5377,7 @@ async function runReport(type){
     out.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div class="ct" style="margin:0">🗺️ فروش به تفکیک ولایت</div>
       <div style="display:flex;gap:6px">
-        <button class="btn bsec" onclick="exportReportExcel()" style="font-size:11px">📥 Excel</button>
+        <button class="btn bsec" onclick="exportTableExcel('sales-tbody','فروش')" style="font-size:11px">📥 Excel</button>
         <button class="btn bsec" onclick="printReport()" style="font-size:11px">🖨️ چاپ</button>
       </div>
     </div>
@@ -5523,28 +5575,57 @@ async function runReport(type){
 
 // ── Export Excel ──
 function exportReportExcel(){
-  if(!_lastRptData.length){alert("اول یک گزارش را اجرا کن");return;}
-  const rows=_lastRptData;
-  let csv="\uFEFF"; // BOM for UTF-8
-  const keys=Object.keys(rows[0]);
-  csv+=keys.join(",")+"\n";
-  rows.forEach(r=>{
-    csv+=keys.map(k=>{
-      const v=String(r[k]||"").replace(/,/g,"،");
-      return `"${v}"`;
-    }).join(",")+"\n";
-  });
-  const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download=`PCU_${_lastRptTitle||"report"}_${today()}.csv`;
-  a.click();
-  showSaved();
+  if(!_lastRptData||!_lastRptData.length){alert("اول یک گزارش را اجرا کن");return;}
+  try{
+    const wb=XLSX.utils.book_new();
+    const ws=XLSX.utils.json_to_sheet(_lastRptData);
+    // عرض ستون‌ها
+    const cols=Object.keys(_lastRptData[0]).map(()=>({wch:18}));
+    ws["!cols"]=cols;
+    XLSX.utils.book_append_sheet(wb,ws,_lastRptTitle||"گزارش");
+    // sheet خلاصه
+    const summary=[
+      ["فابریکه حیات‌زاده — PCU ERP",""],
+      ["گزارش:",_lastRptTitle||"—"],
+      ["تاریخ خروجی:",today()],
+      ["تعداد ردیف:",_lastRptData.length],
+    ];
+    const ws2=XLSX.utils.aoa_to_sheet(summary);
+    XLSX.utils.book_append_sheet(wb,ws2,"اطلاعات");
+    XLSX.writeFile(wb,`PCU_${_lastRptTitle||"report"}_${today()}.xlsx`);
+    showSaved();
+  }catch(e){
+    // fallback به CSV اگر SheetJS لود نشده باشد
+    const rows=_lastRptData;
+    let csv="\uFEFF";
+    const keys=Object.keys(rows[0]);
+    csv+=keys.join(",")+"\n";
+    rows.forEach(r=>{csv+=keys.map(k=>`"${String(r[k]||"").replace(/,/g,"،")}"`).join(",")+"\n";});
+    const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=`PCU_${_lastRptTitle||"report"}_${today()}.csv`;
+    a.click();
+    showSaved();
+  }
+}
+
+function exportTableExcel(tableId,title){
+  try{
+    const tbl=document.getElementById(tableId);
+    if(!tbl){alert("جدول پیدا نشد");return;}
+    const wb=XLSX.utils.book_new();
+    const ws=XLSX.utils.table_to_sheet(tbl);
+    XLSX.utils.book_append_sheet(wb,ws,title||"داده");
+    XLSX.writeFile(wb,`PCU_${title||"export"}_${today()}.xlsx`);
+    showSaved();
+  }catch(e){console.error(e);alert("خطا در Export");}
 }
 
 // ── چاپ / Print ──
 function printReport(){
-  const content=document.getElementById("rpt-output").innerHTML;
+  const rptEl=document.getElementById("rpt-output");
+  if(!rptEl||!rptEl.innerHTML.trim()){alert("اول یک گزارش را اجرا کن");return;}
   const w=window.open("","_blank");
   w.document.write(`<!DOCTYPE html><html dir="rtl"><head>
     <meta charset="UTF-8">
@@ -5552,30 +5633,43 @@ function printReport(){
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
     <style>
       *{box-sizing:border-box;margin:0;padding:0}
-      body{font-family:'Vazirmatn',sans-serif;background:#fff;color:#000;padding:20px;font-size:12px}
-      h1{font-size:16px;margin-bottom:5px}
-      .header{border-bottom:2px solid #000;margin-bottom:15px;padding-bottom:10px;display:flex;justify-content:space-between}
-      table{width:100%;border-collapse:collapse;margin-top:10px;font-size:11px}
-      th{background:#f0f0f0;border:1px solid #ccc;padding:6px 8px;text-align:right;font-weight:700}
-      td{border:1px solid #ddd;padding:5px 8px;text-align:right}
-      tr:nth-child(even) td{background:#fafafa}
-      .bb{border:1px solid #999;border-radius:10px;padding:1px 6px;font-size:10px}
-      tfoot td{background:#e8e8e8;font-weight:800}
-      @media print{body{padding:10px}}
-    </style></head><body>
-    <div class="header">
-      <div><h1>کمپنی نورآغامنصور | فابریکه حیات‌زاده</h1><div>PCU ERP v9 | گزارش: ${_lastRptTitle}</div></div>
-      <div style="text-align:left"><div>تاریخ چاپ: ${today()}</div><div>کابل، افغانستان 🇦🇫</div></div>
+      body{font-family:'Vazirmatn',sans-serif;background:#fff;color:#000;padding:24px;font-size:12px;direction:rtl}
+      .print-header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #d4a843;margin-bottom:16px;padding-bottom:12px}
+      .print-logo{font-size:20px;font-weight:900;color:#1a1108;letter-spacing:-0.5px}
+      .print-logo span{color:#d4a843}
+      .print-sub{font-size:10px;color:#666;margin-top:2px}
+      .print-meta{text-align:left;font-size:10px;color:#666}
+      h2{font-size:14px;margin-bottom:10px;color:#1a1108;border-right:3px solid #d4a843;padding-right:8px}
+      table{width:100%;border-collapse:collapse;margin-top:8px;font-size:11px;page-break-inside:auto}
+      tr{page-break-inside:avoid}
+      th{background:#f5f0e8;border:1px solid #d4a843;padding:7px 10px;text-align:right;font-weight:700;color:#1a1108}
+      td{border:1px solid #e5e0d8;padding:5px 10px;text-align:right}
+      tr:nth-child(even) td{background:#faf8f4}
+      .kpi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+      .kpi-card{border:1px solid #d4a843;border-radius:6px;padding:10px;text-align:center}
+      .kpi-val{font-size:18px;font-weight:800;color:#d4a843}
+      .kpi-lbl{font-size:10px;color:#666;margin-top:2px}
+      @media print{@page{size:A4;margin:15mm} body{padding:0}}
+    </style>
+  </head><body>
+    <div class="print-header">
+      <div>
+        <div class="print-logo">PCU <span>ERP</span></div>
+        <div class="print-sub">فابریکه حیات‌زاده · کابل، افغانستان</div>
+      </div>
+      <div class="print-meta">
+        <div>تاریخ چاپ: ${today()}</div>
+        <div>${_lastRptTitle||"گزارش"}</div>
+      </div>
     </div>
-    ${content}
-    <div style="margin-top:20px;font-size:10px;color:#666;border-top:1px solid #ccc;padding-top:8px">
-      این گزارش توسط سیستم PCU ERP فابریکه حیات‌زاده تولید شده است
-    </div>
-    </body></html>`);
+    ${rptEl.innerHTML}
+  </body></html>`);
   w.document.close();
-  w.focus();
   setTimeout(()=>w.print(),800);
 }
+
+function exportReportPDF(){printReport();}
+
 
 // ── Print فاکتور فروش ──
 function printInvoice(saleId){
