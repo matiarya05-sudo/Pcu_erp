@@ -2942,26 +2942,24 @@ async function submitOrder(){
   document.getElementById("ord-btn").disabled=true;
   document.getElementById("ord-btn").textContent="در حال ذخیره...";
 
-  // ذخیره order سر
-  const _odate=document.getElementById("o-date").value;
-  const _custIdRaw=_selCustOrd?.id||null;
-  const _custIdInt=(typeof _custIdRaw==="number")?_custIdRaw:(parseInt(_custIdRaw)>0?parseInt(_custIdRaw):null);
   const orderRes=await sbPost("orders",{
-    date:_odate,order_date:_odate,
-    cust_id:_custIdRaw,customer_id:_custIdInt,
-    cust_name:cn,province:cp,
-    status:"pending",notes:document.getElementById("o-note").value,note:document.getElementById("o-note").value
+    date:document.getElementById("o-date").value,
+    cust_id:_selCustOrd?.id||"",cust_name:cn,province:cp,
+    status:"pending",note:document.getElementById("o-note").value
   });
 
   if(orderRes&&orderRes[0]){
     const orderId=orderRes[0].id;
-    // ذخیره آیتم‌ها
     for(const it of validItems){
-      const _itemRes=await sbPost("order_items",{
-        order_id:orderId,product:it.prod,product_id:null,
-        quantity_dozen:it.doz,notes:it.note||""
+      // ستون‌ها دقیقاً مطابق دیتابیس شما
+      await sbPost("order_items",{
+        order_id:orderId,
+        product:it.prod,
+        dozen_ordered:it.doz, 
+        dozen_delivered:0,
+        dozen_remaining:it.doz,
+        status:"pending"
       });
-      if(!_itemRes) console.error("order_item failed for",it.prod);
     }
     document.getElementById("ord-msg").innerHTML='<div class="ib ok">✅ فرمایش با '+validItems.length+' قلم جنس ثبت شد!</div>';
     showSaved();
@@ -2972,7 +2970,6 @@ async function submitOrder(){
   document.getElementById("ord-btn").disabled=false;
   document.getElementById("ord-btn").textContent="ثبت فرمایش ✓";
 }
-
 // نمایش فرمایشات
 async function renderOrders(){
   document.getElementById("orders-list").innerHTML='<div class="loading"><div class="spinner"></div>در حال بارگذاری...</div>';
@@ -3097,7 +3094,7 @@ async function submitDelivery(){
   if(rows&&rows[0]){
     const cur=rows[0];
     const newDel=(+cur.dozen_delivered||0)+doz;
-    const newRem=(+(cur.quantity_dozen||cur.dozen_ordered)||0)-newDel;
+    const newRem=(+cur.dozen_ordered||0)-newDel;
     const newStatus=newRem<=0?"done":newDel>0?"partial":"pending";
 
     await sbPatch("order_items",{
@@ -3106,7 +3103,6 @@ async function submitDelivery(){
       status:newStatus
     },`?id=eq.${_deliverItemId}`);
 
-    // آپدیت وضعیت کلی فرمایش
     const allItems=await sbGet("order_items",`?order_id=eq.${cur.order_id}`)||[];
     const updatedItems=allItems.map(it=>it.id===_deliverItemId?{...it,status:newStatus}:it);
     const allDone=updatedItems.every(it=>it.status==="done");
@@ -3114,29 +3110,25 @@ async function submitDelivery(){
     const ordStatus=allDone?"done":anyDel?"partial":"pending";
     await sbPatch("orders",{status:ordStatus},`?id=eq.${cur.order_id}`);
 
-    // ── بل نوشتن: ثبت در sales ──
-    const orderRow=await sbGet("orders",`?id=eq.${cur.order_id}&select=cust_id,cust_name,province,customer_id`);
+    const orderRow=await sbGet("orders",`?id=eq.${cur.order_id}&select=cust_id,cust_name,province`);
     if(orderRow&&orderRow[0]){
       const o=orderRow[0];
       const pricePerDoz=+(document.getElementById("d-price").value)||1500;
-      const _sdate=document.getElementById("d-date").value||today();
-      const _tot=doz*pricePerDoz;
-      const _custIdInt=(()=>{const n=parseInt(o.customer_id||o.cust_id);return n>0?n:null;})();
-      const saleRes=await sbPost("sales",{
-        date:_sdate,sale_date:_sdate,
-        cust_id:o.cust_id,customer_id:_custIdInt,
-        cust_name:o.cust_name,province:o.province||"",
-        product:cur.product,dozen:doz,
+      const total=doz*pricePerDoz;
+      // ستون‌ها دقیقاً مطابق دیتابیس شما
+      await sbPost("sales",{
+        date:document.getElementById("d-date").value||today(),
+        cust_id:o.cust_id,
+        cust_name:o.cust_name,
+        province:o.province||'',
+        product:cur.product,
+        dozen:doz,
         price_per_doz:pricePerDoz,
-        total:_tot,total_amount:_tot,
-        paid:0,amount_received:0,
-        remaining:_tot,remaining_debt:_tot,
-        bill_number:"FRM-"+cur.order_id,bill:"FRM-"+cur.order_id,
-        status:"pending",notes:"از فرمایش #"+cur.order_id
+        total:total,
+        paid:0,
+        remaining:total,
+        note:`از فرمایش #${cur.order_id}`
       });
-      if(saleRes) {
-        document.getElementById("del-msg")?document.getElementById("del-msg").innerHTML='<div class="ib ok">✅ بل فروش هم ثبت شد!</div>':null;
-      }
     }
 
     showSaved();closeModal("modalDeliver");renderOrders();
@@ -3144,7 +3136,6 @@ async function submitDelivery(){
   document.getElementById("del-btn").disabled=false;
   document.getElementById("del-btn").textContent="ثبت ارسال ✓";
 }
-
 // ── SPLASH SCREEN ──
 (function(){
   // Hide login and app during splash
@@ -4377,7 +4368,10 @@ function calcSaleWage(){
 
 async function submitSale(){
   const validItems=_saleItems.filter(it=>it.doz>0&&it.prc>0);
-  if(!validItems.length){document.getElementById("sale-msg").innerHTML='<div class="ib err">حداقل یک قلم با درجن و قیمت اضافه کن</div>';return;}
+  if(!validItems.length){
+    document.getElementById("sale-msg").innerHTML='<div class="ib err">حداقل یک قلم جنس با درجن و قیمت اضافه کن</div>';
+    return;
+  }
   const custName=_selCust?.n||(document.getElementById("s-csrch").value||"مشتری جدید");
   const custProv=_selCust?.p||"نامشخص";
   const saleDate=document.getElementById("s-date").value;
@@ -4385,30 +4379,57 @@ async function submitSale(){
   const paid=+(document.getElementById("s-paid").value)||0;
   const totAll=validItems.reduce((a,it)=>a+(it.doz*it.prc),0);
   const remAll=Math.max(0,totAll-paid);
+
   document.getElementById("sale-btn").disabled=true;
   document.getElementById("sale-btn").textContent="در حال ذخیره...";
+
   let totalWageJ=0,totalWageS=0;
-  validItems.forEach(it=>{const w=getWageForProduct(it.prod);totalWageJ+=it.doz*w.j;totalWageS+=it.doz*w.s;});
+  validItems.forEach(it=>{
+    const w=getWageForProduct(it.prod);
+    totalWageJ+=it.doz*w.j;
+    totalWageS+=it.doz*w.s;
+  });
+
   const savedRows=[];
   for(let i=0;i<validItems.length;i++){
     const it=validItems[i];
     const tot=it.doz*it.prc;
-    const itemPaid=i===validItems.length-1?Math.max(0,paid-savedRows.reduce((a,r)=>a+r._paid,0)):Math.round(paid*(tot/totAll));
-    const res=await sbPost("sales",{date:saleDate,sale_date:saleDate,cust_id:_selCust?.id||null,customer_id:(()=>{const _id=_selCust?.id||null;return(typeof _id==="number")?_id:(parseInt(_id)>0?parseInt(_id):null);})(),cust_name:custName,province:custProv,
-      bill:billNo,bill_number:billNo,product:it.prod,dozen:it.doz,price_per_doz:it.prc,total:tot,total_amount:tot,paid:itemPaid,amount_received:itemPaid,remaining:Math.max(0,tot-itemPaid),remaining_debt:Math.max(0,tot-itemPaid),status:"pending"});
-    if(res)savedRows.push({...res[0],_paid:itemPaid});
+    const itemPaidRatio=totAll>0?tot/totAll:0;
+    const itemPaid=i===validItems.length-1
+      ?Math.max(0,paid-savedRows.reduce((a,r)=>a+r._paid,0))
+      :Math.round(paid*itemPaidRatio);
+    const itemRem=Math.max(0,tot-itemPaid);
+    const cg=calcCOGS(it.prod,it.doz),gp=tot-cg;
+
+    // ستون‌ها دقیقاً مطابق دیتابیس شما
+    const res=await sbPost("sales",{
+      date:saleDate,
+      cust_id:_selCust?.id||"new",
+      cust_name:custName,
+      province:custProv,
+      bill:billNo,
+      product:it.prod,
+      dozen:it.doz,
+      price_per_doz:it.prc, 
+      total:tot,
+      paid:itemPaid,
+      remaining:itemRem,
+      cogs:cg,
+      profit:gp 
+    });
+    if(res) savedRows.push({...res[0],_paid:itemPaid});
   }
+
   if(savedRows.length===validItems.length){
-    // اجرت
-    const emps=await sbGet("employees","?select=id,name_fa");
+    const emps=await sbGet("employees","?select=id,name");
     if(emps){
-      const jamshid=emps.find(e=>e.name_fa&&e.name_fa.includes("جمشید"));
-      const wn="اجرت بل "+(billNo||"—")+" | "+custName;
-      if(jamshid&&totalWageJ>0)await sbPost("employee_payments",{employee_id:jamshid.id,employee_name:"جمشید",date:saleDate,payment_date:saleDate,amount_afn:totalWageJ,total_payment:totalWageJ,payment_type:"salary",type:"salary",notes:wn});
-      // اجرت دفتر (بسته‌بندی) → در cash_ledger ثبت می‌شود
-      if(totalWageS>0)await sbPost("cash_ledger",{date:saleDate,category:"اجرت دفتر",type:"out",description:wn,amount_out:totalWageS,amount_in:0,notes:"اجرت بسته‌بندی"});
+      const jamshid=emps.find(e=>e.name.includes("جمشید"));
+      const samiullah=emps.find(e=>e.name.includes("سمیع"));
+      const wageNote=`اجرت بل ${billNo||"—"} | ${validItems.length} قلم | ${custName}`;
+      if(jamshid&&totalWageJ>0) await sbPost("employee_payments",{employee_id:jamshid.id,employee_name:"جمشید",date:saleDate,amount_afn:totalWageJ,type:"salary",notes:wageNote});
+      if(samiullah&&totalWageS>0) await sbPost("employee_payments",{employee_id:samiullah.id,employee_name:"سمیع‌الله",date:saleDate,amount_afn:totalWageS,type:"salary",notes:wageNote});
     }
-    // کسر از انبار جنس تولیدشده
+
     for(const it of validItems){
       const fgRows=await sbGet("finished_goods",`?product_name=eq.${encodeURIComponent(it.prod)}`)||[];
       if(fgRows.length>0){
@@ -4418,31 +4439,23 @@ async function submitSale(){
         await sbPatch("finished_goods",{dozen:newDoz,total_value:newVal,updated_at:new Date().toISOString()},`?product_name=eq.${encodeURIComponent(it.prod)}`);
       }
     }
-    // صندوق
-    if(paid>0)await sbPost("cash_ledger",{date:saleDate,category:"in",type:"وصول از مشتری",
-      description:"فروش — بل "+(billNo||"—")+" | "+custName,amount_in:paid,amount_out:0});
-    // باقی طلب
-    const oldBal=_selCust?._realBal!=null?_selCust._realBal:null;
-    const finalBal=oldBal!=null?oldBal+totAll-paid:null;
-    // واتساپ
-    const custPhone=_selCust?.ph||"";
-    const itemLines=validItems.map(it=>it.doz+" درجن "+it.prod+" = "+afn(it.doz*it.prc)).join(", ");
-    const wLines=["سلام "+custName,"بل "+(billNo||"—"),itemLines,
-      "مجموع: "+afn(totAll),"رسید: "+afn(paid),"باقی این بل: "+afn(remAll)];
-    if(finalBal!=null)wLines.push("مجموع طلب فعلی: "+afn(finalBal));
-    wLines.push("تشکر — فابریکه حیات‌زاده");
-    const waMsg=wLines.join("\n");
-    const waPhone=custPhone?"93"+custPhone.replace(/^0/,""):"";
-    const waUrl=waPhone?"https://wa.me/"+waPhone+"?text="+encodeURIComponent(waMsg):"https://wa.me/?text="+encodeURIComponent(waMsg);
-    document.getElementById("sale-msg").innerHTML=
-      '<div class="ib ok" style="flex-direction:column;gap:8px">'+
-      '<div>✅ بل '+validItems.length+' قلم | '+afn(totAll)+'</div>'+
-      (finalBal!=null?'<div style="font-size:12px;color:var(--rd);font-weight:700">🔴 طلب فعلی '+custName+': '+afn(finalBal)+'</div>':"")+
-      '<a href="'+waUrl+'" target="_blank" style="display:inline-flex;align-items:center;gap:6px;background:#25d366;color:#000;border-radius:9px;padding:8px 14px;font-size:12px;font-weight:800;text-decoration:none">💬 واتساپ</a></div>';
-    showSaved();setTimeout(()=>{closeModal("modalSale");renderSales();},4000);
+
+    if(paid>0)await sbPost("cash_ledger",{
+      date:saleDate,category:"in",type:"وصول از مشتری",
+      description:"فروش — بل "+(billNo||"—")+" | "+custName,
+      amount_in:paid,amount_out:0
+    });
+
+    showSaved();
+    document.getElementById("sale-msg").innerHTML='<div class="ib ok">✅ بل با موفقیت ثبت شد! جنس از گدام کسر شد.</div>';
+    setTimeout(()=>{
+      closeModal("modalSale");
+      renderSales();
+    },1500);
   } else {
     document.getElementById("sale-msg").innerHTML='<div class="ib err">خطا! دوباره امتحان کن</div>';
   }
+
   document.getElementById("sale-btn").disabled=false;
   document.getElementById("sale-btn").textContent="ثبت بل ✓";
 }
@@ -4492,29 +4505,29 @@ async function submitBuy(){
   const tAfn=usdAmt*rate,upm=tAfn/kg,remUSD=usdAmt-pAfn/rate;
   const sn=SUPPLIERS.find(s=>s.id===sid)?.n||"";
   document.getElementById("buy-btn").disabled=true;document.getElementById("buy-btn").textContent="در حال ذخیره...";
-  const _pdate=document.getElementById("b-date").value;
-  const _buyUnit=document.getElementById("b-kg").dataset.unit||"kg";
+  
+  // ستون‌ها دقیقاً مطابق دیتابیس شما
   const res=await sbPost("purchases",{
-    date:_pdate,purchase_date:_pdate,supplier_id:null,supplier_name:sn,material_id:null,
-    bill:document.getElementById("b-bill").value,material:mat,kg,quantity_kg:kg,unit:_buyUnit,
-    amount_usd:usdAmt,exchange_rate:rate,usd_rate:rate,amount_afn:tAfn,paid_afn:pAfn,paid_amount:pAfn,
-    remaining_usd:remUSD,cost_per_kg:upm,price_per_kg:upm,status:"pending"
+    date:document.getElementById("b-date").value,
+    supplier_id:sid,
+    supplier_name:sn,
+    bill:document.getElementById("b-bill").value,
+    material:mat,
+    kg:kg,
+    amount_usd:usdAmt,
+    usd_rate:rate,
+    amount_afn:tAfn,
+    paid_afn:pAfn, 
+    remaining_usd:remUSD,
+    cost_per_kg:upm
   });
+  
   if(res){
-    // Update moving average in mat_stock
     const cur=S.stockMap[mat]||{kg:0,avgCost:0,val:0};
     const newKg=cur.kg+kg,newVal=cur.kg*cur.avgCost+kg*upm,newAvg=newKg>0?newVal/newKg:0;
-    const existStock=await sbGet("mat_stock",`?material=eq.${encodeURIComponent(mat)}`)||[];
-    if(existStock.length>0){
-      await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,avg_cost:newAvg,unit:_buyUnit,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(mat)}`);
-    } else {
-      await sbPost("mat_stock",{material:mat,total_kg:newKg,total_value_afn:newVal,avg_cost:newAvg,unit:_buyUnit,updated_at:new Date().toISOString()});
-    }
-    // آپدیت مانده تامین‌کننده
+    await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,avg_cost:newAvg,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(mat)}`);
     const curBal=S.suppMap[sid]?.bal||0;
-    const curBalAfn=S.suppMap[sid]?.balAfn||0;
-    const suppN=SUPPLIERS.find(s=>s.id===sid)?.n||"";
-    await saveSuppBalance(sid, suppN, +(curBal+remUSD).toFixed(2), curBalAfn);
+    await sbPatch("supplier_balances",{balance_usd:+(curBal+remUSD).toFixed(2),updated_at:new Date().toISOString()},`?supplier_id=eq.${sid}`);
     await refreshStockMap();await refreshSuppMap();
     document.getElementById("buy-msg").innerHTML='<div class="ib ok">✅ خرید در Supabase ذخیره شد!</div>';
     showSaved();setTimeout(()=>{closeModal("modalBuy");renderBuy();},1300);
