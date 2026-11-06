@@ -3445,11 +3445,18 @@ function populateDropdowns(){
     SUPPLIERS.map(s=>`<option value="${s.id}">${s.n} | ${usd(S.suppMap[s.id]?.bal||0)}</option>`).join("");
   if(document.getElementById("b-mat"))
     document.getElementById("b-mat").innerHTML=MATS.map(m=>`<option>${m}</option>`).join("");
-  // Load workers from employees table
-  sbGet("employees","?is_active=eq.true&type=eq.worker&select=id,name_fa,salary_amount").then(emps=>{
+    // Load workers from employees table (با پشتیبانی از هر دو نام ستون)
+  sbGet("employees","?is_active=eq.true&select=id,name,name_fa,role,salary_amount").then(emps=>{
     const sel=document.getElementById("p-worker");
-    if(sel&&emps&&emps.length){
-      sel.innerHTML=emps.map(e=>`<option value="${e.name_fa}">${e.name_fa} — ؋${e.salary_amount}/درجن</option>`).join("");
+    if(sel && emps && emps.length){
+      // فیلتر کردن کارمندان بخش تولید
+      const workers = emps.filter(e => e.role === 'worker');
+      if(workers.length > 0) {
+        sel.innerHTML = workers.map(e => {
+          const empName = e.name_fa || e.name || "بدون نام";
+          return `<option value="${empName}">${empName} — ؋${e.salary_amount || 0}/درجن</option>`;
+        }).join("");
+      }
     }
   });
 }
