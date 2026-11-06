@@ -4366,96 +4366,85 @@ function calcSaleWage(){
   }
 }
 
-async function submitSale(){
+  async function submitSale(){
   const validItems=_saleItems.filter(it=>it.doz>0&&it.prc>0);
   if(!validItems.length){
     document.getElementById("sale-msg").innerHTML='<div class="ib err">حداقل یک قلم جنس با درجن و قیمت اضافه کن</div>';
     return;
   }
+  
   const custName=_selCust?.n||(document.getElementById("s-csrch").value||"مشتری جدید");
   const custProv=_selCust?.p||"نامشخص";
   const saleDate=document.getElementById("s-date").value;
   const billNo=document.getElementById("s-bill").value;
   const paid=+(document.getElementById("s-paid").value)||0;
   const totAll=validItems.reduce((a,it)=>a+(it.doz*it.prc),0);
-  const remAll=Math.max(0,totAll-paid);
-
+  
   document.getElementById("sale-btn").disabled=true;
   document.getElementById("sale-btn").textContent="در حال ذخیره...";
+  document.getElementById("sale-msg").innerHTML=""; // پاک کردن خطای قبلی
 
-  let totalWageJ=0,totalWageS=0;
-  validItems.forEach(it=>{
-    const w=getWageForProduct(it.prod);
-    totalWageJ+=it.doz*w.j;
-    totalWageS+=it.doz*w.s;
-  });
+  // تبدیل شناسه مشتری به عدد (اگر ستون در دیتابیس integer باشد)
+  const _custIdRaw = _selCust?.id || null;
+  const _custIdInt = (typeof _custIdRaw === "number") ? _custIdRaw : (parseInt(_custIdRaw) > 0 ? parseInt(_custIdRaw) : null);
 
   const savedRows=[];
+  
   for(let i=0;i<validItems.length;i++){
     const it=validItems[i];
     const tot=it.doz*it.prc;
+    
+    // تقسیم پول رسیده بین اقلام
     const itemPaidRatio=totAll>0?tot/totAll:0;
-    const itemPaid=i===validItems.length-1
-      ?Math.max(0,paid-savedRows.reduce((a,r)=>a+r._paid,0))
-      :Math.round(paid*itemPaidRatio);
-    const itemRem=Math.max(0,tot-itemPaid);
-    const cg=calcCOGS(it.prod,it.doz),gp=tot-cg;
+    const itemPaid = i===validItems.length-1
+      ? Math.max(0, paid - savedRows.reduce((a,r)=>a+r._paid,0))
+      : Math.round(paid * itemPaidRatio);
+      
+    const itemRem = Math.max(0, tot - itemPaid);
+    
+    // محاسبه هزینه تولید (COGS) و سود
+    const cg = calcCOGS(it.prod, it.doz);
+    const gp = tot - cg;
 
-    // ستون‌ها دقیقاً مطابق دیتابیس شما
-    const res=await sbPost("sales",{
-      date:saleDate,
-      cust_id:_selCust?.id||"new",
-      cust_name:custName,
-      province:custProv,
-      bill:billNo,
-      product:it.prod,
-      dozen:it.doz,
-      price_per_doz:it.prc, 
-      total:tot,
-      paid:itemPaid,
-      remaining:itemRem,
-      cogs:cg,
-      profit:gp 
+    // ⚠️ ارسال دقیقاً با نام ستون‌های دیتابیس شما
+    const res = await sbPost("sales", {
+      date: saleDate,
+      cust_id: _custIdInt,          // عدد یا null
+      cust_name: custName,
+      province: custProv,
+      product: it.prod,
+      dozen: it.doz,
+      price_per_doz: it.prc,        // نام دقیق ستون طبق دیتابیس شما
+      total: tot,
+      paid: itemPaid,
+      remaining: itemRem,
+      cogs: cg,
+      profit: gp                    // نام دقیق ستون طبق دیتابیس شما
     });
-    if(res) savedRows.push({...res[0],_paid:itemPaid});
+
+    if(res && res.length > 0) {
+      savedRows.push({...res[0], _paid: itemPaid});
+    } else {
+      // 🔍 نمایش دقیق خطای Supabase برای دیباگ
+      const errorDetail = window._lastSBError || "خطای نامشخص از سرور";
+      console.error("Supabase Error:", errorDetail);
+      document.getElementById("sale-msg").innerHTML = `<div class="ib err" style="flex-direction:column;align-items:flex-start;gap:5px">
+        <div style="font-weight:800">❌ خطا در ثبت!</div>
+        <div style="font-size:10px;direction:ltr;text-align:left;opacity:0.8">${errorDetail}</div>
+      </div>`;
+      document.getElementById("sale-btn").disabled=false;
+      document.getElementById("sale-btn").textContent="ثبت بل ✓";
+      return; // توقف عملیات در صورت خطا
+    }
   }
 
-  if(savedRows.length===validItems.length){
-    const emps=await sbGet("employees","?select=id,name");
-    if(emps){
-      const jamshid=emps.find(e=>e.name.includes("جمشید"));
-      const samiullah=emps.find(e=>e.name.includes("سمیع"));
-      const wageNote=`اجرت بل ${billNo||"—"} | ${validItems.length} قلم | ${custName}`;
-      if(jamshid&&totalWageJ>0) await sbPost("employee_payments",{employee_id:jamshid.id,employee_name:"جمشید",date:saleDate,amount_afn:totalWageJ,type:"salary",notes:wageNote});
-      if(samiullah&&totalWageS>0) await sbPost("employee_payments",{employee_id:samiullah.id,employee_name:"سمیع‌الله",date:saleDate,amount_afn:totalWageS,type:"salary",notes:wageNote});
-    }
-
-    for(const it of validItems){
-      const fgRows=await sbGet("finished_goods",`?product_name=eq.${encodeURIComponent(it.prod)}`)||[];
-      if(fgRows.length>0){
-        const fg=fgRows[0];
-        const newDoz=Math.max(0,(+fg.dozen||0)-it.doz);
-        const newVal=newDoz*(+fg.unit_price||0);
-        await sbPatch("finished_goods",{dozen:newDoz,total_value:newVal,updated_at:new Date().toISOString()},`?product_name=eq.${encodeURIComponent(it.prod)}`);
-      }
-    }
-
-    if(paid>0)await sbPost("cash_ledger",{
-      date:saleDate,category:"in",type:"وصول از مشتری",
-      description:"فروش — بل "+(billNo||"—")+" | "+custName,
-      amount_in:paid,amount_out:0
-    });
-
+  // اگر همه اقلام با موفقیت ثبت شدند:
+  if(savedRows.length === validItems.length){
+    document.getElementById("sale-msg").innerHTML=`<div class="ib ok">✅ بل با ${validItems.length} قلم ثبت شد! | جمع: ${afn(totAll)}</div>`;
     showSaved();
-    document.getElementById("sale-msg").innerHTML='<div class="ib ok">✅ بل با موفقیت ثبت شد! جنس از گدام کسر شد.</div>';
-    setTimeout(()=>{
-      closeModal("modalSale");
-      renderSales();
-    },1500);
-  } else {
-    document.getElementById("sale-msg").innerHTML='<div class="ib err">خطا! دوباره امتحان کن</div>';
+    setTimeout(()=>{closeModal("modalSale");renderSales();}, 1500);
   }
-
+  
   document.getElementById("sale-btn").disabled=false;
   document.getElementById("sale-btn").textContent="ثبت بل ✓";
 }
