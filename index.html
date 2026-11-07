@@ -4418,17 +4418,16 @@ function calcSaleWage(){
       date: saleDate,
       cust_id: _custIdInt,          // عدد یا null
       cust_name: custName,
-      province: custProv,
+            province: custProv,
       product: it.prod,
       dozen: it.doz,
-      price_per_doz: it.prc,        // نام دقیق ستون طبق دیتابیس شما
+      price_per_doz: it.prc,
       total: tot,
       paid: itemPaid,
       remaining: itemRem,
       cogs: cg,
-       profit: gp
-gross_profit: gp
-                    // نام دقیق ستون طبق دیتابیس شما
+      profit: gp,
+      gross_profit: gp
     });
 
     if(res && res.length > 0) {
