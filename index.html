@@ -2942,8 +2942,10 @@ async function submitOrder(){
   document.getElementById("ord-btn").disabled=true;
   document.getElementById("ord-btn").textContent="در حال ذخیره...";
 
+    const _odate=document.getElementById("o-date").value;
   const orderRes=await sbPost("orders",{
-    date:document.getElementById("o-date").value,
+    date:_odate,
+    order_date:_odate,  
     cust_id:_selCustOrd?.id||"",cust_name:cn,province:cp,
     status:"pending",note:document.getElementById("o-note").value
   });
