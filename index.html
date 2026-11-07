@@ -3443,24 +3443,21 @@ function populateDropdowns(){
   const bs=document.getElementById("b-supp");
   if(bs) bs.innerHTML='<option value="">— تامین‌کننده —</option>'+
     SUPPLIERS.map(s=>`<option value="${s.id}">${s.n} | ${usd(S.suppMap[s.id]?.bal||0)}</option>`).join("");
+    
   if(document.getElementById("b-mat"))
     document.getElementById("b-mat").innerHTML=MATS.map(m=>`<option>${m}</option>`).join("");
-    // Load workers from employees table (با پشتیبانی از هر دو نام ستون)
+    
+  // Load workers (پشتیبانی از هر دو نام ستون برای جلوگیری از خطا)
   sbGet("employees","?is_active=eq.true&select=id,name,name_fa,role,salary_amount").then(emps=>{
     const sel=document.getElementById("p-worker");
     if(sel && emps && emps.length){
-      // فیلتر کردن کارمندان بخش تولید
-      const workers = emps.filter(e => e.role === 'worker');
-      if(workers.length > 0) {
-        sel.innerHTML = workers.map(e => {
-          const empName = e.name_fa || e.name || "بدون نام";
-          return `<option value="${empName}">${empName} — ؋${e.salary_amount || 0}/درجن</option>`;
-        }).join("");
-      }
+      sel.innerHTML = emps.map(e => {
+        const empName = e.name_fa || e.name || "بدون نام";
+        return `<option value="${empName}">${empName} — ؋${e.salary_amount || 0}/درجن</option>`;
+      }).join("");
     }
   });
 }
-
 function calcCOGS(prod,doz){
   return(RECIPES[prod]||[]).reduce((s,r)=>{
     const ac=S.stockMap[r.m]?.avgCost||0;
