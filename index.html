@@ -861,6 +861,16 @@ select option{background:#1a1820}
           <tbody id="prod-tbody"><tr><td colspan="9" style="text-align:center;padding:20px;color:var(--t3)"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
         </table></div>
       </div>
+      <!-- خلاصه تولید و فروش ماه جاری به تفکیک مدل -->
+      <div class="card" style="margin-top:12px">
+        <div class="ct">📊 خلاصه تولید و فروش ماه جاری به تفکیک مدل | <span id="prod-model-month" style="color:var(--gd)">—</span></div>
+        <div class="tw"><table>
+          <thead><tr><th>ردیف</th><th>نام مدل</th><th>تولید این ماه (درجن)</th><th>فروش این ماه (درجن)</th><th>موجودی در انبار</th></tr></thead>
+          <tbody id="prod-model-tbody"><tr><td colspan="5" style="text-align:center;padding:20px;color:var(--t3)"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
+          <tfoot id="prod-model-tfoot"></tfoot>
+        </table></div>
+        <div style="font-size:10px;color:var(--t3);margin-top:8px">💡 موجودی در انبار از گدام جنس تولیدشده خوانده می‌شود | تولید دفتر (بسته‌بندی) در ستون تولید این ماه حساب نمی‌شود</div>
+      </div>
     </div>
 
     <!-- ══ مکسچر و تولید (BATCH SYSTEM) ══ -->
@@ -3744,6 +3754,55 @@ async function renderProd(){
         +'<div style="font-size:10px;color:var(--t2);margin-top:2px">'+d.items.join(' | ')+'</div></div>'
       ).join("")
       :'<div style="color:var(--t3);text-align:center;padding:8px">امروز تولیدی ثبت نشده</div>';
+  }
+
+  // ── خلاصه تولید و فروش ماه جاری به تفکیک مدل ──
+  // خواندن فروش (sales) و موجودی گدام جنس تولیدشده (finished_goods)
+  const [salesRowsRaw,fgRowsRaw]=await Promise.all([
+    sbGet("sales","?select=product,dozen,date"),
+    sbGet("finished_goods","?select=product_name,dozen")
+  ]);
+  const salesRows=salesRowsRaw||[], fgRows=fgRowsRaw||[];
+  const modelMap={};
+  const addModel=(name,key,val)=>{
+    const m=(name||"").trim();
+    if(!m) return;
+    if(!modelMap[m]) modelMap[m]={prod:m,prodDoz:0,saleDoz:0,stockDoz:0};
+    modelMap[m][key]+=(+val||0);
+  };
+  monthRecs.filter(isProducer).forEach(r=>addModel(r.product,"prodDoz",r.dozen));
+  salesRows.filter(s=>(s.date||"").slice(0,7)===monthStr).forEach(s=>addModel(s.product,"saleDoz",s.dozen));
+  fgRows.forEach(f=>addModel(f.product_name,"stockDoz",f.dozen));
+  const modelArr=Object.values(modelMap)
+    .filter(r=>r.prodDoz>0||r.saleDoz>0)
+    .sort((a,b)=>b.prodDoz-a.prodDoz||b.saleDoz-a.saleDoz||a.prod.localeCompare(b.prod,"fa"));
+  const dz=v=>+(+v||0).toFixed(1);
+  const msMonth=document.getElementById("prod-model-month");
+  const msTb=document.getElementById("prod-model-tbody");
+  const msFt=document.getElementById("prod-model-tfoot");
+  if(msMonth) msMonth.textContent=monthStr;
+  if(msTb){
+    if(!modelArr.length){
+      msTb.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--t3);padding:18px">در این ماه تولید و فروشی ثبت نشده</td></tr>';
+      if(msFt) msFt.innerHTML="";
+    } else {
+      msTb.innerHTML=modelArr.map((r,i)=>`<tr>
+        <td style="color:var(--t3)">${i+1}</td>
+        <td><span class="bb bpp">${r.prod}</span></td>
+        <td style="font-weight:700;color:var(--gd)">${dz(r.prodDoz)}</td>
+        <td style="font-weight:700;color:var(--bl)">${dz(r.saleDoz)}</td>
+        <td><span class="bb ${r.stockDoz>0?"bg2":r.stockDoz<0?"br2":"by2"}">${dz(r.stockDoz)} درجن</span></td>
+      </tr>`).join("");
+      const totalProd=modelArr.reduce((a,r)=>a+r.prodDoz,0);
+      const totalSale=modelArr.reduce((a,r)=>a+r.saleDoz,0);
+      const totalStock=modelArr.reduce((a,r)=>a+r.stockDoz,0);
+      if(msFt) msFt.innerHTML=`<tr style="background:var(--b3)">
+        <td colspan="2" style="font-weight:800">جمع کل</td>
+        <td style="font-weight:800;color:var(--gd)">${dz(totalProd)}</td>
+        <td style="font-weight:800;color:var(--bl)">${dz(totalSale)}</td>
+        <td style="font-weight:800;color:var(--gr)">${dz(totalStock)} درجن</td>
+      </tr>`;
+    }
   }
 
   const tb=document.getElementById("prod-tbody");
