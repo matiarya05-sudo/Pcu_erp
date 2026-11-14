@@ -1646,8 +1646,9 @@ select option{background:#1a1820}
         <div class="fg"><label>نرخ اجرت فی درجن (؋)</label><input type="number" inputmode="decimal" id="p-rate" min="0" oninput="calcProd()" inputmode="decimal"/></div>
         <div class="fg"><label>اجرت کل اتومات</label><input id="p-wage" readonly/></div>
       </div>
+      <div class="fg"><label>هزینه سرباری فی درجن (؋) — برق، کرایه، شاگرد</label><input type="number" id="p-overhead" min="0" step="0.01" oninput="calcProd()" inputmode="decimal"/></div>
       <div class="row2">
-        <div class="fg"><label>هزینه کل مواد مصرفی (؋)</label><input type="number" id="p-mat-cost" min="0" step="0.01" oninput="onMatCostInput(this)" inputmode="decimal"/></div>
+        <div class="fg"><label>هزینه مواد فی درجن (؋)</label><input type="number" id="p-mat-cost" min="0" step="0.01" oninput="onMatCostInput(this)" inputmode="decimal"/></div>
         <div class="fg"><label>بهای تمام‌شده کل</label><input id="p-total-cogs" readonly/></div>
       </div>
       <div class="fg"><label>پرداختی (؋)</label><input type="number" inputmode="decimal" id="p-paid" min="0" inputmode="decimal"/></div>
@@ -3197,10 +3198,19 @@ async function sb(table, method="GET", body=null, params=""){
   if(body) opts.body=JSON.stringify(body);
   try{
     const r=await fetch(url,opts);
-    if(!r.ok){const e=await r.text();console.error("SB Error:",e);return null;}
+    if(!r.ok){
+      const e=await r.text();
+      // ذخیره خطای کامل برای نمایش در مودال‌ها (submitSale / submitBuy)
+      window._lastSBError=`HTTP ${r.status} ${r.statusText} — ${method} ${table}: ${e}`;
+      console.error("SB Error:",e);
+      return null;
+    }
     const t=await r.text();
     return t?JSON.parse(t):[];
-  }catch(e){console.error("Network error:",e);setSyncOff();return null;}
+  }catch(e){
+    window._lastSBError=`Network error — ${method} ${table}: ${e?.message||e}`;
+    console.error("Network error:",e);setSyncOff();return null;
+  }
 }
 async function sbGet(table,params=""){ return sb(table,"GET",null,params); }
 async function sbPost(table,body){ return sb(table,"POST",body); }
@@ -4553,44 +4563,58 @@ function calcBuy(){
   document.getElementById("b-upm").value=afn(upm);
   document.getElementById("b-rem").textContent=`⚡ میانگین متحرک اتومات آپدیت | باقی: ${usd(rem)}`;
 }
+// شناسه عددی تامین‌کننده برای ستون integer جدول purchases
+// ("s12" → 12 ، عدد خالص → همان عدد ، خالی/نامعتبر → null)
+function supplierIdToInt(raw){
+  if(raw===null||raw===undefined||raw==="") return null;
+  const n=Number(raw);
+  if(Number.isInteger(n)) return n;
+  const digits=String(raw).replace(/[^0-9]/g,"");
+  return digits?parseInt(digits,10):null;
+}
 async function submitBuy(){
-  const sid=document.getElementById("b-supp").value;
+  const sidRaw=document.getElementById("b-supp").value;
+  // supplier_id در دیتابیس integer است → باید عدد یا null برود، نه رشته
+  const sid=supplierIdToInt(sidRaw);
   const mat=document.getElementById("b-mat").value;
-  const kg=+(document.getElementById("b-kg").value);
-  const usdAmt=+(document.getElementById("b-usd").value);
-  const rate=+(document.getElementById("b-rate").value)||68;
-  const pAfn=+(document.getElementById("b-paid").value)||0;
-  if(!sid||!kg||!usdAmt){document.getElementById("buy-msg").innerHTML='<div class="ib err">تامین‌کننده، مقدار و مبلغ الزامی</div>';return;}
+  // همه مقادیر عددی صریحاً با Number() تبدیل می‌شوند
+  const num=id=>{const v=Number(document.getElementById(id).value);return Number.isFinite(v)?v:0;};
+  const kg=num("b-kg");
+  const usdAmt=num("b-usd");
+  const rate=num("b-rate")||68;
+  const pAfn=num("b-paid");
+  if(!sidRaw||!kg||!usdAmt){document.getElementById("buy-msg").innerHTML='<div class="ib err">تامین‌کننده، مقدار و مبلغ الزامی</div>';return;}
   const tAfn=usdAmt*rate,upm=tAfn/kg,remUSD=usdAmt-pAfn/rate;
-  const sn=SUPPLIERS.find(s=>s.id===sid)?.n||"";
+  const sn=SUPPLIERS.find(s=>s.id===sidRaw)?.n||"";
   document.getElementById("buy-btn").disabled=true;document.getElementById("buy-btn").textContent="در حال ذخیره...";
-  
-  // ستون‌ها دقیقاً مطابق دیتابیس شما
+  window._lastSBError=null;
+
+  // ستون‌ها دقیقاً مطابق دیتابیس شما (unit و status در جدول موجود هستند ولی لازم نیستند)
   const res=await sbPost("purchases",{
     date:document.getElementById("b-date").value,
     supplier_id:sid,
     supplier_name:sn,
     bill:document.getElementById("b-bill").value,
     material:mat,
-    kg:kg,
-    amount_usd:usdAmt,
-    usd_rate:rate,
-    amount_afn:tAfn,
-    paid_afn:pAfn, 
-    remaining_usd:remUSD,
-    cost_per_kg:upm
+    kg:Number(kg),
+    amount_usd:Number(usdAmt),
+    usd_rate:Number(rate),
+    amount_afn:Number(tAfn),
+    paid_afn:Number(pAfn),
+    remaining_usd:Number(remUSD.toFixed(2)),
+    cost_per_kg:Number(upm.toFixed(2))
   });
   
   if(res){
     const cur=S.stockMap[mat]||{kg:0,avgCost:0,val:0};
     const newKg=cur.kg+kg,newVal=cur.kg*cur.avgCost+kg*upm,newAvg=newKg>0?newVal/newKg:0;
     await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,avg_cost:newAvg,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(mat)}`);
-    const curBal=S.suppMap[sid]?.bal||0;
-    await sbPatch("supplier_balances",{balance_usd:+(curBal+remUSD).toFixed(2),updated_at:new Date().toISOString()},`?supplier_id=eq.${sid}`);
+    const curBal=S.suppMap[sidRaw]?.bal||0;
+    await sbPatch("supplier_balances",{balance_usd:+(curBal+remUSD).toFixed(2),updated_at:new Date().toISOString()},`?supplier_id=eq.${sidRaw}`);
     await refreshStockMap();await refreshSuppMap();
     document.getElementById("buy-msg").innerHTML='<div class="ib ok">✅ خرید در Supabase ذخیره شد!</div>';
     showSaved();setTimeout(()=>{closeModal("modalBuy");renderBuy();},1300);
-  } else document.getElementById("buy-msg").innerHTML='<div class="ib err">خطا! دوباره امتحان کن</div>';
+  } else document.getElementById("buy-msg").innerHTML = '<div class="ib err" style="direction:ltr;text-align:left">Error: ' + (window._lastSBError || 'Unknown') + '</div>';
   document.getElementById("buy-btn").disabled=false;document.getElementById("buy-btn").textContent="ثبت خرید ✓";
 }
 
@@ -4601,6 +4625,7 @@ function initProdModal(){
   document.getElementById("p-rate").value="";
   document.getElementById("p-wage").value="";
   document.getElementById("p-paid").value="";
+  document.getElementById("p-overhead").value="";
   const mc=document.getElementById("p-mat-cost");
   mc.value="";
   delete mc.dataset.manual;
@@ -4617,18 +4642,21 @@ function calcProd(){
   const doz=+(document.getElementById("p-doz").value)||0;
   const rate=+(document.getElementById("p-rate").value)||0;
   const prod=document.getElementById("p-prod").value;
-  const wage=doz*rate;
-  // هزینه مواد: اتومات از رسپی × میانگین بهای انبار، مگر اینکه دستی وارد شده باشد
+  // هزینه مواد فی درجن: اتومات از رسپی × میانگین بهای انبار، مگر اینکه دستی وارد شده باشد
   const mcEl=document.getElementById("p-mat-cost");
   if(mcEl && mcEl.dataset.manual!=="1"){
-    const auto=calcCOGS(prod,doz);
-    mcEl.value=auto?+auto.toFixed(2):"";
+    const autoPerDoz=calcCOGS(prod,1);
+    mcEl.value=autoPerDoz?+autoPerDoz.toFixed(2):"";
   }
-  const matCost=+(mcEl?.value)||0;
-  const total=wage+matCost;
+  const matCostPerDoz=+(mcEl?.value)||0;
+  const overheadPerDoz=+(document.getElementById("p-overhead").value)||0;
+  const wage=doz*rate;
+  // بهای تمام‌شده کل = تعداد درجن × (اجرت + مواد + سرباری) فی درجن
+  const totalCogs=doz*(rate+matCostPerDoz+overheadPerDoz);
+  const perDoz=rate+matCostPerDoz+overheadPerDoz;
   document.getElementById("p-wage").value=afn(wage);
-  document.getElementById("p-total-cogs").value=afn(total);
-  document.getElementById("p-cogs").textContent=`💡 مواد ${afn(matCost)} + اجرت ${afn(wage)} = بهای تمام‌شده ${afn(total)} | مواد اتومات کسر می‌شود`;
+  document.getElementById("p-total-cogs").value=afn(totalCogs);
+  document.getElementById("p-cogs").textContent=`💡 فی درجن: اجرت ${afn(rate)} + مواد ${afn(matCostPerDoz)} + سرباری ${afn(overheadPerDoz)} = ${afn(perDoz)} × ${doz} درجن = بهای تمام‌شده ${afn(totalCogs)}`+(mcEl?.dataset.manual==="1"?"":" | مواد اتومات کسر می‌شود");
 }
 async function submitProd(){
   const doz=+(document.getElementById("p-doz").value);
@@ -4637,16 +4665,17 @@ async function submitProd(){
   const prod=document.getElementById("p-prod").value;
   const wRate=+(document.getElementById("p-rate").value)||0;
   const wage=doz*wRate,paid=+(document.getElementById("p-paid").value)||0;
-  const matCost=+(document.getElementById("p-mat-cost").value)||0;
-  // بهای تمام‌شده کل = اجرت + هزینه مواد مصرفی
-  const cg=wage+matCost;
+  const matCostPerDoz=+(document.getElementById("p-mat-cost").value)||0;
+  const overheadPerDoz=+(document.getElementById("p-overhead").value)||0;
+  // بهای تمام‌شده کل = درجن × (اجرت + هزینه مواد + هزینه سرباری) فی درجن
+  const totalCogs=doz*(wRate+matCostPerDoz+overheadPerDoz);
   document.getElementById("prod-btn").disabled=true;document.getElementById("prod-btn").textContent="در حال ذخیره...";
   const _prdate=document.getElementById("p-date").value;
   const _emprows=await sbGet("employees","?name_fa=eq."+encodeURIComponent(worker)+"&select=id")||[];
   const _empid=_emprows[0]?.id||null;
   const res=await sbPost("production",{
     date:_prdate,production_date:_prdate,worker,employee_id:_empid,product:prod,product_id:null,dozen:doz,quantity_dozen:doz,
-    wage_rate:wRate,total_wage:wage,paid_wage:paid,remaining_wage:wage-paid,mat_cogs:cg,status:"pending"
+    wage_rate:wRate,total_wage:wage,paid_wage:paid,remaining_wage:wage-paid,mat_cogs:totalCogs,status:"pending"
   });
   if(res){
     // Deduct from mat_stock
