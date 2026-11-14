@@ -3382,6 +3382,14 @@ const RECIPES={
   ویژه:[{m:"دی‌اوپی (DOP)",q:0.9},{m:"ریزن",q:0.35},{m:"تیتانیوم",q:0.06},{m:"ای سی (AC)",q:0.12},{m:"کرش سیاه",q:0.25}],
   کودکانه:[{m:"دی‌اوپی (DOP)",q:0.6},{m:"ریزن",q:0.2},{m:"تیتانیوم",q:0.04},{m:"ای سی (AC)",q:0.08},{m:"کرش سیاه",q:0.15}],
 };
+// نسبت استاندارد مصرف مواد فی درجن — برای کسر خودکار از انبار مواد
+// DOP ۰.۸ کیلو | ریزن ۰.۳ کیلو | AC ۰.۱ کیلو | کرش سیاه ۰.۲ کیلو
+const MAT_STD_RATIO_PER_DOZ=[
+  {m:"دی‌اوپی (DOP)",q:0.8},
+  {m:"ریزن",q:0.3},
+  {m:"ای سی (AC)",q:0.1},
+  {m:"کرش سیاه",q:0.2},
+];
 const CASH_IN=["وصول از مشتری","سرمایه شریک","قرض دریافتی","سایر ورودی"];
 const CASH_OUT=["خرید مواد (افغانی)","اجرت جمشید","اجرت دفتر","معاش شاگردان","کرایه","برق","مصارف اداری","سایر خروجی"];
 
@@ -4666,39 +4674,63 @@ async function submitProd(){
   const prod=document.getElementById("p-prod").value;
   const wRate=+(document.getElementById("p-rate").value)||0;
   const wage=doz*wRate,paid=+(document.getElementById("p-paid").value)||0;
-  const matCostPerDoz=+(document.getElementById("p-mat-cost").value)||0;
+  const matCostEl=document.getElementById("p-mat-cost");
+  let matCostPerDoz=+(matCostEl?.value)||0;
+  // اگر هزینه مواد فی درجن خالی باشد، از نسبت استاندارد مصرف × میانگین بهای انبار محاسبه می‌شود
+  if(!matCostPerDoz){
+    matCostPerDoz=MAT_STD_RATIO_PER_DOZ.reduce((s,r)=>s+r.q*(S.stockMap[r.m]?.avgCost||0),0);
+  }
   const overheadPerDoz=+(document.getElementById("p-overhead").value)||0;
-  // بهای تمام‌شده کل = درجن × (اجرت + هزینه مواد + هزینه سرباری) فی درجن
-  const totalCogs=doz*(wRate+matCostPerDoz+overheadPerDoz);
+  // بهای تمام‌شده کل = اجرت کل + هزینه مواد کل + هزینه سرباری کل
+  const materialCost=matCostPerDoz*doz;
+  const overheadCost=overheadPerDoz*doz;
+  const totalCogs=wage+materialCost+overheadCost;
+  const matCogs=Math.round(totalCogs*100)/100;
   document.getElementById("prod-btn").disabled=true;document.getElementById("prod-btn").textContent="در حال ذخیره...";
   const _prdate=document.getElementById("p-date").value;
   const _emprows=await sbGet("employees","?name_fa=eq."+encodeURIComponent(worker)+"&select=id")||[];
   const _empid=_emprows[0]?.id||null;
   const res=await sbPost("production",{
     date:_prdate,production_date:_prdate,worker,employee_id:_empid,product:prod,product_id:null,dozen:doz,quantity_dozen:doz,
-    wage_rate:wRate,total_wage:wage,paid_wage:paid,remaining_wage:wage-paid,mat_cogs:totalCogs,status:"pending"
+    wage_rate:wRate,total_wage:wage,paid_wage:paid,remaining_wage:wage-paid,mat_cogs:matCogs,status:"pending"
   });
   if(res){
-    // Deduct from mat_stock
-    for(const r of (RECIPES[prod]||[])){
-      const cur=S.stockMap[r.m]||{kg:0,avgCost:0,val:0};
+    const warnings=[];
+    // ── ۱) کسر مواد اولیه از انبار بر اساس نسبت استاندارد فی درجن ──
+    const stockRows=await sbGet("mat_stock","?select=material,total_kg,avg_cost")||[];
+    const stockByName={};
+    stockRows.forEach(r=>{stockByName[r.material]=r;});
+    for(const r of MAT_STD_RATIO_PER_DOZ){
+      const row=stockByName[r.m];
+      if(!row){warnings.push(`«${r.m}» در انبار مواد ثبت نشده`);continue;}
+      const curKg=+row.total_kg||0;
+      const avgCost=+row.avg_cost||0;
       const usedKg=r.q*doz;
-      const newKg=Math.max(0,cur.kg-usedKg);
-      const newVal=newKg*cur.avgCost;
-      await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(r.m)}`);
+      const newKg=Math.max(0,curKg-usedKg);
+      const newVal=newKg*avgCost;
+      const ok=await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(r.m)}`);
+      if(ok){
+        S.stockMap[r.m]={...(S.stockMap[r.m]||{}),kg:newKg,avgCost,val:newVal};
+      } else {
+        warnings.push(`کسر «${r.m}» انجام نشد`);
+      }
     }
-    // اضافه کردن به انبار جنس تولیدشده
+    // ── ۲) اضافه کردن به انبار جنس تولیدشده ──
+    const costPerDoz=doz>0?matCogs/doz:0;
     const fgRows=await sbGet("finished_goods",`?product_name=eq.${encodeURIComponent(prod)}`)||[];
     if(fgRows.length>0){
       const fg=fgRows[0];
       const newDoz=(+fg.dozen||0)+doz;
-      const newVal=newDoz*(+fg.unit_price||0);
-      await sbPatch("finished_goods",{dozen:newDoz,total_value:newVal,updated_at:new Date().toISOString()},`?product_name=eq.${encodeURIComponent(prod)}`);
+      const unitPrice=(+fg.unit_price||0)>0?(+fg.unit_price):costPerDoz;
+      const newVal=newDoz*unitPrice;
+      const ok=await sbPatch("finished_goods",{dozen:newDoz,unit_price:unitPrice,total_value:newVal,updated_at:new Date().toISOString()},`?product_name=eq.${encodeURIComponent(prod)}`);
+      if(!ok) warnings.push("به‌روزرسانی انبار جنس تولیدشده انجام نشد");
     } else {
-      await sbPost("finished_goods",{product_name:prod,dozen:doz,unit_price:0,total_value:0});
+      const ok=await sbPost("finished_goods",{product_name:prod,dozen:doz,unit_price:costPerDoz,total_value:doz*costPerDoz});
+      if(!ok) warnings.push("ثبت جنس جدید در انبار انجام نشد");
     }
     await refreshStockMap();
-    document.getElementById("prod-msg").innerHTML='<div class="ib ok">✅ تولید در Supabase ذخیره شد!</div>';
+    document.getElementById("prod-msg").innerHTML='<div class="ib ok">✅ تولید در Supabase ذخیره شد!'+(warnings.length?'<br>⚠️ '+warnings.join(' | '):'')+'</div>';
     showSaved();setTimeout(()=>{closeModal("modalProd");renderProd();},1300);
   } else document.getElementById("prod-msg").innerHTML='<div class="ib err">خطا! دوباره امتحان کن</div>';
   document.getElementById("prod-btn").disabled=false;document.getElementById("prod-btn").textContent="ثبت تولید ✓";
