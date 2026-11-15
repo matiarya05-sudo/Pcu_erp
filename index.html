@@ -370,6 +370,23 @@ select option{background:#1a1820}
 .role-btn.on{border-color:var(--gd);background:rgba(212,168,67,.1);box-shadow:0 0 0 3px rgba(212,168,67,.1)}
 .role-btn.on-tl{border-color:var(--tl);background:rgba(46,196,212,.08)}
 
+/* ── Production material sections / scrap / reconciliation ── */
+.pm-section{border:1px solid var(--bd);border-radius:10px;padding:10px;margin-bottom:10px;background:rgba(255,255,255,.015)}
+.pm-section.raw{border-color:rgba(46,196,212,.3);background:rgba(46,196,212,.04)}
+.pm-section.pack{border-color:rgba(240,120,64,.3);background:rgba(240,120,64,.04)}
+.pm-section.scrap{border-color:rgba(212,168,67,.3);background:rgba(212,168,67,.04)}
+.pm-head{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:800;margin-bottom:6px}
+.pm-sub{font-size:10px;color:var(--t3);margin-bottom:8px;line-height:1.5}
+.recon-warn-row td{background:rgba(240,90,110,.06)}
+.recon-ok-row td{background:rgba(46,204,122,.04)}
+details.recon-details>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px}
+details.recon-details>summary::-webkit-details-marker{display:none}
+details.recon-details>summary::after{content:'▾';color:var(--t2);font-size:12px;transition:transform .2s}
+details.recon-details[open]>summary::after{transform:rotate(180deg)}
+pre.sql-box{direction:ltr;text-align:left;background:#0b0a10;border:1px solid var(--bd);border-radius:8px;padding:10px;font-size:10px;line-height:1.7;overflow-x:auto;color:#b9f6ca;white-space:pre}
+.rec-in{width:80px;max-width:100%;padding:6px 8px;background:var(--b4);border:1px solid var(--bd2);border-radius:7px;color:var(--tx);font-size:11.5px;font-family:inherit;direction:ltr;text-align:center}
+.rec-in:focus{outline:none;border-color:var(--gd);box-shadow:0 0 0 2px rgba(212,168,67,.15)}
+
 /* ── Scrollbar ── */
 ::-webkit-scrollbar{width:3px;height:3px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -835,8 +852,8 @@ select option{background:#1a1820}
       <div class="card">
         <div class="ct">📦 خرید مواد | <span id="buy-count" style="color:var(--gd)">—</span></div>
         <div class="tw"><table>
-          <thead><tr><th>#</th><th>تاریخ</th><th>تامین‌کننده</th><th>جنس</th><th>کیلو</th><th>مبلغ($)</th><th>مبلغ(؋)</th><th>باقی($)</th><th>✏️</th></tr></thead>
-          <tbody id="buy-tbody"><tr><td colspan="9" style="text-align:center;padding:20px;color:var(--t3)"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
+          <thead><tr><th>#</th><th>تاریخ</th><th>حواله</th><th>تامین‌کننده</th><th>جنس</th><th>کیلو</th><th>مبلغ($)</th><th>مبلغ(؋)</th><th>باقی($)</th><th>✏️</th></tr></thead>
+          <tbody id="buy-tbody"><tr><td colspan="10" style="text-align:center;padding:20px;color:var(--t3)"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
         </table></div>
       </div>
     </div>
@@ -857,8 +874,8 @@ select option{background:#1a1820}
       <div class="card">
         <div class="ct">🏭 دفتر تولید | <span id="prod-count" style="color:var(--gd)">—</span></div>
         <div class="tw"><table>
-          <thead><tr><th>#</th><th>تاریخ</th><th>سرکاریگر</th><th>مدل</th><th>درجن</th><th>اجرت کل</th><th>پرداختی</th><th>باقی</th><th>✏️</th></tr></thead>
-          <tbody id="prod-tbody"><tr><td colspan="9" style="text-align:center;padding:20px;color:var(--t3)"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
+          <thead><tr><th>#</th><th>تاریخ</th><th>سرکاریگر</th><th>مدل</th><th>درجن</th><th>ضایعات</th><th>حواله</th><th>اجرت کل</th><th>پرداختی</th><th>باقی</th><th>✏️</th></tr></thead>
+          <tbody id="prod-tbody"><tr><td colspan="11" style="text-align:center;padding:20px;color:var(--t3)"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
         </table></div>
       </div>
       <!-- خلاصه تولید و فروش ماه جاری به تفکیک مدل -->
@@ -961,6 +978,12 @@ select option{background:#1a1820}
           <div class="kv" id="stock-fg-val">—</div>
           <div class="ks" id="stock-fg-count">— نوع جنس</div>
         </div>
+        <div class="kc og" style="border:2px solid rgba(240,120,64,.3)">
+          <div class="ke">🧮</div>
+          <div class="kl" style="font-weight:800;color:var(--og)">🧮 مغایرت امروز</div>
+          <div class="kv" id="stock-recon-flag">—</div>
+          <div class="ks" id="stock-recon-sub">در حال بررسی...</div>
+        </div>
       </div>
 
       <!-- تب انتخاب گدام -->
@@ -1022,6 +1045,68 @@ select option{background:#1a1820}
             <tbody id="fg-tbody"><tr><td colspan="7" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
           </table></div>
         </div>
+      </div>
+
+      <!-- ══ مغایرت‌گیری روزانه ══ -->
+      <div class="card" style="margin-top:12px">
+        <details class="recon-details" id="recon-details">
+          <summary>
+            <span class="ct" style="margin-bottom:0">🧮 مغایرت‌گیری روزانه انبار — موجودی اولیه + تولید − فروش − ضایعات</span>
+            <span id="recon-summary-badge" class="bb by2" style="flex-shrink:0">—</span>
+          </summary>
+
+          <div style="margin-top:12px">
+            <div class="ib info" style="font-size:10.5px">
+              فرمول کنترول: <b>موجودی اولیه + تولید − فروش − ضایعات = موجودی سیستم</b> — اگر شمارش فزیکی برابر نباشد، سیستم هشدار می‌دهد.
+            </div>
+
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px">
+              <div class="fg" style="margin:0;min-width:130px">
+                <label>تا تاریخ</label>
+                <input id="recon-date" onchange="renderRecon()"/>
+              </div>
+              <button class="btn bpri" onclick="renderRecon(true)" style="font-size:11px;padding:8px 12px">🔄 محاسبه مجدد</button>
+              <button class="btn bsec" onclick="saveReconCounts()" style="font-size:11px;padding:8px 12px">💾 ذخیره شمارش</button>
+              <button class="btn bsec" onclick="initReconFromFG()" style="font-size:11px;padding:8px 12px">📦 موجودی اولیه از گدام</button>
+            </div>
+
+            <div id="recon-summary" class="ib warn"></div>
+
+            <div class="tw"><table>
+              <thead><tr>
+                <th>#</th><th>محصول</th><th>موجودی اولیه</th><th>تولید</th><th>فروش</th><th>ضایعات</th>
+                <th>موجودی سیستم</th><th>شمارش فزیکی</th><th>مغایرت</th><th>وضعیت</th>
+              </tr></thead>
+              <tbody id="recon-tbody">
+                <tr><td colspan="10" style="text-align:center;padding:18px"><div class="spinner" style="margin:auto"></div></td></tr>
+              </tbody>
+            </table></div>
+
+            <div class="ib info" style="font-size:10.5px;margin-top:10px;direction:ltr;text-align:left">
+              ℹ️ موجودی اولیه و شمارش فزیکی در جدول <b>settings</b> (کلید <code>stock_recon_v1</code>) ذخیره می‌شوند.
+            </div>
+
+            <details style="margin-top:4px">
+              <summary style="cursor:pointer;font-size:11px;color:var(--t2);font-weight:700">🗄️ ستون‌های لازم دیتابیس (SQL) — یک بار اجرا کن</summary>
+              <pre class="sql-box">-- ۱) ستون‌های ضایعات و حواله در جدول تولید
+alter table production add column if not exists scrap_waste numeric default 0;
+alter table production add column if not exists scrap_unit  text    default 'dozen';
+alter table production add column if not exists scrap_dozen numeric default 0;
+alter table production add column if not exists voucher_no  text;
+
+-- ۲) شماره حواله در جدول خرید
+alter table purchases add column if not exists voucher_no text;
+
+-- ۳) ایندکس برای جستجوی سریع حواله‌ها
+create index if not exists idx_production_voucher on production(voucher_no);
+create index if not exists idx_purchases_voucher  on purchases(voucher_no);
+
+-- ۴) بعد از اجرا، schema cache را ری‌لود کن
+notify pgrst, 'reload schema';</pre>
+              <button class="btn bsec" onclick="resetSchemaCache();renderRecon(true);alert('کش ساختار دیتابیس پاک شد — دوباره محاسبه شد.')" style="font-size:11px;padding:7px 12px;margin-top:6px">🗄️ بازخوانی ساختار دیتابیس</button>
+            </details>
+          </div>
+        </details>
       </div>
     </div>
 
@@ -1580,8 +1665,13 @@ select option{background:#1a1820}
     <div class="modal-body">
       <div id="buy-msg"></div>
       <div class="row2">
-        <div class="fg"><label>تاریخ</label><input id="b-date"/></div>
+        <div class="fg"><label>تاریخ</label><input id="b-date" onchange="refreshBuyVoucher()"/></div>
         <div class="fg"><label>شماره بل</label><input id="b-bill"/></div>
+      </div>
+      <div class="fg">
+        <label>شماره حواله / رسید انبار (voucher_no)</label>
+        <input id="b-voucher" placeholder="VCH-PUR-... — اتومات پیشنهاد می‌شود"/>
+        <div style="font-size:10px;color:var(--t3);margin-top:4px">🔗 هر حرکت مواد باید به یک حواله/رسید وصل باشد</div>
       </div>
       <div class="fg"><label>تامین‌کننده (۲۶)</label><select id="b-supp"></select></div>
       <div class="row2">
@@ -1612,13 +1702,14 @@ select option{background:#1a1820}
     <div class="modal-body">
       <div id="prod-msg"></div>
       <div class="row2">
-        <div class="fg"><label>تاریخ</label><input id="p-date"/></div>
-        <div class="fg"><label>سرکاریگر</label>
-          <select id="p-worker">
-            <option value="جمشید">جمشید — ماشین‌کار</option>
-            <option value="دفتر">دفتر — بسته‌بندی</option>
-          </select>
-        </div>
+        <div class="fg"><label>تاریخ</label><input id="p-date" onchange="refreshProdVoucher()"/></div>
+        <div class="fg"><label>شماره حواله تولید (voucher_no)</label><input id="p-voucher" placeholder="VCH-PRD-..."/></div>
+      </div>
+      <div class="fg"><label>سرکاریگر</label>
+        <select id="p-worker">
+          <option value="جمشید">جمشید — ماشین‌کار</option>
+          <option value="دفتر">دفتر — بسته‌بندی</option>
+        </select>
       </div>
       <div class="row2">
         <div class="fg"><label>مدل</label>
@@ -1651,10 +1742,47 @@ select option{background:#1a1820}
         <div class="fg"><label>اجرت کل اتومات</label><input id="p-wage" readonly/></div>
       </div>
       <div class="fg"><label>هزینه سرباری فی درجن (؋) — برق، کرایه، شاگرد</label><input type="number" id="p-overhead" min="0" step="0.01" oninput="calcProd()" inputmode="decimal"/></div>
-      <div class="fg">
-        <label>مواد مصرفی (کیلو) — انتخاب دستی از انبار</label>
-        <button type="button" class="btn bsec btn-full" style="margin-bottom:8px" onclick="addProdMatRow()">+ اضافه کردن ماده مصرفی</button>
-        <div id="prod-mats-list"></div>
+      <!-- ══ مواد اولیه تولید ══ -->
+      <div class="pm-section raw">
+        <div class="pm-head">
+          <span>🧪 مواد اولیه تولید</span>
+          <span id="prod-raw-total" style="font-size:11px;color:var(--tl)">؋ 0</span>
+        </div>
+        <div class="pm-sub">از گدام مواد خام (mat_stock) کسر می‌شود — کیلو دقیق</div>
+        <button type="button" class="btn bsec btn-full" style="margin-bottom:8px" onclick="addProdMatRow('raw')">+ اضافه کردن ماده اولیه</button>
+        <div id="prod-mats-raw-list"></div>
+      </div>
+      <!-- ══ مواد بسته‌بندی ══ -->
+      <div class="pm-section pack">
+        <div class="pm-head">
+          <span>📦 مواد بسته‌بندی</span>
+          <span id="prod-pack-total" style="font-size:11px;color:var(--og)">؋ 0</span>
+        </div>
+        <div class="pm-sub">کارتن، پلاستیک، بکل، نگینه... — از همان گدام مواد کسر می‌شود</div>
+        <button type="button" class="btn bsec btn-full" style="margin-bottom:8px" onclick="addProdMatRow('pack')">+ اضافه کردن ماده بسته‌بندی</button>
+        <div id="prod-mats-pack-list"></div>
+      </div>
+      <!-- ══ ضایعات تولید ══ -->
+      <div class="pm-section scrap">
+        <div class="pm-head"><span>♻️ ضایعات تولید (درجن یا کیلو)</span></div>
+        <div class="pm-sub">ضایعات از گدام جنس تولیدشده کسر می‌شود تا انبار دقیقاً با واقعیت فزیکی برابر باشد</div>
+        <div class="row2">
+          <div class="fg" style="margin-bottom:0"><label>مقدار ضایعات</label>
+            <input type="number" inputmode="decimal" id="p-scrap" min="0" step="0.01" placeholder="0" oninput="calcProd()" inputmode="decimal"/>
+          </div>
+          <div class="fg" style="margin-bottom:0"><label>واحد</label>
+            <select id="p-scrap-unit" onchange="calcProd()">
+              <option value="dozen">درجن</option>
+              <option value="kg">کیلو</option>
+            </select>
+          </div>
+        </div>
+        <div class="fg" id="p-scrap-kgpd-wrap" style="display:none;margin-top:8px;margin-bottom:0">
+          <label>هر درجن چند کیلو؟ (برای تبدیل به درجن)</label>
+          <input type="number" inputmode="decimal" id="p-scrap-kgpd" min="0.01" step="0.01" value="1"
+            oninput="this.dataset.manual='1';calcProd()" inputmode="decimal"/>
+        </div>
+        <div id="p-scrap-hint" class="ib info" style="font-size:10.5px;margin:8px 0 0">♻️ ضایعات ثبت نشده</div>
       </div>
       <div class="row2">
         <div class="fg"><label>هزینه مواد فی درجن (؋)</label><input type="number" id="p-mat-cost" min="0" step="0.01" oninput="onMatCostInput(this)" inputmode="decimal"/></div>
@@ -3226,6 +3354,37 @@ async function sbPost(table,body){ return sb(table,"POST",body); }
 async function sbPatch(table,body,params){ return sb(table,"PATCH",body,params); }
 async function sbDelete(table,params){ return sb(table,"DELETE",null,params); }
 
+// ── ساختار دیتابیس: بررسی وجود ستون (با کش) ──
+// اگر ستون جدید (scrap_waste / voucher_no) در دیتابیس نباشد، ذخیره کردن
+// بقیه فیلدها خراب نمی‌شود؛ فقط همان فیلدهای اضافه ارسال نمی‌شوند.
+const _colCache={};
+async function tableHasColumn(table,col){
+  const key=table+"."+col;
+  if(key in _colCache) return _colCache[key];
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/${table}?select=${encodeURIComponent(col)}&limit=1`,{headers:SB_HEADERS});
+    _colCache[key]=r.ok;
+    if(!r.ok) console.warn(`ستون ${col} در جدول ${table} موجود نیست — SQL راهنما را در صفحه انبار اجرا کن.`);
+  }catch(e){ _colCache[key]=false; }
+  return _colCache[key];
+}
+function resetSchemaCache(){ Object.keys(_colCache).forEach(k=>delete _colCache[k]); }
+
+// ── شماره حواله اتومات ──
+// مثال: VCH-PUR-14050824-001 / VCH-PRD-14050824-003
+async function suggestVoucherNo(table,prefix){
+  const d=today().replace(/\//g,"");
+  let seq=1;
+  try{
+    if(await tableHasColumn(table,"voucher_no")){
+      const rows=await sbGet(table,`?date=eq.${encodeURIComponent(today())}&select=voucher_no`);
+      if(Array.isArray(rows)) seq=rows.filter(r=>r.voucher_no).length+1;
+    }
+  }catch(e){ /* شماره ساده استفاده می‌شود */ }
+  return `${prefix}-${d}-${String(seq).padStart(3,"0")}`;
+}
+
+
 // ذخیره مانده تامین‌کننده — مستقیم fetch با error کامل
 async function saveSuppBalance(suppId, suppName, balUsd, balAfn){
   const headers = {
@@ -3737,13 +3896,14 @@ function renderSalesRows(list){
 // ── BUY ──
 let allBuys=[];
 async function renderBuy(){
-  document.getElementById("buy-tbody").innerHTML='<tr><td colspan="9" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr>';
+  document.getElementById("buy-tbody").innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr>';
   allBuys=await sbGet("purchases","?order=id.desc")||[];
   document.getElementById("buy-count").textContent=allBuys.length+" رکورد";
   const tb=document.getElementById("buy-tbody");
-  if(!allBuys.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--t3);padding:18px">هنوز خریدی ثبت نشده</td></tr>';return;}
+  if(!allBuys.length){tb.innerHTML='<tr><td colspan="10" style="text-align:center;color:var(--t3);padding:18px">هنوز خریدی ثبت نشده</td></tr>';return;}
   tb.innerHTML=allBuys.map((b,i)=>`<tr>
     <td style="color:var(--t3)">${i+1}</td><td>${b.date}</td>
+    <td>${b.voucher_no?`<span class="bb btl" style="direction:ltr">${b.voucher_no}</span>`:'<span style="color:var(--t3)">—</span>'}</td>
     <td style="font-weight:700">${b.supplier_name}</td>
     <td><span class="bb btl">${b.material}</span></td>
     <td style="color:var(--gd);font-weight:700">${b.kg} کیلو</td>
@@ -3851,12 +4011,16 @@ async function renderProd(){
   }
 
   const tb=document.getElementById("prod-tbody");
-  if(!allProd.length){tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--t3);padding:18px">هنوز تولیدی ثبت نشده</td></tr>';return;}
-  tb.innerHTML=allProd.map((r,i)=>`<tr>
+  if(!allProd.length){tb.innerHTML='<tr><td colspan="11" style="text-align:center;color:var(--t3);padding:18px">هنوز تولیدی ثبت نشده</td></tr>';return;}
+  tb.innerHTML=allProd.map((r,i)=>{
+    const scrapDoz=+(r.scrap_dozen||0)||(r.scrap_unit==="dozen"?+(r.scrap_waste||0):0);
+    return `<tr>
     <td style="color:var(--t3)">${i+1}</td><td>${r.date}</td>
     <td style="font-weight:700;color:var(--gd)">${r.worker}</td>
     <td><span class="bb bpp">${r.product}</span></td>
     <td style="font-weight:700">${r.dozen}</td>
+    <td>${scrapDoz>0?`<span class="bb bog">−${scrapDoz.toFixed(2)}</span>`:'<span style="color:var(--t3)">—</span>'}</td>
+    <td>${r.voucher_no?`<span class="bb btl" style="direction:ltr">${r.voucher_no}</span>`:'<span style="color:var(--t3)">—</span>'}</td>
     <td class="tdr" style="font-weight:700">${afn(r.total_wage)}</td>
     <td class="tdr" style="color:var(--gr)">${afn(r.paid_wage)}</td>
     <td>${+r.remaining_wage>0?`<span class="bb br2">${afn(r.remaining_wage)}</span>`:'<span class="bb bg2">تسویه</span>'}</td>
@@ -3864,7 +4028,7 @@ async function renderProd(){
       <button onclick="openEditRecord('production',${r.id})" style="${_editBtnStyle('bl')}">✏️</button>
       <button onclick="deleteRecord('production',${r.id},'renderProd')" style="${_editBtnStyle('rd')}">🗑️</button>
     </td>
-  </tr>`).join("");
+  </tr>`;}).join("");
 }
 
 // ── STOCK ──
@@ -4581,6 +4745,7 @@ function calcSaleWage(){
 function initBuyModal(){
   document.getElementById("b-date").value=today();
   document.getElementById("b-bill").value="";
+  document.getElementById("b-voucher").value="";
   document.getElementById("b-kg").value="";
   document.getElementById("b-usd").value="";
   document.getElementById("b-rate").value=S.usdRate;
@@ -4590,6 +4755,13 @@ function initBuyModal(){
   document.getElementById("buy-msg").innerHTML="";
   onBuyMatChange();
   calcBuy();
+  refreshBuyVoucher();
+}
+// شماره حواله خرید را اتومات پیشنهاد می‌دهد (قابل تغییر توسط کاربر)
+async function refreshBuyVoucher(){
+  const el=document.getElementById("b-voucher");
+  if(!el) return;
+  el.value=await suggestVoucherNo("purchases","VCH-PUR");
 }
 async function onBuyMatChange(){
   const mat=document.getElementById("b-mat")?.value;
@@ -4638,6 +4810,12 @@ async function submitBuy(){
   document.getElementById("buy-btn").disabled=true;document.getElementById("buy-btn").textContent="در حال ذخیره...";
   window._lastSBError=null;
 
+  // شماره حواله/رسید — هر حرکت مواد به یک حواله وصل می‌شود
+  const voucher=(document.getElementById("b-voucher").value||"").trim()
+    ||await suggestVoucherNo("purchases","VCH-PUR");
+  const hasVoucherCol=await tableHasColumn("purchases","voucher_no");
+  const voucherFields=hasVoucherCol?{voucher_no:voucher}:{};
+
   // ستون‌ها دقیقاً مطابق دیتابیس شما (unit و status در جدول موجود هستند ولی لازم نیستند)
   const res=await sbPost("purchases",{
     date:document.getElementById("b-date").value,
@@ -4651,7 +4829,8 @@ async function submitBuy(){
     amount_afn:Number(tAfn),
     paid_afn:Number(pAfn),
     remaining_usd:Number(remUSD.toFixed(2)),
-    cost_per_kg:Number(upm.toFixed(2))
+    cost_per_kg:Number(upm.toFixed(2)),
+    ...voucherFields
   });
   
   if(res){
@@ -4661,8 +4840,10 @@ async function submitBuy(){
     const curBal=S.suppMap[sidRaw]?.bal||0;
     await sbPatch("supplier_balances",{balance_usd:+(curBal+remUSD).toFixed(2),updated_at:new Date().toISOString()},`?supplier_id=eq.${sidRaw}`);
     await refreshStockMap();await refreshSuppMap();
-    document.getElementById("buy-msg").innerHTML='<div class="ib ok">✅ خرید در Supabase ذخیره شد!</div>';
-    showSaved();setTimeout(()=>{closeModal("modalBuy");renderBuy();},1300);
+    document.getElementById("buy-msg").innerHTML=
+      `<div class="ib ok">✅ خرید ذخیره شد! | حواله: ${voucher}</div>`+
+      (hasVoucherCol?"":'<div class="ib warn">⚠️ ستون <b>voucher_no</b> در جدول purchases نیست — حواله ذخیره نشد. SQL راهنما در صفحه انبار موجود است.</div>');
+    showSaved();setTimeout(()=>{closeModal("modalBuy");renderBuy();},1500);
   } else document.getElementById("buy-msg").innerHTML = '<div class="ib err" style="direction:ltr;text-align:left">Error: ' + (window._lastSBError || 'Unknown') + '</div>';
   document.getElementById("buy-btn").disabled=false;document.getElementById("buy-btn").textContent="ثبت خرید ✓";
 }
@@ -4671,37 +4852,57 @@ async function submitBuy(){
 let _prodMats=[];
 let _prodMatSeq=0;
 
-// جمع هزینه مواد مصرفی = مجموع (کیلو × میانگین بهای انبار)
-function prodMatsTotal(){
-  return _prodMats.reduce((s,r)=>s+(+r.kg||0)*(S.stockMap[r.m]?.avgCost||0),0);
+// مواد بسته‌بندی: برای مرتب‌سازی و انتخاب پیش‌فرض هر بخش
+const PACK_KEYWORDS=["کارتن","پلاستیک","بکل","نگینه","لیبل","چسب","نایلون","جعبه","تسمه","کاغذ","بسته"];
+const isPackMat=name=>PACK_KEYWORDS.some(k=>String(name||"").includes(k));
+
+// جمع هزینه مواد مصرفی = مجموع (مقدار × میانگین بهای انبار) — می‌تواند فقط یک بخش را حساب کند
+function prodMatsTotal(kind){
+  return _prodMats
+    .filter(r=>!kind||r.kind===kind)
+    .reduce((s,r)=>s+(+r.kg||0)*(S.stockMap[r.m]?.avgCost||0),0);
 }
 function refreshProdMatsTotal(){
-  const el=document.getElementById("prod-mats-total");
-  if(el) el.innerHTML='جمع هزینه مواد: <b style="color:var(--gd)">'+afn(prodMatsTotal())+'</b>';
+  ["raw","pack"].forEach(k=>{
+    const el=document.getElementById(`prod-${k}-total`);
+    if(el) el.textContent=afn(prodMatsTotal(k));
+  });
+  const all=document.getElementById("prod-mats-total");
+  if(all) all.innerHTML='جمع هزینه مواد: <b style="color:var(--gd)">'+afn(prodMatsTotal())+'</b>';
+}
+// گزینه‌های فهرست مواد — مواد هم‌خانواده همان بخش اول می‌آیند
+function prodMatOptions(kind,selected){
+  const mats=Object.keys(S.stockMap||{});
+  if(!mats.length) return '<option value="">— ماده‌ای در انبار نیست —</option>';
+  const ordered=[...mats].sort((a,b)=>{
+    const pa=isPackMat(a)?1:0, pb=isPackMat(b)?1:0;
+    return kind==="pack"?(pb-pa)||a.localeCompare(b,"fa"):(pa-pb)||a.localeCompare(b,"fa");
+  });
+  return ordered.map(m=>{
+    const st=S.stockMap[m]||{kg:0,avgCost:0};
+    return `<option value="${m}"${m===selected?" selected":""}>${m} — ${(+st.kg||0).toFixed(2)}kg | ${afn(st.avgCost)}/kg</option>`;
+  }).join("");
 }
 function renderProdMats(){
-  const box=document.getElementById("prod-mats-list");
-  if(!box) return;
-  if(!_prodMats.length){box.innerHTML="";return;}
-  const mats=Object.keys(S.stockMap||{});
-  box.innerHTML=_prodMats.map(r=>{
-    const opts=mats.length
-      ?mats.map(m=>`<option value="${m}"${m===r.m?" selected":""}>${m} — ${afn(S.stockMap[m]?.avgCost||0)}/kg</option>`).join("")
-      :'<option value="">— ماده‌ای در انبار نیست —</option>';
-    return `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+  ["raw","pack"].forEach(kind=>{
+    const box=document.getElementById(`prod-mats-${kind}-list`);
+    if(!box) return;
+    const rows=_prodMats.filter(r=>r.kind===kind);
+    box.innerHTML=rows.map(r=>`<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
       <select id="pm-mat-${r.id}" onchange="updateProdMatRow(${r.id},'m',this.value)"
-        style="flex:2;width:auto;min-width:0;padding:8px 10px;background:var(--b4);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-size:12px;font-family:inherit">${opts}</select>
+        style="flex:2;width:auto;min-width:0;padding:8px 10px;background:var(--b4);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-size:12px;font-family:inherit">${prodMatOptions(kind,r.m)}</select>
       <input type="number" id="pm-kg-${r.id}" value="${r.kg||""}" min="0" step="0.01" placeholder="کیلو" inputmode="decimal" oninput="updateProdMatRow(${r.id},'kg',this.value)"
         style="flex:1;width:auto;min-width:0;padding:8px 10px;background:var(--b4);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-size:12px;font-family:inherit;direction:ltr"/>
       <button type="button" onclick="removeProdMatRow(${r.id})" title="حذف"
         style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;flex-shrink:0">✕</button>
-    </div>`;
-  }).join("")+'<div id="prod-mats-total" style="font-size:11px;color:var(--t2);margin-top:2px"></div>';
+    </div>`).join("");
+  });
   refreshProdMatsTotal();
 }
-function addProdMatRow(){
+function addProdMatRow(kind="raw"){
   const mats=Object.keys(S.stockMap||{});
-  _prodMats.push({id:++_prodMatSeq,m:mats[0]||"",kg:0});
+  const preferred=kind==="pack"?mats.find(m=>isPackMat(m)):mats.find(m=>!isPackMat(m));
+  _prodMats.push({id:++_prodMatSeq,kind,m:preferred||mats[0]||"",kg:0});
   renderProdMats();
   calcProd();
 }
@@ -4719,24 +4920,81 @@ function removeProdMatRow(id){
   calcProd();
 }
 
+// ── ضایعات تولید: درجن یا کیلو → همیشه به درجن تبدیل می‌شود ──
+function scrapData(){
+  const qtyEl=document.getElementById("p-scrap"),unitEl=document.getElementById("p-scrap-unit");
+  if(!qtyEl||!unitEl) return {qty:0,unit:"dozen",dozen:0,kgpd:1};
+  const qty=+qtyEl.value||0;
+  const unit=unitEl.value;
+  const kgpd=Math.max(0.01,+(document.getElementById("p-scrap-kgpd")?.value)||1);
+  const dozen=unit==="kg"?qty/kgpd:qty;
+  return {qty,unit,dozen:+dozen.toFixed(3),kgpd};
+}
+function updateScrapUI(){
+  const unitEl=document.getElementById("p-scrap-unit");
+  if(!unitEl) return;
+  const isKg=unitEl.value==="kg";
+  const wrap=document.getElementById("p-scrap-kgpd-wrap");
+  if(wrap) wrap.style.display=isKg?"":"none";
+  const hint=document.getElementById("p-scrap-hint");
+  if(!hint) return;
+  const s=scrapData();
+  hint.className="ib "+(s.qty>0?"warn":"info");
+  hint.style.fontSize="10.5px";
+  hint.style.margin="8px 0 0";
+  if(s.qty<=0){hint.textContent="♻️ ضایعات ثبت نشده — تمام تولید به گدام اضافه می‌شود";return;}
+  hint.innerHTML=`♻️ ${s.qty.toFixed(2)} ${isKg?"کیلو":"درجن"} ⇒ <b>${s.dozen.toFixed(2)} درجن</b> از گدام جنس کسر می‌شود`;
+}
+
+// ── تنظیم موجودی یک ماده (PATCH و اگر رکورد نبود POST) ──
+// delta منفی = کسر، مثبت = افزودن
+async function adjustMatStock(mat,deltaKg){
+  const cur=S.stockMap[mat]||{kg:0,avgCost:0};
+  const avgCost=+cur.avgCost||0;
+  const newKg=Math.max(0,(+cur.kg||0)+deltaKg);
+  const newVal=newKg*avgCost;
+  const body={total_kg:newKg,total_value_afn:newVal,avg_cost:avgCost,updated_at:new Date().toISOString()};
+  const res=await sbPatch("mat_stock",body,`?material=eq.${encodeURIComponent(mat)}`);
+  if(res===null) return false;
+  if(Array.isArray(res)&&res.length===0){
+    const ins=await sbPost("mat_stock",{material:mat,...body});
+    if(ins===null) return false;
+  }
+  S.stockMap[mat]={kg:newKg,avgCost,val:newVal,unit:cur.unit||"kg"};
+  return true;
+}
+
+
 // Prod modal
 function initProdModal(){
   document.getElementById("p-date").value=today();
+  document.getElementById("p-voucher").value="";
   document.getElementById("p-doz").value="";
   document.getElementById("p-rate").value="";
   document.getElementById("p-wage").value="";
   document.getElementById("p-paid").value="";
   document.getElementById("p-size").value="";
   document.getElementById("p-overhead").value="";
+  document.getElementById("p-scrap").value="";
+  document.getElementById("p-scrap-unit").value="dozen";
+  document.getElementById("p-scrap-kgpd").value="1";
+  delete document.getElementById("p-scrap-kgpd").dataset.manual;
   const mc=document.getElementById("p-mat-cost");
   mc.value="";
   delete mc.dataset.manual;
   document.getElementById("p-total-cogs").value="";
   document.getElementById("prod-msg").innerHTML="";
-  // پاک کردن فهرست مواد مصرفی دستی
+  // پاک کردن هر دو فهرست مواد (مواد اولیه / بسته‌بندی)
   _prodMats=[];
-  document.getElementById("prod-mats-list").innerHTML="";
+  renderProdMats();
   calcProd();
+  refreshProdVoucher();
+}
+// شماره حواله تولید را اتومات پیشنهاد می‌دهد (قابل تغییر توسط کاربر)
+async function refreshProdVoucher(){
+  const el=document.getElementById("p-voucher");
+  if(!el) return;
+  el.value=await suggestVoucherNo("production","VCH-PRD");
 }
 // اگر کاربر هزینه مواد را دستی تغییر دهد، محاسبه اتومات آن غیرفعال می‌شود
 function onMatCostInput(el){
@@ -4766,54 +5024,96 @@ function calcProd(){
   const perDoz=rate+matCostPerDoz+overheadPerDoz;
   document.getElementById("p-wage").value=afn(wage);
   document.getElementById("p-total-cogs").value=afn(totalCogs);
-  const matHint=_prodMats.length>0?" | مواد از فهرست مصرفی کسر می‌شود":(mcEl?.dataset.manual==="1"?"":" | مواد اتومات کسر می‌شود");
+  const matHint=_prodMats.length>0?" | مواد از فهرست مصرفی کسر می‌شود":(mcEl?.dataset.manual==="1"?"":" | مواد اتومات (رسپی) کسر می‌شود");
   document.getElementById("p-cogs").textContent=`💡 فی درجن: اجرت ${afn(rate)} + مواد ${afn(matCostPerDoz)} + سرباری ${afn(overheadPerDoz)} = ${afn(perDoz)} × ${doz} درجن = بهای تمام‌شده ${afn(totalCogs)}`+matHint;
+  // ضایعات → نمایش تبدیل و بروزرسانی جمع هر بخش
+  updateScrapUI();
+  refreshProdMatsTotal();
 }
 async function submitProd(){
+  const msgEl=document.getElementById("prod-msg");
+  const btn=document.getElementById("prod-btn");
   const doz=+(document.getElementById("p-doz").value);
-  if(!doz){document.getElementById("prod-msg").innerHTML='<div class="ib err">تعداد درجن الزامی</div>';return;}
+  if(!doz){msgEl.innerHTML='<div class="ib err">تعداد درجن الزامی</div>';return;}
   const worker=document.getElementById("p-worker").value;
+  const model=document.getElementById("p-prod").value.trim();
   // مدل و سایز با هم یک نام محصول می‌سازند: "مدل سایز" (هر دو trim شده)
-  const prod=(document.getElementById("p-prod").value.trim()+" "+document.getElementById("p-size").value.trim()).trim();
+  const prod=(model+" "+document.getElementById("p-size").value.trim()).trim();
   const wRate=+(document.getElementById("p-rate").value)||0;
   const wage=doz*wRate,paid=+(document.getElementById("p-paid").value)||0;
   const matCostPerDoz=+(document.getElementById("p-mat-cost").value)||0;
   const overheadPerDoz=+(document.getElementById("p-overhead").value)||0;
   // بهای تمام‌شده کل = درجن × (اجرت + هزینه مواد + هزینه سرباری) فی درجن
   const totalCogs=doz*(wRate+matCostPerDoz+overheadPerDoz);
-  document.getElementById("prod-btn").disabled=true;document.getElementById("prod-btn").textContent="در حال ذخیره...";
+  const scrap=scrapData();
+  if(scrap.dozen>doz+0.0001){
+    msgEl.innerHTML='<div class="ib err">ضایعات نمی‌تواند از مقدار تولید بیشتر باشد</div>';return;
+  }
+
+  // ۱) مواد مصرفی: اگر در دو بخش فرم انتخاب شده باشد → همان‌ها، وگرنه رسپی اتومات
+  const usedByMat={};
+  const manualRows=_prodMats.filter(r=>r.m&&(+r.kg||0)>0);
+  if(manualRows.length){
+    manualRows.forEach(r=>{usedByMat[r.m]=(usedByMat[r.m]||0)+(+r.kg||0);});
+  } else {
+    const recipe=RECIPES[prod]||RECIPES[model]||[];
+    recipe.forEach(r=>{usedByMat[r.m]=(usedByMat[r.m]||0)+r.q*doz;});
+  }
+
+  // ۲) کنترول موجودی — قبل از هر نوشتنی، تا هیچ رکورد نصفه ثبت نشود
+  const short=[];
+  Object.keys(usedByMat).forEach(m=>{
+    const have=+(S.stockMap[m]?.kg||0);
+    const need=usedByMat[m];
+    if(need-have>0.0001) short.push(`${m}: لازم ${need.toFixed(2)}kg — موجود ${have.toFixed(2)}kg`);
+  });
+  if(short.length && !confirm("⚠️ موجودی این مواد کافی نیست:\n\n"+short.join("\n")+"\n\nادامه بدهی؟ موجودی صفر ثبت می‌شود.")) return;
+
+  // ۳) شماره حواله تولید
+  const voucher=(document.getElementById("p-voucher").value||"").trim()
+    ||await suggestVoucherNo("production","VCH-PRD");
+
+  btn.disabled=true;btn.textContent="در حال ذخیره...";
+  msgEl.innerHTML='<div class="ib info">⏳ ثبت تولید، کسر مواد و انتقال به گدام...</div>';
+  window._lastSBError=null;
+
+  // ۴) ستون‌های اختیاری (اگر SQL اجرا نشده باشد ارسال نمی‌شوند و ثبت تولید خراب نمی‌شود)
+  const opt={};
+  const hasVoucherCol=await tableHasColumn("production","voucher_no");
+  const hasScrapCol=await tableHasColumn("production","scrap_waste");
+  if(hasVoucherCol) opt.voucher_no=voucher;
+  if(hasScrapCol){
+    opt.scrap_waste=scrap.qty;
+    opt.scrap_unit=scrap.unit;
+    opt.scrap_dozen=scrap.dozen;
+  }
+
+  // ۵) ثبت رکورد تولید
   const _prdate=document.getElementById("p-date").value;
   const _emprows=await sbGet("employees","?name_fa=eq."+encodeURIComponent(worker)+"&select=id")||[];
   const _empid=_emprows[0]?.id||null;
   const res=await sbPost("production",{
     date:_prdate,production_date:_prdate,worker,employee_id:_empid,product:prod,product_id:null,dozen:doz,quantity_dozen:doz,
-    wage_rate:wRate,total_wage:wage,paid_wage:paid,remaining_wage:wage-paid,mat_cogs:totalCogs,status:"pending"
+    wage_rate:wRate,total_wage:wage,paid_wage:paid,remaining_wage:wage-paid,mat_cogs:totalCogs,status:"pending",
+    ...opt
   });
-  if(res){
-    // کسر مواد مصرفی انتخاب‌شده از انبار مواد (کیلو دقیق)
-    if(_prodMats.length>0){
-      const usedByMat={};
-      _prodMats.forEach(r=>{
-        const kg=+r.kg||0;
-        if(r.m && kg>0) usedByMat[r.m]=(usedByMat[r.m]||0)+kg;
-      });
-      for(const mat of Object.keys(usedByMat)){
-        const cur=S.stockMap[mat]||{kg:0,avgCost:0,val:0};
-        const newKg=Math.max(0,cur.kg-usedByMat[mat]);
-        const newVal=newKg*cur.avgCost;
-        await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(mat)}`);
-      }
-    } else {
-      // Deduct from mat_stock (رسپی اتومات — وقتی مواد مصرفی دستی انتخاب نشده باشد)
-      for(const r of (RECIPES[prod]||[])){
-        const cur=S.stockMap[r.m]||{kg:0,avgCost:0,val:0};
-        const usedKg=r.q*doz;
-        const newKg=Math.max(0,cur.kg-usedKg);
-        const newVal=newKg*cur.avgCost;
-        await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(r.m)}`);
-      }
-    }
-    // اضافه کردن به انبار جنس تولیدشده
+  if(!res){
+    msgEl.innerHTML='<div class="ib err">خطا در ثبت تولید — هیچ تغییری در انبار انجام نشد'+
+      '<div style="direction:ltr;text-align:left;font-size:10px;margin-top:4px">'+(window._lastSBError||"")+'</div></div>';
+    btn.disabled=false;btn.textContent="ثبت تولید ✓";return;
+  }
+
+  // ۶) کسر مواد اولیه + بسته‌بندی از گدام مواد
+  const matErrors=[];
+  for(const mat of Object.keys(usedByMat)){
+    const ok=await adjustMatStock(mat,-usedByMat[mat]);
+    if(!ok) matErrors.push(`${mat} (${usedByMat[mat].toFixed(2)}kg)`);
+  }
+
+  // ۷) انتقال تولید خالص (تولید − ضایعات) به گدام جنس تولیدشده
+  const netDoz=+(doz-scrap.dozen).toFixed(3);
+  let fgOk=false;
+  if(netDoz>0||scrap.dozen>0){
     const fgRows=await sbGet("finished_goods",`?product_name=eq.${encodeURIComponent(prod)}&select=id,product_name,dozen,unit_price`)||[];
     let fg=fgRows[0];
     if(!fg){
@@ -4822,17 +5122,33 @@ async function submitProd(){
       fg=allFg.find(r=>normalizeProductName(r.product_name)===normalizeProductName(prod));
     }
     if(fg){
-      const newDoz=(+fg.dozen||0)+doz;
+      const newDoz=Math.max(0,(+fg.dozen||0)+netDoz);
       const newVal=newDoz*(+fg.unit_price||0);
-      await sbPatch("finished_goods",{product_name:prod,dozen:newDoz,total_value:newVal,updated_at:new Date().toISOString()},"?id=eq."+fg.id);
+      fgOk=(await sbPatch("finished_goods",{product_name:prod,dozen:newDoz,total_value:newVal,updated_at:new Date().toISOString()},"?id=eq."+fg.id))!==null;
     } else {
-      await sbPost("finished_goods",{product_name:prod,dozen:doz,unit_price:0,total_value:0});
+      fgOk=(await sbPost("finished_goods",{product_name:prod,dozen:netDoz,unit_price:0,total_value:0}))!==null;
     }
-    await refreshStockMap();
-    document.getElementById("prod-msg").innerHTML='<div class="ib ok">✅ تولید در Supabase ذخیره شد!</div>';
-    showSaved();setTimeout(()=>{closeModal("modalProd");renderProd();},1300);
-  } else document.getElementById("prod-msg").innerHTML='<div class="ib err">خطا! دوباره امتحان کن</div>';
-  document.getElementById("prod-btn").disabled=false;document.getElementById("prod-btn").textContent="ثبت تولید ✓";
+  } else {
+    fgOk=true; // تولید و ضایعات صفر → تغییری لازم نیست
+  }
+  await refreshStockMap();
+
+  // ۸) گزارش شفاف به کاربر
+  const matList=Object.keys(usedByMat).length
+    ? Object.keys(usedByMat).map(m=>`${m}: ${usedByMat[m].toFixed(2)}kg`).join(" • ")
+    : "بدون کسر مواد (رسپی خالی)";
+  msgEl.innerHTML=
+    `<div class="ib ok">✅ تولید ثبت شد | حواله: <b>${voucher}</b><br>`+
+    `<span style="font-size:10.5px">مواد کسر شد: ${matList}<br>`+
+    `به گدام اضافه شد: <b>${netDoz} درجن</b>`+
+    (scrap.dozen>0?` (تولید ${doz} − ضایعات ${scrap.dozen} ${scrap.unit==="kg"?"≈":""})`:"")+`</span></div>`+
+    (matErrors.length?`<div class="ib warn">⚠️ کسر این مواد ناموفق بود: ${matErrors.join("، ")}</div>`:"")+
+    (!fgOk?'<div class="ib err">⚠️ انتقال به گدام جنس تولیدشده ناموفق بود</div>':"")+
+    ((hasVoucherCol&&hasScrapCol)?"":'<div class="ib warn">⚠️ ستون‌های <b>voucher_no / scrap_waste</b> در جدول production نیستند — حواله و ضایعات ذخیره نشد. SQL صفحه انبار را اجرا کن.</div>');
+
+  if(fgOk||matErrors.length===0) showSaved();
+  setTimeout(()=>{closeModal("modalProd");renderProd();},1900);
+  btn.disabled=false;btn.textContent="ثبت تولید ✓";
 }
 
 // Cash modal
@@ -5981,6 +6297,210 @@ function printInvoice(saleId){
 }
 
 // ── STOCK ──
+// ══ مغایرت‌گیری روزانه انبار ══
+// فرمول: موجودی اولیه + تولید − فروش − ضایعات = موجودی سیستم
+const RECON_KEY="stock_recon_v1";
+let _reconData={byDate:{}};
+let _reconLoaded=false;
+let _reconView=[];      // ردیف‌های رندرشده برای همان تاریخ (برای بروزرسانی بدون رندر مجدد)
+let _reconDate="";
+const _recEsc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const _recKey=s=>normalizeProductName(s)||String(s||"").trim();
+const _recDz=v=>+(+v||0).toFixed(2);
+// ضایعات یک رکورد تولید به درجن (اگر ستون scrap_dozen نبود از scrap_waste استفاده می‌شود)
+function reconScrapDoz(r){
+  const d=+(r.scrap_dozen||0);
+  if(d>0) return d;
+  const w=+(r.scrap_waste||0);
+  return (r.scrap_unit||"dozen")==="dozen"?w:0;
+}
+async function loadReconData(){
+  try{
+    const rows=await sbGet("settings",`?key=eq.${RECON_KEY}`)||[];
+    const raw=rows[0]?.value;
+    const o=raw?(typeof raw==="string"?JSON.parse(raw):raw):{};
+    _reconData=(o&&typeof o==="object")?o:{byDate:{}};
+    if(!_reconData.byDate||typeof _reconData.byDate!=="object") _reconData.byDate={};
+  }catch(e){ _reconData={byDate:{}}; }
+  return _reconData;
+}
+async function saveReconData(){
+  const val=JSON.stringify(_reconData);
+  const res=await sbPatch("settings",{value:val,updated_at:new Date().toISOString()},`?key=eq.${RECON_KEY}`);
+  if(res===null) return false;
+  if(Array.isArray(res)&&res.length===0){
+    const ins=await sbPost("settings",{key:RECON_KEY,value:val});
+    return ins!==null;
+  }
+  return true;
+}
+function reconDay(dateStr){
+  if(!_reconData.byDate[dateStr]) _reconData.byDate[dateStr]={opening:{},counted:{}};
+  const d=_reconData.byDate[dateStr];
+  if(!d.opening||typeof d.opening!=="object") d.opening={};
+  if(!d.counted||typeof d.counted!=="object") d.counted={};
+  return d;
+}
+
+async function renderRecon(force){
+  const tb=document.getElementById("recon-tbody");
+  if(!tb) return;
+  const dateEl=document.getElementById("recon-date");
+  if(dateEl&&!dateEl.value) dateEl.value=today();
+  const dateVal=dateEl?.value||today();
+  if(force||!tb.dataset.loaded){
+    tb.innerHTML='<tr><td colspan="10" style="text-align:center;padding:18px"><div class="spinner" style="margin:auto"></div></td></tr>';
+  }
+  if(!_reconLoaded){await loadReconData();_reconLoaded=true;}
+  // ستون‌های ضایعات ممکن است در دیتابیس نباشند — فقط ستون‌های موجود انتخاب می‌شوند
+  const prodCols=["product","dozen","date"];
+  if(await tableHasColumn("production","scrap_dozen")) prodCols.push("scrap_dozen");
+  if(await tableHasColumn("production","scrap_waste")) prodCols.push("scrap_waste");
+  if(await tableHasColumn("production","scrap_unit")) prodCols.push("scrap_unit");
+  const [prodRowsRaw,saleRowsRaw,fgRowsRaw]=await Promise.all([
+    sbGet("production","?select="+prodCols.join(",")),
+    sbGet("sales","?select=product,dozen,date"),
+    sbGet("finished_goods","?select=product_name,dozen,unit_price")
+  ]);
+  const prodRows=prodRowsRaw||[],saleRows=saleRowsRaw||[],fgRows=fgRowsRaw||[];
+  const day=reconDay(dateVal);
+  // یک ردیف برای هر محصول (بر اساس نام نرمال‌شده)
+  const map={};
+  const touch=name=>{
+    const k=_recKey(name);
+    if(!k) return null;
+    if(!map[k]) map[k]={key:k,name:String(name||k),produced:0,sold:0,scrap:0,fg:0,price:0};
+    return map[k];
+  };
+  fgRows.forEach(r=>{
+    const m=touch(r.product_name);
+    if(!m) return;
+    m.fg+=+r.dozen||0;
+    m.price=+r.unit_price||m.price;
+    if(r.product_name) m.name=String(r.product_name);
+  });
+  prodRows.forEach(r=>{
+    const m=touch(r.product);
+    if(!m||r.date!==dateVal) return;
+    m.produced+=+r.dozen||0;
+    m.scrap+=reconScrapDoz(r);
+  });
+  saleRows.forEach(r=>{
+    const m=touch(r.product);
+    if(!m||r.date!==dateVal) return;
+    m.sold+=+r.dozen||0;
+  });
+  _reconView=Object.values(map).sort((a,b)=>a.name.localeCompare(b.name,"fa")).map(m=>({...m}));
+  _reconDate=dateVal;
+  tb.innerHTML=_reconView.length
+    ? _reconView.map((m,i)=>reconRowHtml(m,i)).join("")
+    : '<tr><td colspan="10" style="text-align:center;color:var(--t3);padding:18px">داده‌ای برای مغایرت‌گیری نیست — اول تولید و فروش ثبت کن</td></tr>';
+  tb.dataset.loaded="1";
+  reconSummary();
+}
+// ── محاسبه یک ردیف: موجودی اولیه + تولید − فروش − ضایعات = موجودی سیستم ──
+function reconModel(m){
+  const day=reconDay(_reconDate||today());
+  const savedOpening=day.opening[m.key];
+  m.opening=savedOpening!==undefined&&savedOpening!==null
+    ?+savedOpening
+    :+(m.fg-(m.produced-m.sold-m.scrap)).toFixed(3);
+  m.system=+(m.opening+m.produced-m.sold-m.scrap).toFixed(3);
+  const sc=day.counted[m.key];
+  m.counted=sc!==undefined&&sc!==null?+sc:null;
+  m.diff=m.counted===null?null:+(m.counted-m.system).toFixed(3);
+  m.isWarn=m.diff!==null&&Math.abs(m.diff)>0.01;
+  return m;
+}
+function reconRowHtml(m,i){
+  reconModel(m);
+  const {opening,system,counted,diff,isWarn}=m;
+  const status=counted===null?'<span class="bb by2">شمارش نشده</span>'
+    :isWarn?`<span class="bb br2">${diff>0?"اضافه":"کمبود"}</span>`
+    :'<span class="bb bg2">✓ برابر</span>';
+  return `<tr data-key="${_recEsc(m.key)}" class="${isWarn?"recon-warn-row":(counted!==null?"recon-ok-row":"")}">
+    <td style="color:var(--t3)">${i+1}</td>
+    <td style="font-weight:700">${_recEsc(m.name)}</td>
+    <td><input class="rec-in" data-prod="${_recEsc(m.key)}" data-kind="opening" type="number" step="0.01" inputmode="decimal" value="${opening}" onchange="onReconInput(this)"/></td>
+    <td style="color:var(--gd);font-weight:700">${_recDz(m.produced)}</td>
+    <td style="color:var(--bl);font-weight:700">${_recDz(m.sold)}</td>
+    <td style="color:var(--og);font-weight:700">${m.scrap?_recDz(m.scrap):"—"}</td>
+    <td style="font-weight:800">${_recDz(system)}</td>
+    <td><input class="rec-in" data-prod="${_recEsc(m.key)}" data-kind="counted" type="number" step="0.01" inputmode="decimal" placeholder="—" value="${counted===null?"":counted}" onchange="onReconInput(this)"/></td>
+    <td>${diff===null?'<span style="color:var(--t3)">—</span>':`<span style="font-weight:800;color:${isWarn?"var(--rd)":"var(--gr)"}">${diff>0?"+":""}${_recDz(diff)}</span>`}</td>
+    <td>${status}</td>
+  </tr>`;
+}
+
+// ── خلاصه و KPI (از مدل‌های رندرشده محاسبه می‌شود) ──
+function reconSummary(){
+  let mismatch=0,totalDiff=0,countedCount=0;
+  _reconView.forEach(m=>{
+    reconModel(m);
+    if(m.diff!==null){countedCount++;if(m.isWarn){mismatch++;totalDiff+=m.diff;}}
+  });
+  const badge=document.getElementById("recon-summary-badge");
+  if(badge){
+    badge.className="bb "+(mismatch?"br2":"bg2");
+    badge.textContent=mismatch?`${mismatch} مغایرت`:"بدون مغایرت";
+  }
+  const flag=document.getElementById("stock-recon-flag");
+  if(flag){
+    flag.textContent=mismatch?`${mismatch} قلم`:"✓ ندارد";
+    flag.style.color=mismatch?"var(--rd)":"var(--gr)";
+  }
+  const sub=document.getElementById("stock-recon-sub");
+  if(sub) sub.textContent=`${_reconDate||today()} | ${countedCount}/${_reconView.length} شمارش شد`;
+  const sum=document.getElementById("recon-summary");
+  if(sum){
+    sum.className="ib "+(mismatch?"warn":"ok");
+    sum.innerHTML=mismatch
+      ?`⚠️ <b>${mismatch}</b> قلم مغایرت دارد — جمع مغایرت: <b>${_recDz(totalDiff)}</b> درجن. علت را چک کن (فروش/ضایعات ثبت‌نشده یا شمارش فزیکی).`
+      :`✅ موجودی سیستم با شمارش فزیکی برابر است (${_reconView.length} قلم چک شد).`;
+  }
+}
+function onReconInput(el){
+  const dateVal=document.getElementById("recon-date")?.value||today();
+  // اگر تاریخ عوض شده ولی جدول رفرش نشده، ورودی مربوط به روز دیگر است → فقط رفرش
+  if(_reconDate&&dateVal!==_reconDate){renderRecon(true);return;}
+  const day=reconDay(dateVal);
+  const prod=el.dataset.prod,kind=el.dataset.kind;
+  const raw=(el.value||"").trim();
+  const target=kind==="counted"?day.counted:day.opening;
+  if(raw==="") delete target[prod];
+  else target[prod]=+(+raw).toFixed(3);
+  // فقط همان ردیف بازنویسی می‌شود تا بقیه ورودی‌ها و فوکس از دست نرود
+  const idx=_reconView.findIndex(m=>m.key===prod);
+  const tr=el.closest("tr");
+  if(idx>=0&&tr) tr.outerHTML=reconRowHtml(_reconView[idx],idx);
+  reconSummary();
+}
+async function saveReconCounts(){
+  const dateVal=document.getElementById("recon-date")?.value||today();
+  reconDay(dateVal);
+  const ok=await saveReconData();
+  const sum=document.getElementById("recon-summary");
+  await renderRecon(true);
+  if(sum){
+    sum.className="ib "+(ok?"ok":"err");
+    sum.innerHTML=ok
+      ?`✅ موجودی اولیه و شمارش فزیکی تاریخ <b>${dateVal}</b> ذخیره شد.`
+      :`❌ ذخیره نشد — اتصال یا جدول settings را چک کن.`;
+  }
+}
+// موجودی اولیه = همان موجودی فعلی گدام (برای شروع شمارش روز)
+async function initReconFromFG(){
+  const dateVal=document.getElementById("recon-date")?.value||today();
+  const fgRows=await sbGet("finished_goods","?select=product_name,dozen")||[];
+  if(!fgRows.length){alert("گدام جنس تولیدشده خالی است.");return;}
+  if(!confirm("موجودی فعلی گدام به عنوان «موجودی اولیه» این تاریخ ثبت می‌شود و شمارش‌های قبلی این تاریخ پاک می‌شوند. ادامه؟")) return;
+  if(!_reconLoaded){await loadReconData();_reconLoaded=true;}
+  const day=reconDay(dateVal);
+  day.opening={};day.counted={};
+  fgRows.forEach(r=>{const k=_recKey(r.product_name);if(k) day.opening[k]=+(+r.dozen||0).toFixed(3);});
+  await saveReconData();
+  await renderRecon(true);
+}
 function switchStockTab(tab){
   const isRaw=tab==='raw';
   document.getElementById('stock-raw-panel').style.display=isRaw?'block':'none';
@@ -6069,6 +6589,8 @@ async function renderStock(){
       <button onclick="window._delStock(${i})" style="background:transparent;border:none;color:var(--rd);font-size:14px;cursor:pointer;padding:2px 4px;opacity:0.7" title="حذف">🗑️</button>
     </td></tr>`;
   }).join('');
+  // مغایرت‌گیری روزانه (موجودی اولیه + تولید − فروش − ضایعات)
+  renderRecon();
 }
 async function initEditStockModal(){
   const MATS_LIST=["دی‌اوپی (DOP)","ریزن","کرش سیاه","کرش آبی","کرش چاکلیتی","کرش براون","کرش سفید","اشترک","تیتانیوم","لایت","ای سی (AC)","پلاستیک (۹/۱۲)","پلاستیک (۱۱/۱۴)","پلاستیک (۱۲/۱۴)","بکل","نگینه"];
@@ -6383,7 +6905,8 @@ async function openEditRecord(table,id){
   let fields="";
   if(table==="sales"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>مشتری</label><input id="ef-cust_name" value="${r.cust_name||""}"/></div></div><div class="row2"><div class="fg"><label>درجن</label><input type="number" inputmode="decimal" id="ef-dozen" value="${r.dozen||0}" inputmode="decimal"/></div><div class="fg"><label>قیمت فی درجن</label><input type="number" inputmode="decimal" id="ef-price_per_doz" value="${r.price_per_doz||0}" inputmode="decimal"/></div></div><div class="fg"><label>وصول (؋)</label><input type="number" inputmode="decimal" id="ef-paid" value="${r.paid||0}" inputmode="decimal"/></div>`;}
   else if(table==="cash_ledger"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>نوع</label><select id="ef-category"><option value="in" ${r.category==="in"?"selected":""}>ورودی</option><option value="out" ${r.category==="out"?"selected":""}>خروجی</option></select></div></div><div class="fg"><label>موضوع</label><input id="ef-type" value="${r.type||""}"/></div><div class="fg"><label>شرح</label><input id="ef-description" value="${r.description||""}"/></div><div class="row2"><div class="fg"><label>مبلغ ورودی</label><input type="number" inputmode="decimal" id="ef-amount_in" value="${r.amount_in||0}" inputmode="decimal"/></div><div class="fg"><label>مبلغ خروجی</label><input type="number" inputmode="decimal" id="ef-amount_out" value="${r.amount_out||0}" inputmode="decimal"/></div></div>`;}
-  else if(table==="production"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>سرکاریگر</label><input id="ef-worker" value="${r.worker||""}"/></div></div><div class="row2"><div class="fg"><label>درجن</label><input type="number" inputmode="decimal" id="ef-dozen" value="${r.dozen||0}" inputmode="decimal"/></div><div class="fg"><label>اجرت کل</label><input type="number" inputmode="decimal" id="ef-total_wage" value="${r.total_wage||0}" inputmode="decimal"/></div></div><div class="fg"><label>پرداختی</label><input type="number" inputmode="decimal" id="ef-paid_wage" value="${r.paid_wage||0}" inputmode="decimal"/></div>`;}
+  else if(table==="purchases"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>تامین‌کننده</label><input id="ef-supplier_name" value="${r.supplier_name||""}"/></div></div><div class="row2"><div class="fg"><label>جنس</label><input id="ef-material" value="${r.material||""}"/></div><div class="fg"><label>کیلو</label><input type="number" inputmode="decimal" id="ef-kg" value="${r.kg||0}"/></div></div><div class="row2"><div class="fg"><label>مبلغ ($)</label><input type="number" inputmode="decimal" id="ef-amount_usd" value="${r.amount_usd||0}"/></div><div class="fg"><label>نرخ دالر</label><input type="number" inputmode="decimal" id="ef-usd_rate" value="${r.usd_rate||68}"/></div></div><div class="row2"><div class="fg"><label>پرداختی (؋)</label><input type="number" inputmode="decimal" id="ef-paid_afn" value="${r.paid_afn||0}"/></div><div class="fg"><label>شماره حواله</label><input id="ef-voucher_no" value="${r.voucher_no||""}"/></div></div>`;}
+  else if(table==="production"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>سرکاریگر</label><input id="ef-worker" value="${r.worker||""}"/></div></div><div class="row2"><div class="fg"><label>درجن</label><input type="number" inputmode="decimal" id="ef-dozen" value="${r.dozen||0}" inputmode="decimal"/></div><div class="fg"><label>اجرت کل</label><input type="number" inputmode="decimal" id="ef-total_wage" value="${r.total_wage||0}" inputmode="decimal"/></div></div><div class="fg"><label>پرداختی</label><input type="number" inputmode="decimal" id="ef-paid_wage" value="${r.paid_wage||0}" inputmode="decimal"/></div><div class="row2"><div class="fg"><label>شماره حواله</label><input id="ef-voucher_no" value="${r.voucher_no||""}"/></div><div class="fg"><label>ضایعات (درجن)</label><input type="number" inputmode="decimal" id="ef-scrap_dozen" value="${r.scrap_dozen||0}" inputmode="decimal"/></div></div>`;}
   document.getElementById("em-title").textContent=`✏️ ویرایش #${id}`;
   document.getElementById("ef-fields").innerHTML=fields;
   document.getElementById("ef-msg").innerHTML="";
@@ -6398,6 +6921,20 @@ async function saveEditRecord(){
   });
   if(_editTable==="sales"){body.total=(body.dozen||0)*(body.price_per_doz||0);body.remaining=body.total-(body.paid||0);}
   if(_editTable==="production"){body.remaining_wage=Math.max(0,(body.total_wage||0)-(body.paid_wage||0));}
+  // خرید: مبالغ وابسته دوباره حساب می‌شوند تا ویرایش کیلو/نرخ داده را خراب نکند
+  if(_editTable==="purchases"){
+    const rate=+body.usd_rate||68;
+    body.amount_afn=+((+body.amount_usd||0)*rate).toFixed(2);
+    body.remaining_usd=+((+body.amount_usd||0)-(+body.paid_afn||0)/rate).toFixed(2);
+    body.cost_per_kg=body.kg?+(body.amount_afn/body.kg).toFixed(2):0;
+  }
+  // ستون‌های جدید ممکن است در دیتابیس نباشند → ارسال نمی‌شوند تا ویرایش خراب نشود
+  for(const [tbl,cols] of [["production",["voucher_no","scrap_dozen"]],["purchases",["voucher_no"]]]){
+    if(_editTable!==tbl) continue;
+    for(const col of cols){
+      if(col in body && !(await tableHasColumn(tbl,col))) delete body[col];
+    }
+  }
   const res=await sbPatch(_editTable,body,`?id=eq.${_editId}`);
   document.getElementById("ef-save-btn").disabled=false;
   if(res!==null){
