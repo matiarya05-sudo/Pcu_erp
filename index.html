@@ -3499,6 +3499,20 @@ function calcCOGS(prod,doz){
   },0);
 }
 
+// بهای تمام‌شده واقعی (COGS) از روی داده‌های واقعی جدول production
+// نه از روی رسپی استاندارد: جمع mat_cogs ÷ جمع درجن = میانگین بهای هر درجن
+async function getRealCOGS(prod,doz){
+  const rows=await sbGet("production",`?product=eq.${encodeURIComponent(prod)}&select=mat_cogs,dozen`)||[];
+  const sumMatCogs=rows.reduce((s,r)=>s+(+r.mat_cogs||0),0);
+  const sumDoz=rows.reduce((s,r)=>s+(+r.dozen||0),0);
+  if(sumDoz<=0){
+    console.warn(`getRealCOGS: برای «${prod}» رکورد تولید معتبری پیدا نشد — COGS صفر محاسبه شد`);
+    return 0;
+  }
+  const avgCostPerDoz=sumMatCogs/sumDoz;
+  return Math.round(avgCostPerDoz*doz*100)/100;
+}
+
 // ── Navigation ──
 const PAGE_TITLES={dash:"داشبورد",sales:"فروش",orders:"فرمایشات",buy:"خرید مواد",prod:"تولید",
   stock:"انبار مواد",cust:"مشتریان",supp:"تامین‌کنندگان",cash:"صندوق افغانی",
@@ -4489,8 +4503,8 @@ function calcSaleWage(){
       
     const itemRem = Math.max(0, tot - itemPaid);
     
-    // محاسبه هزینه تولید (COGS) و سود
-    const cg = calcCOGS(it.prod, it.doz);
+    // محاسبه هزینه تولید واقعی (COGS از جدول production) و سود
+    const cg = await getRealCOGS(it.prod, it.doz);
     const gp = tot - cg;
 
     // ⚠️ ارسال دقیقاً با نام ستون‌های دیتابیس شما
@@ -4524,6 +4538,29 @@ function calcSaleWage(){
       document.getElementById("sale-btn").textContent="ثبت بل ✓";
       return; // توقف عملیات در صورت خطا
     }
+  }
+
+  // ── کسر از انبار جنس تولیدشده (finished_goods) بعد از ثبت فروش ──
+  // درجن‌های فروخته‌شده به تفکیک محصول جمع می‌شوند (یک محصول ممکن است چند قلم داشته باشد)
+  const soldByProduct={};
+  validItems.forEach(it=>{
+    const p=it.prod;
+    soldByProduct[p]=(soldByProduct[p]||0)+(+it.doz||0);
+  });
+
+  for(const prod of Object.keys(soldByProduct)){
+    const soldDoz=soldByProduct[prod];
+    if(soldDoz<=0) continue;
+    const fgRows=await sbGet("finished_goods",`?product_name=eq.${encodeURIComponent(prod)}&select=id,dozen,unit_price,total_value`)||[];
+    if(!fgRows.length) continue; // این محصول در انبار جنس تولیدشده ثبت نشده است
+    const fg=fgRows[0];
+    const curDoz=+fg.dozen||0;
+    // کسر تعداد فروخته‌شده از موجودی — هرگز منفی نمی‌شود
+    const newDoz=Math.max(0,curDoz-soldDoz);
+    // اگر unit_price ثبت نشده باشد، از total_value ÷ dozen استفاده می‌شود
+    const unitPrice=(+fg.unit_price||0)>0?(+fg.unit_price):(curDoz>0?(+fg.total_value||0)/curDoz:0);
+    const newVal=Math.round(newDoz*unitPrice*100)/100;
+    await sbPatch("finished_goods",{dozen:newDoz,total_value:newVal},"?id=eq."+fg.id);
   }
 
   // اگر همه اقلام با موفقیت ثبت شدند:
