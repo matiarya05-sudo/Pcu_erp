@@ -1615,21 +1615,16 @@ select option{background:#1a1820}
       <div class="row2">
         <div class="fg"><label>مدل</label>
           <select id="p-prod" onchange="calcProd()">
-            <option value="بوت شیما سیاه ۷-۱۰">بوت شیما سیاه ۷-۱۰</option>
-            <option value="بوت شیما سیاه ۱-۶">بوت شیما سیاه ۱-۶</option>
-            <option value="بوت شیما سیاه ۹-۱۳">بوت شیما سیاه ۹-۱۳</option>
+            <option value="بوت شیما سیاه">بوت شیما سیاه</option>
             <option value="چپلک حمام دوم">چپلک حمام دوم</option>
             <option value="چپلک حمام اول">چپلک حمام اول</option>
             <option value="چپلک حمام سفید دوم">چپلک حمام سفید دوم</option>
-            <option value="بوت شیما سفید ۷-۱۰">بوت شیما سفید ۷-۱۰</option>
-            <option value="بوت شیما سفید ۱-۶">بوت شیما سفید ۱-۶</option>
-            <option value="بوت شیما سفید ۹-۱۳">بوت شیما سفید ۹-۱۳</option>
+            <option value="بوت شیما سفید">بوت شیما سفید</option>
             <option value="چپلک زنانه آپردار">چپلک زنانه آپردار</option>
             <option value="چپلک زنانه ۰۵ اول">چپلک زنانه ۰۵ اول</option>
             <option value="چپلک دخترانه ۰۳ دوم">چپلک دخترانه ۰۳ دوم</option>
             <option value="بوت زنانه سیاه">بوت زنانه سیاه</option>
-            <option value="بوت دخترانه ۱-۵">بوت دخترانه ۱-۵</option>
-            <option value="بوت دخترانه ۷-۱۳">بوت دخترانه ۷-۱۳</option>
+            <option value="بوت دخترانه">بوت دخترانه</option>
             <option value="کارتن فریش خالی">کارتن فریش خالی</option>
             <option value="کارتن زرد">کارتن زرد</option>
             <option value="پلاستیک شیشه‌ای">پلاستیک شیشه‌ای</option>
@@ -1640,8 +1635,9 @@ select option{background:#1a1820}
             <option value="چپلک زنانه ۰۵ دوم">چپلک زنانه ۰۵ دوم</option>
           </select>
         </div>
-        <div class="fg"><label>درجن</label><input type="number" inputmode="decimal" id="p-doz" min="0" step="0.5" oninput="calcProd()" inputmode="decimal"/></div>
+        <div class="fg"><label>سایز</label><input id="p-size" type="text" placeholder="مثلاً 7-10" oninput="calcProd()"/></div>
       </div>
+      <div class="fg"><label>درجن</label><input type="number" inputmode="decimal" id="p-doz" min="0" step="0.5" oninput="calcProd()" inputmode="decimal"/></div>
       <div class="row2">
         <div class="fg"><label>نرخ اجرت فی درجن (؋)</label><input type="number" inputmode="decimal" id="p-rate" min="0" oninput="calcProd()" inputmode="decimal"/></div>
         <div class="fg"><label>اجرت کل اتومات</label><input id="p-wage" readonly/></div>
@@ -3491,6 +3487,32 @@ function calcCOGS(prod,doz){
   },0);
 }
 
+// نرمال‌سازی نام محصول: نوشتارهای مختلف یک محصول را یکسان می‌کند
+// «بوت شیما سیاه ۷-۱۰» ، «بوت شیما سیاه ۱۰-۷» ، «بوت شیما سیاه 7-10»
+// همه تبدیل می‌شوند به: «بوت شیما سیاه 7-10»
+function normalizeProductName(prod){
+  if(prod===null||prod===undefined) return "";
+  let s=String(prod);
+
+  // ۱) ارقام فارسی (۰-۹) و عربی (٠-٩) → ارقام انگلیسی (0-9)
+  const faDigits="۰۱۲۳۴۵۶۷۸۹", arDigits="٠١٢٣٤٥٦٧٨٩";
+  s=s.replace(/[۰-۹٠-٩]/g,ch=>{
+    const i=faDigits.indexOf(ch);
+    return String(i>=0?i:arDigits.indexOf(ch));
+  });
+
+  // ۲) انواع خط تیره/دش عربی و کاراکترهای مشابه → خط تیره انگلیسی
+  s=s.replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212\uFE58\uFE63\uFF0D]/g,"-");
+
+  // ۳) حذف فاصله‌های اضافی و trim
+  s=s.replace(/\s+/g," ").trim();
+
+  // ۴) بازه عددی معکوس را هم‌سو می‌کند تا «10-7» و «7-10» یک محصول باشند
+  s=s.replace(/(^|[^\d.])(\d+)\s*-\s*(\d+)(?![\d.])/g,(m,pre,a,b)=>pre+(+a<=+b?a+"-"+b:b+"-"+a));
+
+  return s;
+}
+
 // ── Navigation ──
 const PAGE_TITLES={dash:"داشبورد",sales:"فروش",orders:"فرمایشات",buy:"خرید مواد",prod:"تولید",
   stock:"انبار مواد",cust:"مشتریان",supp:"تامین‌کنندگان",cash:"صندوق افغانی",
@@ -4625,6 +4647,7 @@ function initProdModal(){
   document.getElementById("p-rate").value="";
   document.getElementById("p-wage").value="";
   document.getElementById("p-paid").value="";
+  document.getElementById("p-size").value="";
   document.getElementById("p-overhead").value="";
   const mc=document.getElementById("p-mat-cost");
   mc.value="";
@@ -4641,7 +4664,8 @@ function onMatCostInput(el){
 function calcProd(){
   const doz=+(document.getElementById("p-doz").value)||0;
   const rate=+(document.getElementById("p-rate").value)||0;
-  const prod=document.getElementById("p-prod").value;
+  // نام کامل محصول = مدل + سایز (نرمال‌شده)
+  const prod=normalizeProductName(document.getElementById("p-prod").value+" "+document.getElementById("p-size").value);
   // هزینه مواد فی درجن: اتومات از رسپی × میانگین بهای انبار، مگر اینکه دستی وارد شده باشد
   const mcEl=document.getElementById("p-mat-cost");
   if(mcEl && mcEl.dataset.manual!=="1"){
@@ -4662,7 +4686,8 @@ async function submitProd(){
   const doz=+(document.getElementById("p-doz").value);
   if(!doz){document.getElementById("prod-msg").innerHTML='<div class="ib err">تعداد درجن الزامی</div>';return;}
   const worker=document.getElementById("p-worker").value;
-  const prod=document.getElementById("p-prod").value;
+  // مدل و سایز با هم یک نام محصول می‌سازند و قبل از ذخیره نرمال می‌شوند
+  const prod=normalizeProductName(document.getElementById("p-prod").value+" "+document.getElementById("p-size").value);
   const wRate=+(document.getElementById("p-rate").value)||0;
   const wage=doz*wRate,paid=+(document.getElementById("p-paid").value)||0;
   const matCostPerDoz=+(document.getElementById("p-mat-cost").value)||0;
@@ -4687,12 +4712,17 @@ async function submitProd(){
       await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(r.m)}`);
     }
     // اضافه کردن به انبار جنس تولیدشده
-    const fgRows=await sbGet("finished_goods",`?product_name=eq.${encodeURIComponent(prod)}`)||[];
-    if(fgRows.length>0){
-      const fg=fgRows[0];
+    const fgRows=await sbGet("finished_goods",`?product_name=eq.${encodeURIComponent(prod)}&select=id,product_name,dozen,unit_price`)||[];
+    let fg=fgRows[0];
+    if(!fg){
+      // اگر همان محصول با نوشتار متفاوت (مثلاً ارقام فارسی) ذخیره شده باشد، با نرمال‌سازی پیدا می‌شود
+      const allFg=await sbGet("finished_goods","?select=id,product_name,dozen,unit_price")||[];
+      fg=allFg.find(r=>normalizeProductName(r.product_name)===prod);
+    }
+    if(fg){
       const newDoz=(+fg.dozen||0)+doz;
       const newVal=newDoz*(+fg.unit_price||0);
-      await sbPatch("finished_goods",{dozen:newDoz,total_value:newVal,updated_at:new Date().toISOString()},`?product_name=eq.${encodeURIComponent(prod)}`);
+      await sbPatch("finished_goods",{product_name:prod,dozen:newDoz,total_value:newVal,updated_at:new Date().toISOString()},"?id=eq."+fg.id);
     } else {
       await sbPost("finished_goods",{product_name:prod,dozen:doz,unit_price:0,total_value:0});
     }
