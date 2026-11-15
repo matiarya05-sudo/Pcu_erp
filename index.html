@@ -1532,6 +1532,14 @@ select option{background:#1a1820}
       </div>
       <div id="cust-dd" class="ddrop" style="display:none"></div>
       <div id="cust-sel" style="display:none" class="ib ok"></div>
+      <div class="fg"><label>ولایت مشتری</label>
+        <input id="s-prov" placeholder="مثلاً کابل" list="s-prov-list"/>
+        <datalist id="s-prov-list">
+          <option>کابل</option><option>غزنی</option><option>کندهار</option><option>هرات</option>
+          <option>پلخمری</option><option>کندز</option><option>بدخشان</option><option>تخار</option>
+          <option>جلال آباد</option><option>خوست</option><option>سایر</option>
+        </datalist>
+      </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 4px;flex-wrap:wrap;gap:4px">
         <div style="font-size:12px;font-weight:700;color:var(--gd)">📦 اقلام بل</div>
         <div style="display:flex;gap:5px">
@@ -4345,6 +4353,7 @@ function initSaleModal(){
   document.getElementById("s-date").value=today();
   document.getElementById("s-bill").value="";
   document.getElementById("s-csrch").value="";
+  document.getElementById("s-prov").value="";
   document.getElementById("s-paid").value="";
   document.getElementById("s-rem").value="";
   document.getElementById("sale-msg").innerHTML="";
@@ -4412,6 +4421,11 @@ function calcSaleSummaryOnly(){
 }
 function searchCust(q){
   const dd=document.getElementById("cust-dd");
+  const qq=(q||"").trim();
+  // اگر نام کاملِ یک مشتری موجود تایپ شود، ولایتش اتومات در فیلد فرم پر می‌شود
+  const provEl=document.getElementById("s-prov");
+  const exact=qq?CUSTOMERS.find(c=>(c.n||"").trim()===qq):null;
+  if(provEl && exact && !provEl.value.trim()) provEl.value=exact.p||"";
   if(!q){dd.style.display="none";return;}
   const res=CUSTOMERS.filter(c=>c.n.includes(q)||c.p.includes(q)).slice(0,15);
   dd.style.display=res.length?"block":"none";
@@ -4423,6 +4437,9 @@ function searchCust(q){
 async function pickCust(id){
   _selCust=CUSTOMERS.find(c=>c.id===id);
   document.getElementById("s-csrch").value=_selCust.n;
+  // ولایت مشتری انتخاب‌شده در فیلد فرم هم نمایش داده می‌شود
+  const provEl=document.getElementById("s-prov");
+  if(provEl) provEl.value=_selCust.p||"";
   document.getElementById("cust-dd").style.display="none";
   const sel=document.getElementById("cust-sel");
   sel.style.display="flex";
@@ -4479,8 +4496,13 @@ function calcSaleWage(){
     return;
   }
   
-  const custName=_selCust?.n||(document.getElementById("s-csrch").value||"مشتری جدید");
-  const custProv=_selCust?.p||"نامشخص";
+  // مشتری: اگر از لیست انتخاب شده باشد از همان، وگرنه مشتری هم‌نام با متن تایپ‌شده
+  const _custTyped=(document.getElementById("s-csrch").value||"").trim();
+  const _typedCust=_custTyped?CUSTOMERS.find(c=>(c.n||"").trim()===_custTyped):null;
+  const custName=_selCust?.n||_typedCust?.n||(_custTyped||"مشتری جدید");
+  // ولایت: اول مشتری انتخاب‌شده، اگر خالی بود از فیلد فرم، بعد از مشتری هم‌نام تایپ‌شده
+  const _provEl=document.getElementById("s-prov");
+  const custProv=((_selCust?.p||"").trim())||((_provEl?.value||"").trim())||((_typedCust?.p||"").trim())||"نامشخص";
   const saleDate=document.getElementById("s-date").value;
   const billNo=document.getElementById("s-bill").value;
   const paid=+(document.getElementById("s-paid").value)||0;
@@ -4491,7 +4513,7 @@ function calcSaleWage(){
   document.getElementById("sale-msg").innerHTML=""; // پاک کردن خطای قبلی
 
   // تبدیل شناسه مشتری به عدد (اگر ستون در دیتابیس integer باشد)
-  const _custIdRaw = _selCust?.id || null;
+  const _custIdRaw = _selCust?.id || _typedCust?.id || null;
   const _custIdInt = (typeof _custIdRaw === "number") ? _custIdRaw : (parseInt(_custIdRaw) > 0 ? parseInt(_custIdRaw) : null);
 
   const savedRows=[];
@@ -4724,8 +4746,8 @@ function onMatCostInput(el){
 function calcProd(){
   const doz=+(document.getElementById("p-doz").value)||0;
   const rate=+(document.getElementById("p-rate").value)||0;
-  // نام کامل محصول = مدل + سایز (نرمال‌شده)
-  const prod=normalizeProductName(document.getElementById("p-prod").value+" "+document.getElementById("p-size").value);
+  // نام کامل محصول = مدل + سایز (دقیقاً مطابق فیلدهای فرم)
+  const prod=(document.getElementById("p-prod").value.trim()+" "+document.getElementById("p-size").value.trim()).trim();
   // هزینه مواد فی درجن: اگر مواد مصرفی دستی انتخاب شده باشد از همان‌ها، وگرنه اتومات از رسپی
   const mcEl=document.getElementById("p-mat-cost");
   if(mcEl && _prodMats.length>0){
@@ -4751,8 +4773,8 @@ async function submitProd(){
   const doz=+(document.getElementById("p-doz").value);
   if(!doz){document.getElementById("prod-msg").innerHTML='<div class="ib err">تعداد درجن الزامی</div>';return;}
   const worker=document.getElementById("p-worker").value;
-  // مدل و سایز با هم یک نام محصول می‌سازند و قبل از ذخیره نرمال می‌شوند
-  const prod=normalizeProductName(document.getElementById("p-prod").value+" "+document.getElementById("p-size").value);
+  // مدل و سایز با هم یک نام محصول می‌سازند: "مدل سایز" (هر دو trim شده)
+  const prod=(document.getElementById("p-prod").value.trim()+" "+document.getElementById("p-size").value.trim()).trim();
   const wRate=+(document.getElementById("p-rate").value)||0;
   const wage=doz*wRate,paid=+(document.getElementById("p-paid").value)||0;
   const matCostPerDoz=+(document.getElementById("p-mat-cost").value)||0;
@@ -4797,7 +4819,7 @@ async function submitProd(){
     if(!fg){
       // اگر همان محصول با نوشتار متفاوت (مثلاً ارقام فارسی) ذخیره شده باشد، با نرمال‌سازی پیدا می‌شود
       const allFg=await sbGet("finished_goods","?select=id,product_name,dozen,unit_price")||[];
-      fg=allFg.find(r=>normalizeProductName(r.product_name)===prod);
+      fg=allFg.find(r=>normalizeProductName(r.product_name)===normalizeProductName(prod));
     }
     if(fg){
       const newDoz=(+fg.dozen||0)+doz;
