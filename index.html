@@ -51,7 +51,7 @@ body>*{position:relative;z-index:1}
 }
 .nav-title{font-size:14px;font-weight:800;
   background:linear-gradient(135deg,var(--gd),var(--g2));
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+   :text;-webkit-text-fill-color:transparent}
 .hamburger{background:none;border:none;color:var(--t2);font-size:22px;cursor:pointer;padding:2px;transition:color .2s}
 .hamburger:hover{color:var(--gd)}
 .rate-pill{
@@ -3382,14 +3382,6 @@ const RECIPES={
   ویژه:[{m:"دی‌اوپی (DOP)",q:0.9},{m:"ریزن",q:0.35},{m:"تیتانیوم",q:0.06},{m:"ای سی (AC)",q:0.12},{m:"کرش سیاه",q:0.25}],
   کودکانه:[{m:"دی‌اوپی (DOP)",q:0.6},{m:"ریزن",q:0.2},{m:"تیتانیوم",q:0.04},{m:"ای سی (AC)",q:0.08},{m:"کرش سیاه",q:0.15}],
 };
-// نسبت استاندارد مصرف مواد فی درجن — برای کسر خودکار از انبار مواد
-// DOP ۰.۸ کیلو | ریزن ۰.۳ کیلو | AC ۰.۱ کیلو | کرش سیاه ۰.۲ کیلو
-const MAT_STD_RATIO_PER_DOZ=[
-  {m:"دی‌اوپی (DOP)",q:0.8},
-  {m:"ریزن",q:0.3},
-  {m:"ای سی (AC)",q:0.1},
-  {m:"کرش سیاه",q:0.2},
-];
 const CASH_IN=["وصول از مشتری","سرمایه شریک","قرض دریافتی","سایر ورودی"];
 const CASH_OUT=["خرید مواد (افغانی)","اجرت جمشید","اجرت دفتر","معاش شاگردان","کرایه","برق","مصارف اداری","سایر خروجی"];
 
@@ -3497,47 +3489,6 @@ function calcCOGS(prod,doz){
     const ac=S.stockMap[r.m]?.avgCost||0;
     return s+r.q*ac*doz;
   },0);
-}
-
-// نرمال‌سازی نام محصول: نوشتارهای مختلف یک محصول را یکسان می‌کند
-// «بوت شیما سیاه ۷-۱۰» ، «بوت شیما سیاه ۱۰-۷» ، «بوت شیما سیاه 7-10»
-// همه تبدیل می‌شوند به: «بوت شیما سیاه 7-10»
-function normalizeProductName(prod){
-  if(prod===null||prod===undefined) return "";
-  let s=String(prod);
-
-  // ۱) ارقام فارسی (۰-۹) و عربی (٠-٩) → ارقام انگلیسی (0-9)
-  const faDigits="۰۱۲۳۴۵۶۷۸۹", arDigits="٠١٢٣٤٥٦٧٨٩";
-  s=s.replace(/[۰-۹٠-٩]/g,ch=>{
-    const i=faDigits.indexOf(ch);
-    return String(i>=0?i:arDigits.indexOf(ch));
-  });
-
-  // ۲) انواع خط تیره/دش عربی و کاراکترهای مشابه → خط تیره انگلیسی
-  s=s.replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212\uFE58\uFE63\uFF0D]/g,"-");
-
-  // ۳) حذف فاصله‌های اضافی و trim
-  s=s.replace(/\s+/g," ").trim();
-
-  // ۴) بازه عددی معکوس را هم‌سو می‌کند تا «10-7» و «7-10» یک محصول باشند
-  s=s.replace(/(^|[^\d.])(\d+)\s*-\s*(\d+)(?![\d.])/g,(m,pre,a,b)=>pre+(+a<=+b?a+"-"+b:b+"-"+a));
-
-  return s;
-}
-
-// بهای تمام‌شده واقعی (COGS) از روی داده‌های واقعی جدول production
-// نه از روی رسپی استاندارد: جمع mat_cogs ÷ جمع درجن = میانگین بهای هر درجن
-async function getRealCOGS(prod,doz){
-  const prodKey=normalizeProductName(prod);
-  const rows=await sbGet("production",`?product=eq.${encodeURIComponent(prodKey)}&select=mat_cogs,dozen`)||[];
-  const sumMatCogs=rows.reduce((s,r)=>s+(+r.mat_cogs||0),0);
-  const sumDoz=rows.reduce((s,r)=>s+(+r.dozen||0),0);
-  if(sumDoz<=0){
-    console.warn(`getRealCOGS: برای «${prodKey}» رکورد تولید معتبری پیدا نشد — COGS صفر محاسبه شد`);
-    return 0;
-  }
-  const avgCostPerDoz=sumMatCogs/sumDoz;
-  return Math.round(avgCostPerDoz*doz*100)/100;
 }
 
 // ── Navigation ──
@@ -3800,7 +3751,7 @@ async function renderProd(){
   todayRecs.forEach(r=>{
     if(!machineMap[r.worker]) machineMap[r.worker]={doz:0,items:[]};
     machineMap[r.worker].doz+=(+r.dozen||0);
-    machineMap[r.worker].items.push(normalizeProductName(r.product)+" "+r.dozen+"درجن");
+    machineMap[r.worker].items.push(r.product+" "+r.dozen+"درجن");
   });
   const mEl=document.getElementById("prod-machines-today");
   if(mEl){
@@ -3824,7 +3775,7 @@ async function renderProd(){
   const salesRows=salesRowsRaw||[], fgRows=fgRowsRaw||[];
   const modelMap={};
   const addModel=(name,key,val)=>{
-    const m=normalizeProductName(name);
+    const m=(name||"").trim();
     if(!m) return;
     if(!modelMap[m]) modelMap[m]={prod:m,prodDoz:0,saleDoz:0,stockDoz:0};
     modelMap[m][key]+=(+val||0);
@@ -3869,7 +3820,7 @@ async function renderProd(){
   tb.innerHTML=allProd.map((r,i)=>`<tr>
     <td style="color:var(--t3)">${i+1}</td><td>${r.date}</td>
     <td style="font-weight:700;color:var(--gd)">${r.worker}</td>
-    <td><span class="bb bpp">${normalizeProductName(r.product)}</span></td>
+    <td><span class="bb bpp">${r.product}</span></td>
     <td style="font-weight:700">${r.dozen}</td>
     <td class="tdr" style="font-weight:700">${afn(r.total_wage)}</td>
     <td class="tdr" style="color:var(--gr)">${afn(r.paid_wage)}</td>
@@ -4520,7 +4471,6 @@ function calcSaleWage(){
   
   for(let i=0;i<validItems.length;i++){
     const it=validItems[i];
-    const prod=normalizeProductName(it.prod);
     const tot=it.doz*it.prc;
     
     // تقسیم پول رسیده بین اقلام
@@ -4531,8 +4481,8 @@ function calcSaleWage(){
       
     const itemRem = Math.max(0, tot - itemPaid);
     
-    // محاسبه هزینه تولید واقعی (COGS از جدول production) و سود
-    const cg = await getRealCOGS(prod, it.doz);
+    // محاسبه هزینه تولید (COGS) و سود
+    const cg = calcCOGS(it.prod, it.doz);
     const gp = tot - cg;
 
     // ⚠️ ارسال دقیقاً با نام ستون‌های دیتابیس شما
@@ -4541,7 +4491,7 @@ function calcSaleWage(){
       cust_id: _custIdInt,          // عدد یا null
       cust_name: custName,
             province: custProv,
-      product: prod,
+      product: it.prod,
       dozen: it.doz,
       price_per_doz: it.prc,
       total: tot,
@@ -4566,29 +4516,6 @@ function calcSaleWage(){
       document.getElementById("sale-btn").textContent="ثبت بل ✓";
       return; // توقف عملیات در صورت خطا
     }
-  }
-
-  // ── کسر از انبار جنس تولیدشده (finished_goods) بعد از ثبت فروش ──
-  // درجن‌های فروخته‌شده به تفکیک محصول جمع می‌شوند (یک محصول ممکن است چند قلم داشته باشد)
-  const soldByProduct={};
-  validItems.forEach(it=>{
-    const p=normalizeProductName(it.prod);
-    soldByProduct[p]=(soldByProduct[p]||0)+(+it.doz||0);
-  });
-
-  for(const prod of Object.keys(soldByProduct)){
-    const soldDoz=soldByProduct[prod];
-    if(soldDoz<=0) continue;
-    const fgRows=await sbGet("finished_goods",`?product_name=eq.${encodeURIComponent(prod)}&select=id,dozen,unit_price,total_value`)||[];
-    if(!fgRows.length) continue; // این محصول در انبار جنس تولیدشده ثبت نشده است
-    const fg=fgRows[0];
-    const curDoz=+fg.dozen||0;
-    // کسر تعداد فروخته‌شده از موجودی — هرگز منفی نمی‌شود
-    const newDoz=Math.max(0,curDoz-soldDoz);
-    // اگر unit_price ثبت نشده باشد، از total_value ÷ dozen استفاده می‌شود
-    const unitPrice=(+fg.unit_price||0)>0?(+fg.unit_price):(curDoz>0?(+fg.total_value||0)/curDoz:0);
-    const newVal=Math.round(newDoz*unitPrice*100)/100;
-    await sbPatch("finished_goods",{dozen:newDoz,total_value:newVal},"?id=eq."+fg.id);
   }
 
   // اگر همه اقلام با موفقیت ثبت شدند:
@@ -4665,7 +4592,6 @@ async function submitBuy(){
   // ستون‌ها دقیقاً مطابق دیتابیس شما (unit و status در جدول موجود هستند ولی لازم نیستند)
   const res=await sbPost("purchases",{
     date:document.getElementById("b-date").value,
-    purchase_date:document.getElementById("b-date").value,
     supplier_id:sid,
     supplier_name:sn,
     bill:document.getElementById("b-bill").value,
@@ -4715,7 +4641,7 @@ function onMatCostInput(el){
 function calcProd(){
   const doz=+(document.getElementById("p-doz").value)||0;
   const rate=+(document.getElementById("p-rate").value)||0;
-  const prod=normalizeProductName(document.getElementById("p-prod").value);
+  const prod=document.getElementById("p-prod").value;
   // هزینه مواد فی درجن: اتومات از رسپی × میانگین بهای انبار، مگر اینکه دستی وارد شده باشد
   const mcEl=document.getElementById("p-mat-cost");
   if(mcEl && mcEl.dataset.manual!=="1"){
@@ -4736,66 +4662,42 @@ async function submitProd(){
   const doz=+(document.getElementById("p-doz").value);
   if(!doz){document.getElementById("prod-msg").innerHTML='<div class="ib err">تعداد درجن الزامی</div>';return;}
   const worker=document.getElementById("p-worker").value;
-  const prod=normalizeProductName(document.getElementById("p-prod").value);
+  const prod=document.getElementById("p-prod").value;
   const wRate=+(document.getElementById("p-rate").value)||0;
   const wage=doz*wRate,paid=+(document.getElementById("p-paid").value)||0;
-  const matCostEl=document.getElementById("p-mat-cost");
-  let matCostPerDoz=+(matCostEl?.value)||0;
-  // اگر هزینه مواد فی درجن خالی باشد، از نسبت استاندارد مصرف × میانگین بهای انبار محاسبه می‌شود
-  if(!matCostPerDoz){
-    matCostPerDoz=MAT_STD_RATIO_PER_DOZ.reduce((s,r)=>s+r.q*(S.stockMap[r.m]?.avgCost||0),0);
-  }
+  const matCostPerDoz=+(document.getElementById("p-mat-cost").value)||0;
   const overheadPerDoz=+(document.getElementById("p-overhead").value)||0;
-  // بهای تمام‌شده کل = اجرت کل + هزینه مواد کل + هزینه سرباری کل
-  const materialCost=matCostPerDoz*doz;
-  const overheadCost=overheadPerDoz*doz;
-  const totalCogs=wage+materialCost+overheadCost;
-  const matCogs=Math.round(totalCogs*100)/100;
+  // بهای تمام‌شده کل = درجن × (اجرت + هزینه مواد + هزینه سرباری) فی درجن
+  const totalCogs=doz*(wRate+matCostPerDoz+overheadPerDoz);
   document.getElementById("prod-btn").disabled=true;document.getElementById("prod-btn").textContent="در حال ذخیره...";
   const _prdate=document.getElementById("p-date").value;
   const _emprows=await sbGet("employees","?name_fa=eq."+encodeURIComponent(worker)+"&select=id")||[];
   const _empid=_emprows[0]?.id||null;
   const res=await sbPost("production",{
     date:_prdate,production_date:_prdate,worker,employee_id:_empid,product:prod,product_id:null,dozen:doz,quantity_dozen:doz,
-    wage_rate:wRate,total_wage:wage,paid_wage:paid,remaining_wage:wage-paid,mat_cogs:matCogs,status:"pending"
+    wage_rate:wRate,total_wage:wage,paid_wage:paid,remaining_wage:wage-paid,mat_cogs:totalCogs,status:"pending"
   });
   if(res){
-    const warnings=[];
-    // ── ۱) کسر مواد اولیه از انبار بر اساس نسبت استاندارد فی درجن ──
-    const stockRows=await sbGet("mat_stock","?select=material,total_kg,avg_cost")||[];
-    const stockByName={};
-    stockRows.forEach(r=>{stockByName[r.material]=r;});
-    for(const r of MAT_STD_RATIO_PER_DOZ){
-      const row=stockByName[r.m];
-      if(!row){warnings.push(`«${r.m}» در انبار مواد ثبت نشده`);continue;}
-      const curKg=+row.total_kg||0;
-      const avgCost=+row.avg_cost||0;
+    // Deduct from mat_stock
+    for(const r of (RECIPES[prod]||[])){
+      const cur=S.stockMap[r.m]||{kg:0,avgCost:0,val:0};
       const usedKg=r.q*doz;
-      const newKg=Math.max(0,curKg-usedKg);
-      const newVal=newKg*avgCost;
-      const ok=await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(r.m)}`);
-      if(ok){
-        S.stockMap[r.m]={...(S.stockMap[r.m]||{}),kg:newKg,avgCost,val:newVal};
-      } else {
-        warnings.push(`کسر «${r.m}» انجام نشد`);
-      }
+      const newKg=Math.max(0,cur.kg-usedKg);
+      const newVal=newKg*cur.avgCost;
+      await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(r.m)}`);
     }
-    // ── ۲) اضافه کردن به انبار جنس تولیدشده ──
-    const costPerDoz=doz>0?matCogs/doz:0;
+    // اضافه کردن به انبار جنس تولیدشده
     const fgRows=await sbGet("finished_goods",`?product_name=eq.${encodeURIComponent(prod)}`)||[];
     if(fgRows.length>0){
       const fg=fgRows[0];
       const newDoz=(+fg.dozen||0)+doz;
-      const unitPrice=(+fg.unit_price||0)>0?(+fg.unit_price):costPerDoz;
-      const newVal=newDoz*unitPrice;
-      const ok=await sbPatch("finished_goods",{dozen:newDoz,unit_price:unitPrice,total_value:newVal,updated_at:new Date().toISOString()},`?product_name=eq.${encodeURIComponent(prod)}`);
-      if(!ok) warnings.push("به‌روزرسانی انبار جنس تولیدشده انجام نشد");
+      const newVal=newDoz*(+fg.unit_price||0);
+      await sbPatch("finished_goods",{dozen:newDoz,total_value:newVal,updated_at:new Date().toISOString()},`?product_name=eq.${encodeURIComponent(prod)}`);
     } else {
-      const ok=await sbPost("finished_goods",{product_name:prod,dozen:doz,unit_price:costPerDoz,total_value:doz*costPerDoz});
-      if(!ok) warnings.push("ثبت جنس جدید در انبار انجام نشد");
+      await sbPost("finished_goods",{product_name:prod,dozen:doz,unit_price:0,total_value:0});
     }
     await refreshStockMap();
-    document.getElementById("prod-msg").innerHTML='<div class="ib ok">✅ تولید در Supabase ذخیره شد!'+(warnings.length?'<br>⚠️ '+warnings.join(' | '):'')+'</div>';
+    document.getElementById("prod-msg").innerHTML='<div class="ib ok">✅ تولید در Supabase ذخیره شد!</div>';
     showSaved();setTimeout(()=>{closeModal("modalProd");renderProd();},1300);
   } else document.getElementById("prod-msg").innerHTML='<div class="ib err">خطا! دوباره امتحان کن</div>';
   document.getElementById("prod-btn").disabled=false;document.getElementById("prod-btn").textContent="ثبت تولید ✓";
@@ -6175,7 +6077,7 @@ async function renderFG(){
   document.getElementById('stock-fg-val').textContent=afn(totalVal);
   if(!rows.length){document.getElementById('fg-tbody').innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--t3);padding:18px">هنوز جنسی ثبت نشده</td></tr>';return;}
   document.getElementById('fg-tbody').innerHTML=rows.map((r,i)=>`<tr>
-    <td style="color:var(--t3)">${i+1}</td><td style="font-weight:700">${normalizeProductName(r.product_name)}</td>
+    <td style="color:var(--t3)">${i+1}</td><td style="font-weight:700">${r.product_name}</td>
     <td><span class="bb bbl">${r.size_range||'—'}</span></td>
     <td style="font-weight:800;color:var(--gd)">${r.dozen} درجن</td>
     <td class="tdr" style="color:var(--tl)">${afn(r.unit_price)}</td>
@@ -6216,7 +6118,7 @@ async function editFG(id){
   openModal('modalAddFG');
 }
 async function submitFG(){
-  const name=normalizeProductName(document.getElementById('fg-name').value);
+  const name=document.getElementById('fg-name').value.trim();
   const dozen=+(document.getElementById('fg-dozen').value)||0;
   const price=+(document.getElementById('fg-price').value)||0;
   if(!name||!dozen){document.getElementById('fg-msg').innerHTML='<div class="ib err">نام و تعداد الزامی است</div>';return;}
