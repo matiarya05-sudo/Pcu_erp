@@ -3237,7 +3237,8 @@ function calcDeliverTotal(){
 
 // ثبت ارسال
 async function submitDelivery(){
-  const doz=+(document.getElementById("d-doz").value);
+  // درجن صحیح — parseInt هر اعشاری را می‌برد تا عدد اعشاری وارد sales/order_items نشود
+  const doz=parseInt(document.getElementById("d-doz").value,10)||0;
   if(!doz||doz<=0){alert("تعداد ارسال را بنویس!");return;}
   if(doz>_deliverItemRem){alert(`باقی مانده فقط ${_deliverItemRem} درجن است!`);return;}
 
@@ -3275,7 +3276,7 @@ async function submitDelivery(){
         cust_id:o.cust_id,
         cust_name:o.cust_name,
         province:o.province||'',
-        product:cur.product,
+        product:normalizeProductName(cur.product),
         dozen:doz,
         price_per_doz:pricePerDoz,
         total:total,
@@ -3659,10 +3660,9 @@ function calcCOGS(prod,doz){
   },0);
 }
 
-// نرمال‌سازی نام محصول: نوشتارهای مختلف یک محصول را یکسان می‌کند
-// «بوت شیما سیاه ۷-۱۰» ، «بوت شیما سیاه ۱۰-۷» ، «بوت شیما سیاه 7-10»
-// همه تبدیل می‌شوند به: «بوت شیما سیاه 7-10»
-// اگر سایز جدا داده شود: normalizeProductName("بوت شیما سیاه","۱۰-۷") === "بوت شیما سیاه 7-10"
+// نرمال‌سازی نام محصول: نوشتارهای مختلف یک محصول را یکسان می‌کند تا
+// «بوت شیما سیاه ۷-۱۰» و «بوت شیما سیاه 10-7» در دیتابیس یک محصول شناخته شوند.
+// normalizeProductName("بوت شیما سیاه","۱۰-۷") === "بوت شیما سیاه 7-10"
 function normalizeProductName(name,size){
   // ۱) ارقام فارسی (۰-۹) و عربی (٠-٩) → ارقام انگلیسی (0-9)
   const toEnDigits=str=>{
@@ -3673,24 +3673,25 @@ function normalizeProductName(name,size){
       return String(i>=0?i:arDigits.indexOf(ch));
     });
   };
-  // ۲) انواع خط تیره/دش عربی و کاراکترهای مشابه → خط تیره انگلیسی
-  const fixDashes=str=>str.replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212\uFE58\uFE63\uFF0D]/g,"-");
+  // ۲) انواع خط تیره → «-» و حذف فاصله‌های اضافی
+  const tidy=str=>str
+    .replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212\uFE58\uFE63\uFF0D]/g,"-")
+    .replace(/\s+/g," ").trim();
   // ۳) بازه عددی معکوس را هم‌سو می‌کند تا «10-7» و «7-10» یک محصول باشند
-  const sortRanges=str=>str.replace(/(^|[^\d.])(\d+)\s*-\s*(\d+)(?![\d.])/g,(m,pre,a,b)=>pre+(+a<=+b?a+"-"+b:b+"-"+a));
+  const sortRanges=str=>str.replace(/(^|[^\d.])(\d+)\s*-\s*(\d+)(?![\d.])/g,
+    (m,pre,a,b)=>pre+(+a<=+b?a+"-"+b:b+"-"+a));
 
-  const cleanName=sortRanges(fixDashes(toEnDigits(name)).replace(/\s+/g," ").trim());
+  const cleanName=sortRanges(tidy(toEnDigits(name)));
 
-  // اگر سایز خالی باشد فقط نام (نرمال‌شده) برگشت داده می‌شود
-  const sizeRaw=(size===null||size===undefined)?"":String(size).trim();
+  // اگر سایز داده نشده باشد فقط نام (نرمال‌شده) برگردانده می‌شود
+  const sizeRaw=tidy(toEnDigits(size));
   if(!sizeRaw) return cleanName;
 
-  // سایز: «۱۰-۷» → «7-10» (ارقام انگلیسی + مرتب‌سازی صعودی)
-  const parts=fixDashes(toEnDigits(sizeRaw)).split("-").map(p=>p.trim()).filter(p=>p!=="");
+  // ۴) سایز را با «-» جدا کن، اعداد را صعودی مرتب کن و دوباره بچسبان
+  const parts=sizeRaw.split("-").map(p=>p.trim()).filter(p=>p!=="");
   if(!parts.length) return cleanName;
-  const allNumeric=parts.every(p=>/^\d+(\.\d+)?$/.test(p));
-  const sortedSize=allNumeric&&parts.length>1
-    ? parts.map((p,i)=>({v:Number(p),t:p,i})).sort((a,b)=>a.v-b.v||a.i-b.i).map(o=>o.t).join("-")
-    : parts.join("-");
+  const allNumeric=parts.length>1&&parts.every(p=>!isNaN(+p));
+  const sortedSize=(allNumeric?parts.slice().sort((a,b)=>(+a)-(+b)):parts).join("-");
 
   return (cleanName+" "+sortedSize).trim();
 }
@@ -4190,7 +4191,8 @@ async function submitCollectOrder(){
   const msg=document.getElementById("co-msg");
   const btn=document.getElementById("co-btn");
   if(!_coCust){if(msg)msg.innerHTML='<div class="ib err">اول مشتری را انتخاب کن</div>';return;}
-  const doz=Math.round((+(document.getElementById("co-dozen")?.value)||0)*100)/100;
+  // درجن صحیح (parseInt) — عدد اعشاری در فرمایش ثبت نمی‌شود
+  const doz=parseInt(document.getElementById("co-dozen")?.value,10)||0;
   if(doz<=0){if(msg)msg.innerHTML='<div class="ib err">تعداد درجن باید بیشتر از صفر باشد</div>';return;}
   const date=document.getElementById("co-date")?.value||today();
   // نام محصول با همان نرمال‌سازی سراسری (ارقام انگلیسی + سایز مرتب)
@@ -4986,16 +4988,12 @@ function calcSaleWage(){
 
   async function submitSale(){
   const saleMsg=document.getElementById("sale-msg");
-  // درجن همیشه عدد صحیح — جلوی ورود اعداد اعشاری به دیتابیس گرفته می‌شود
-  const items=_saleItems.map(it=>({...it,dozRaw:+(it.doz||0),doz:Math.floor(+(it.doz||0)),prc:+it.prc||0}));
+  // درجن همیشه عدد صحیح — parseInt هر اعشاری (مثل 2.5) را می‌برد تا عدد اعشاری وارد دیتابیس نشود
+  const items=_saleItems.map(it=>({...it,dozRaw:+(it.doz||0),doz:parseInt(it.doz,10)||0,prc:+it.prc||0}));
   // ردیف‌های کاملاً خالی (نه درجن نه قیمت) نادیده گرفته می‌شوند تا ثبت بلوکه نشود
   const filled=items.filter(it=>it.dozRaw>0||it.prc>0);
   if(!filled.length){
     saleMsg.innerHTML='<div class="ib err">حداقل یک قلم جنس با درجن و قیمت اضافه کن</div>';
-    return;
-  }
-  if(filled.some(it=>it.dozRaw>0&&!Number.isInteger(it.dozRaw))){
-    saleMsg.innerHTML='<div class="ib err">تعداد درجن باید عدد صحیح باشد (مثلاً 12، نه 12.5)</div>';
     return;
   }
   if(filled.some(it=>it.doz<=0)){
@@ -5052,7 +5050,7 @@ function calcSaleWage(){
       cust_id: _custIdInt,          // عدد یا null
       cust_name: custName,
             province: custProv,
-      product: it.prod,
+      product: normalizeProductName(it.prod),
       dozen: it.doz,
       price_per_doz: it.prc,
       total: tot,
@@ -5402,12 +5400,8 @@ function calcProd(){
 async function submitProd(){
   const msgEl=document.getElementById("prod-msg");
   const btn=document.getElementById("prod-btn");
-  // درجن همیشه عدد صحیح — ورود اعداد اعشاری (مثل 66.667 یا 2.5) رد می‌شود
-  const dozRaw=parseFloat(document.getElementById("p-doz").value)||0;
-  if(dozRaw>0&&!Number.isInteger(dozRaw)){
-    msgEl.innerHTML='<div class="ib err">تعداد درجن باید عدد صحیح باشد (مثلاً 12، نه 12.5)</div>';return;
-  }
-  const doz=Math.trunc(dozRaw);
+  // درجن همیشه عدد صحیح — parseInt هر اعشاری (مثل 66.667) را بریده و به عدد کامل تبدیل می‌کند
+  const doz=parseInt(document.getElementById("p-doz").value,10)||0;
   if(doz<=0){msgEl.innerHTML='<div class="ib err">تعداد درجن باید بیشتر از صفر باشد</div>';return;}
   const worker=document.getElementById("p-worker").value;
   const model=document.getElementById("p-prod").value.trim();
