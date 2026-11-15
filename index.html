@@ -1643,6 +1643,11 @@ select option{background:#1a1820}
         <div class="fg"><label>اجرت کل اتومات</label><input id="p-wage" readonly/></div>
       </div>
       <div class="fg"><label>هزینه سرباری فی درجن (؋) — برق، کرایه، شاگرد</label><input type="number" id="p-overhead" min="0" step="0.01" oninput="calcProd()" inputmode="decimal"/></div>
+      <div class="fg">
+        <label>مواد مصرفی (کیلو) — انتخاب دستی از انبار</label>
+        <button type="button" class="btn bsec btn-full" style="margin-bottom:8px" onclick="addProdMatRow()">+ اضافه کردن ماده مصرفی</button>
+        <div id="prod-mats-list"></div>
+      </div>
       <div class="row2">
         <div class="fg"><label>هزینه مواد فی درجن (؋)</label><input type="number" id="p-mat-cost" min="0" step="0.01" oninput="onMatCostInput(this)" inputmode="decimal"/></div>
         <div class="fg"><label>بهای تمام‌شده کل</label><input id="p-total-cogs" readonly/></div>
@@ -4640,6 +4645,58 @@ async function submitBuy(){
   document.getElementById("buy-btn").disabled=false;document.getElementById("buy-btn").textContent="ثبت خرید ✓";
 }
 
+// Prod modal — مواد مصرفی دستی
+let _prodMats=[];
+let _prodMatSeq=0;
+
+// جمع هزینه مواد مصرفی = مجموع (کیلو × میانگین بهای انبار)
+function prodMatsTotal(){
+  return _prodMats.reduce((s,r)=>s+(+r.kg||0)*(S.stockMap[r.m]?.avgCost||0),0);
+}
+function refreshProdMatsTotal(){
+  const el=document.getElementById("prod-mats-total");
+  if(el) el.innerHTML='جمع هزینه مواد: <b style="color:var(--gd)">'+afn(prodMatsTotal())+'</b>';
+}
+function renderProdMats(){
+  const box=document.getElementById("prod-mats-list");
+  if(!box) return;
+  if(!_prodMats.length){box.innerHTML="";return;}
+  const mats=Object.keys(S.stockMap||{});
+  box.innerHTML=_prodMats.map(r=>{
+    const opts=mats.length
+      ?mats.map(m=>`<option value="${m}"${m===r.m?" selected":""}>${m} — ${afn(S.stockMap[m]?.avgCost||0)}/kg</option>`).join("")
+      :'<option value="">— ماده‌ای در انبار نیست —</option>';
+    return `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+      <select id="pm-mat-${r.id}" onchange="updateProdMatRow(${r.id},'m',this.value)"
+        style="flex:2;width:auto;min-width:0;padding:8px 10px;background:var(--b4);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-size:12px;font-family:inherit">${opts}</select>
+      <input type="number" id="pm-kg-${r.id}" value="${r.kg||""}" min="0" step="0.01" placeholder="کیلو" inputmode="decimal" oninput="updateProdMatRow(${r.id},'kg',this.value)"
+        style="flex:1;width:auto;min-width:0;padding:8px 10px;background:var(--b4);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-size:12px;font-family:inherit;direction:ltr"/>
+      <button type="button" onclick="removeProdMatRow(${r.id})" title="حذف"
+        style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;flex-shrink:0">✕</button>
+    </div>`;
+  }).join("")+'<div id="prod-mats-total" style="font-size:11px;color:var(--t2);margin-top:2px"></div>';
+  refreshProdMatsTotal();
+}
+function addProdMatRow(){
+  const mats=Object.keys(S.stockMap||{});
+  _prodMats.push({id:++_prodMatSeq,m:mats[0]||"",kg:0});
+  renderProdMats();
+  calcProd();
+}
+function updateProdMatRow(id,field,val){
+  const r=_prodMats.find(x=>x.id===id);
+  if(!r) return;
+  if(field==="m") r.m=val;
+  else r.kg=+val||0;
+  refreshProdMatsTotal();
+  calcProd();
+}
+function removeProdMatRow(id){
+  _prodMats=_prodMats.filter(r=>r.id!==id);
+  renderProdMats();
+  calcProd();
+}
+
 // Prod modal
 function initProdModal(){
   document.getElementById("p-date").value=today();
@@ -4654,6 +4711,9 @@ function initProdModal(){
   delete mc.dataset.manual;
   document.getElementById("p-total-cogs").value="";
   document.getElementById("prod-msg").innerHTML="";
+  // پاک کردن فهرست مواد مصرفی دستی
+  _prodMats=[];
+  document.getElementById("prod-mats-list").innerHTML="";
   calcProd();
 }
 // اگر کاربر هزینه مواد را دستی تغییر دهد، محاسبه اتومات آن غیرفعال می‌شود
@@ -4666,9 +4726,13 @@ function calcProd(){
   const rate=+(document.getElementById("p-rate").value)||0;
   // نام کامل محصول = مدل + سایز (نرمال‌شده)
   const prod=normalizeProductName(document.getElementById("p-prod").value+" "+document.getElementById("p-size").value);
-  // هزینه مواد فی درجن: اتومات از رسپی × میانگین بهای انبار، مگر اینکه دستی وارد شده باشد
+  // هزینه مواد فی درجن: اگر مواد مصرفی دستی انتخاب شده باشد از همان‌ها، وگرنه اتومات از رسپی
   const mcEl=document.getElementById("p-mat-cost");
-  if(mcEl && mcEl.dataset.manual!=="1"){
+  if(mcEl && _prodMats.length>0){
+    const matTotal=prodMatsTotal();
+    mcEl.value=doz>0?+(matTotal/doz).toFixed(2):+matTotal.toFixed(2);
+    delete mcEl.dataset.manual;
+  } else if(mcEl && mcEl.dataset.manual!=="1"){
     const autoPerDoz=calcCOGS(prod,1);
     mcEl.value=autoPerDoz?+autoPerDoz.toFixed(2):"";
   }
@@ -4680,7 +4744,8 @@ function calcProd(){
   const perDoz=rate+matCostPerDoz+overheadPerDoz;
   document.getElementById("p-wage").value=afn(wage);
   document.getElementById("p-total-cogs").value=afn(totalCogs);
-  document.getElementById("p-cogs").textContent=`💡 فی درجن: اجرت ${afn(rate)} + مواد ${afn(matCostPerDoz)} + سرباری ${afn(overheadPerDoz)} = ${afn(perDoz)} × ${doz} درجن = بهای تمام‌شده ${afn(totalCogs)}`+(mcEl?.dataset.manual==="1"?"":" | مواد اتومات کسر می‌شود");
+  const matHint=_prodMats.length>0?" | مواد از فهرست مصرفی کسر می‌شود":(mcEl?.dataset.manual==="1"?"":" | مواد اتومات کسر می‌شود");
+  document.getElementById("p-cogs").textContent=`💡 فی درجن: اجرت ${afn(rate)} + مواد ${afn(matCostPerDoz)} + سرباری ${afn(overheadPerDoz)} = ${afn(perDoz)} × ${doz} درجن = بهای تمام‌شده ${afn(totalCogs)}`+matHint;
 }
 async function submitProd(){
   const doz=+(document.getElementById("p-doz").value);
@@ -4703,13 +4768,28 @@ async function submitProd(){
     wage_rate:wRate,total_wage:wage,paid_wage:paid,remaining_wage:wage-paid,mat_cogs:totalCogs,status:"pending"
   });
   if(res){
-    // Deduct from mat_stock
-    for(const r of (RECIPES[prod]||[])){
-      const cur=S.stockMap[r.m]||{kg:0,avgCost:0,val:0};
-      const usedKg=r.q*doz;
-      const newKg=Math.max(0,cur.kg-usedKg);
-      const newVal=newKg*cur.avgCost;
-      await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(r.m)}`);
+    // کسر مواد مصرفی انتخاب‌شده از انبار مواد (کیلو دقیق)
+    if(_prodMats.length>0){
+      const usedByMat={};
+      _prodMats.forEach(r=>{
+        const kg=+r.kg||0;
+        if(r.m && kg>0) usedByMat[r.m]=(usedByMat[r.m]||0)+kg;
+      });
+      for(const mat of Object.keys(usedByMat)){
+        const cur=S.stockMap[mat]||{kg:0,avgCost:0,val:0};
+        const newKg=Math.max(0,cur.kg-usedByMat[mat]);
+        const newVal=newKg*cur.avgCost;
+        await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(mat)}`);
+      }
+    } else {
+      // Deduct from mat_stock (رسپی اتومات — وقتی مواد مصرفی دستی انتخاب نشده باشد)
+      for(const r of (RECIPES[prod]||[])){
+        const cur=S.stockMap[r.m]||{kg:0,avgCost:0,val:0};
+        const usedKg=r.q*doz;
+        const newKg=Math.max(0,cur.kg-usedKg);
+        const newVal=newKg*cur.avgCost;
+        await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(r.m)}`);
+      }
     }
     // اضافه کردن به انبار جنس تولیدشده
     const fgRows=await sbGet("finished_goods",`?product_name=eq.${encodeURIComponent(prod)}&select=id,product_name,dozen,unit_price`)||[];
