@@ -781,6 +781,7 @@ pre.sql-box{direction:ltr;text-align:left;background:#0b0a10;border:1px solid va
       <div class="nsec">حساب‌ها</div>
       <button class="ni" onclick="goPage('stock')" data-page="stock" data-roles="admin,staff"><span class="em">🏗️</span>انبار مواد</button>
       <button class="ni" onclick="goPage('cust')" data-page="cust" data-roles="admin,staff"><span class="em">👥</span>مشتریان</button>
+      <button class="ni" onclick="goPage('collect')" data-page="collect" data-roles="admin,staff"><span class="em">💰</span>وصول مطالبات</button>
       <button class="ni" onclick="goPage('supp')" data-page="supp" data-roles="admin,staff"><span class="em">🏭</span>تامین‌کنندگان</button>
       <button class="ni" onclick="goPage('cash')" data-page="cash" data-roles="admin"><span class="em">💵</span>صندوق افغانی</button>
       <button class="ni" onclick="goPage('cheque')" data-page="cheque" data-roles="admin"><span class="em">🏦</span>چک و اقساط</button>
@@ -3660,40 +3661,42 @@ function calcCOGS(prod,doz){
   },0);
 }
 
-// نرمال‌سازی نام محصول: نوشتارهای مختلف یک محصول را یکسان می‌کند تا
-// «بوت شیما سیاه ۷-۱۰» و «بوت شیما سیاه 10-7» در دیتابیس یک محصول شناخته شوند.
-// normalizeProductName("بوت شیما سیاه","۱۰-۷") === "بوت شیما سیاه 7-10"
-function normalizeProductName(name,size){
-  // ۱) ارقام فارسی (۰-۹) و عربی (٠-٩) → ارقام انگلیسی (0-9)
-  const toEnDigits=str=>{
-    if(str===null||str===undefined) return "";
-    const faDigits="۰۱۲۳۴۵۶۷۸۹", arDigits="٠١٢٣٤٥٦٧٨٩";
-    return String(str).replace(/[۰-۹٠-٩]/g,ch=>{
-      const i=faDigits.indexOf(ch);
-      return String(i>=0?i:arDigits.indexOf(ch));
-    });
-  };
-  // ۲) انواع خط تیره → «-» و حذف فاصله‌های اضافی
-  const tidy=str=>str
+// تبدیل ارقام فارسی (۰-۹) و عربی (٠-٩) به ارقام انگلیسی (0-9)
+function toEnDigits(str){
+  if(str===null||str===undefined) return "";
+  const faDigits="۰۱۲۳۴۵۶۷۸۹", arDigits="٠١٢٣٤٥٦٧٨٩";
+  return String(str).replace(/[۰-۹٠-٩]/g,ch=>{
+    const i=faDigits.indexOf(ch);
+    return String(i>=0?i:arDigits.indexOf(ch));
+  });
+}
+// یکسان‌سازی انواع خط تیره و فاصله‌های اضافی
+function _normTidy(str){
+  return str
     .replace(/[\u2010\u2011\u2012\u2013\u2014\u2015\u2212\uFE58\uFE63\uFF0D]/g,"-")
     .replace(/\s+/g," ").trim();
-  // ۳) بازه عددی معکوس را هم‌سو می‌کند تا «10-7» و «7-10» یک محصول باشند
-  const sortRanges=str=>str.replace(/(^|[^\d.])(\d+)\s*-\s*(\d+)(?![\d.])/g,
+}
+// بازه عددی معکوس را صعودی می‌کند تا «10-7» و «7-10» یک محصول باشند
+function _normSortRanges(str){
+  return str.replace(/(^|[^\d.])(\d+)\s*-\s*(\d+)(?![\d.])/g,
     (m,pre,a,b)=>pre+(+a<=+b?a+"-"+b:b+"-"+a));
-
-  const cleanName=sortRanges(tidy(toEnDigits(name)));
-
-  // اگر سایز داده نشده باشد فقط نام (نرمال‌شده) برگردانده می‌شود
-  const sizeRaw=tidy(toEnDigits(size));
-  if(!sizeRaw) return cleanName;
-
-  // ۴) سایز را با «-» جدا کن، اعداد را صعودی مرتب کن و دوباره بچسبان
-  const parts=sizeRaw.split("-").map(p=>p.trim()).filter(p=>p!=="");
-  if(!parts.length) return cleanName;
+}
+// نرمال‌سازی سایز: ارقام فارسی/عربی → انگلیسی، جدا کردن با «-»، مرتب‌سازی صعودی، اتصال دوباره
+// normalizeSize("۱۰-۷") === "7-10"   |   normalizeSize("10-7") === "7-10"
+function normalizeSize(size){
+  const raw=_normTidy(toEnDigits(size));
+  if(!raw) return "";
+  const parts=raw.split("-").map(p=>p.trim()).filter(p=>p!=="");
+  if(!parts.length) return "";
   const allNumeric=parts.length>1&&parts.every(p=>!isNaN(+p));
-  const sortedSize=(allNumeric?parts.slice().sort((a,b)=>(+a)-(+b)):parts).join("-");
-
-  return (cleanName+" "+sortedSize).trim();
+  return (allNumeric?parts.slice().sort((a,b)=>(+a)-(+b)):parts).join("-");
+}
+// نام کامل محصول = نام (نرمال‌شده) + فاصله + سایز مرتب‌شده
+// normalizeProductName("بوت شیما سیاه","۱۰-۷") === "بوت شیما سیاه 7-10"
+function normalizeProductName(name,size){
+  const cleanName=_normSortRanges(_normTidy(toEnDigits(name)));
+  const sizeNorm=normalizeSize(size);
+  return (cleanName+" "+sizeNorm).trim();
 }
 
 // ── Navigation ──
@@ -5063,8 +5066,8 @@ function calcSaleWage(){
 
     if(res && res.length > 0) {
       savedRows.push({...res[0], _paid: itemPaid});
-      // کسر از گدام جنس تولیدشده — با همان normalizeProductName محصول پیدا می‌شود
-      await deductFinishedGoods(it.prod,it.doz);
+      // کسر از گدام جنس تولیدشده — دقیقاً با همان نام نرمال‌شده‌ای که هنگام تولید/ثبت فروش ذخیره شد
+      await deductFinishedGoods(normalizeProductName(it.prod),it.doz);
     } else {
       // 🔍 نمایش دقیق خطای Supabase برای دیباگ
       const errorDetail = window._lastSBError || "خطای نامشخص از سرور";
@@ -5400,13 +5403,15 @@ function calcProd(){
 async function submitProd(){
   const msgEl=document.getElementById("prod-msg");
   const btn=document.getElementById("prod-btn");
-  // درجن همیشه عدد صحیح — parseInt هر اعشاری (مثل 66.667) را بریده و به عدد کامل تبدیل می‌کند
-  const doz=parseInt(document.getElementById("p-doz").value,10)||0;
+  // درجن همیشه عدد صحیح — Math.floor هر اعشاری (مثل 66.667) را به 66 تبدیل می‌کند
+  const doz=Math.floor(+(document.getElementById("p-doz").value)||0);
   if(doz<=0){msgEl.innerHTML='<div class="ib err">تعداد درجن باید بیشتر از صفر باشد</div>';return;}
   const worker=document.getElementById("p-worker").value;
   const model=document.getElementById("p-prod").value.trim();
-  // نام محصول = مدل + سایز نرمال‌شده (ارقام انگلیسی و سایز مرتب‌شده مثل 7-10)
-  const prod=normalizeProductName(model,document.getElementById("p-size").value);
+  // نرمال‌سازی سایز: ارقام فارسی → انگلیسی، جدا کردن با «-»، مرتب‌سازی صعودی و اتصال دوباره
+  // «۱۰-۷» → «7-10» و سپس نام محصول = نام + فاصله + سایز
+  const sizeNorm=normalizeSize(document.getElementById("p-size").value);
+  const prod=(normalizeProductName(model)+" "+sizeNorm).trim();
   const wRate=+(document.getElementById("p-rate").value)||0;
   const wage=doz*wRate,paid=+(document.getElementById("p-paid").value)||0;
   const matCostPerDoz=+(document.getElementById("p-mat-cost").value)||0;
