@@ -7174,7 +7174,16 @@ async function deleteFG(id){
 
 // ── FIXED ASSETS ──
 const CAT_LABELS={machine:"🏭 ماشین",mold:"🔧 قالب",vehicle:"🚗 وسیله",other:"📦 سایر"};
-function calcYearsUsed(d){try{const p=d.split("/");return Math.max(0,new Date().getFullYear()-621-(+p[0]));}catch(e){return 0;}}
+// سال جاری شمسی — همان فرمول today() (۱۴۰۵). اگر تاریخ سیستم در دسترس نبود ۱۴۰۵
+function jalaliYearNow(){const y=parseInt(String(today()).split("/")[0],10);return Number.isFinite(y)&&y>0?y:1405;}
+// سال‌های مصرف‌شده = سال جاری شمسی − سال خرید (بدون new Date — تاریخ‌ها شمسی هستند)
+// پشتیبانی از هر دو جداکننده: 1405/08/25 و 1405-08-25
+function calcYearsUsed(purchaseDate){
+  if(!purchaseDate) return 0;
+  const y=parseInt(String(purchaseDate).trim().split(/[-/.]/)[0],10);
+  if(!Number.isFinite(y)||y<=0) return 0;
+  return Math.max(0,jalaliYearNow()-y);
+}
 function calcBookValue(price,life,yr,salvage=0){const ann=(price-salvage)/life;const acc=Math.min(ann*yr,price-salvage);return Math.max(salvage,price-acc);}
 async function renderAssets(){
   document.getElementById("assets-tbody").innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr>';
@@ -7186,14 +7195,13 @@ async function renderAssets(){
     const price=+r.purchase_price_usd||0;
     const life=+r.useful_life_years||1;
     const salvage=+r.salvage_value||0;
-    const date=new Date(r.purchase_date);
-    // سنوات مصرف‌شده: اول از تاریخ شمسی؛ اگر نامعتبر بود از Date محاسبه می‌شود
-    let yr=calcYearsUsed(r.purchase_date);
-    if(!Number.isFinite(yr)) yr=isNaN(date.getTime())?0:Math.max(0,new Date().getFullYear()-date.getFullYear());
+    // سنوات مصرف‌شده — فقط بر اساس سال شمسی خرید (بدون new Date)
+    const yr=calcYearsUsed(r.purchase_date);
     const ann=life>0?(price-salvage)/life:0;
-    const bv=calcBookValue(price,life,yr,salvage);
-    const acc=price-bv;
-    const pct=price>0?Math.round((acc/price)*100):0;
+    // خریداری‌شده در همین سال (yr=0): استهلاک صفر و ارزش دفتری = قیمت خرید
+    const bv=yr>0?calcBookValue(price,life,yr,salvage):price;
+    const acc=yr>0?price-bv:0;
+    const pct=price>0?Math.min(100,Math.max(0,Math.round((acc/price)*100))):0;
     totalCost+=Number.isFinite(price)?price:0;
     totalBook+=Number.isFinite(bv)?bv:0;
     totalDep+=Number.isFinite(acc)?acc:0;
