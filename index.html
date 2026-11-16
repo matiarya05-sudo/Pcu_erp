@@ -7426,10 +7426,11 @@ async function savePartnerTx(){
   const amtUSD=+(document.getElementById("ptx-usd").value)||0;
   if(!amt&&!amtUSD){document.getElementById("ptx-msg").innerHTML='<div class="ib err">مبلغ الزامی</div>';return;}
   document.getElementById("ptx-btn").disabled=true;
-  const res=await sbPost("partner_transactions",{partner_id:+pid,partner_name:pname,date:document.getElementById("ptx-date").value||today(),type:document.getElementById("ptx-type").value,amount_afn:amt,amount_usd:amtUSD,description:document.getElementById("ptx-desc").value});
+  window._lastSBError=null;
+  const res=await sbPost("partner_transactions",{partner_id:parseInt(pid),partner_name:pname,date:document.getElementById("ptx-date").value||today(),type:document.getElementById("ptx-type").value,amount_afn:Number(amt)||0,amount_usd:Number(amtUSD)||0,description:document.getElementById("ptx-desc").value});
   document.getElementById("ptx-btn").disabled=false;
   if(res){document.getElementById("ptx-msg").innerHTML='<div class="ib ok">✅ ثبت شد!</div>';showSaved();setTimeout(()=>{closeModal("modalPartnerTx");renderPartners();},1000);}
-  else document.getElementById("ptx-msg").innerHTML='<div class="ib err">خطا!</div>';
+  else document.getElementById("ptx-msg").innerHTML='<div class="ib err" style="direction:ltr;text-align:left">Error: ' + (window._lastSBError || 'Unknown') + '</div>';
 }
 async function saveAddPartner(){
   const name=document.getElementById("ap-name").value.trim();
