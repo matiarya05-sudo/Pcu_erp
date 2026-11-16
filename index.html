@@ -7180,33 +7180,44 @@ async function renderAssets(){
   document.getElementById("assets-tbody").innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr>';
   const rows=await sbGet("fixed_assets","?order=id.asc")||[];
   document.getElementById("fa-count").textContent=rows.length;
-  let tC=0,tB=0,tD=0;
+  let totalCost=0,totalBook=0,totalDep=0;
   document.getElementById("assets-tbody").innerHTML=rows.map((r,i)=>{
-    const yr=calcYearsUsed(r.purchase_date);
-    const ann=(+r.purchase_price_usd-(+r.salvage_value||0))/(+r.useful_life_years||1);
-    const bv=calcBookValue(+r.purchase_price_usd,+r.useful_life_years,yr,+r.salvage_value||0);
-    const acc=+r.purchase_price_usd-bv;
-    const pct=Math.round((acc/+r.purchase_price_usd)*100);
-    tC+=+r.purchase_price_usd;tB+=bv;tD+=acc;
+    // 🔢 تبدیل صریح به عدد — null / undefined / رشته باعث NaN می‌شد
+    const price=+r.purchase_price_usd||0;
+    const life=+r.useful_life_years||1;
+    const salvage=+r.salvage_value||0;
+    const date=new Date(r.purchase_date);
+    // سنوات مصرف‌شده: اول از تاریخ شمسی؛ اگر نامعتبر بود از Date محاسبه می‌شود
+    let yr=calcYearsUsed(r.purchase_date);
+    if(!Number.isFinite(yr)) yr=isNaN(date.getTime())?0:Math.max(0,new Date().getFullYear()-date.getFullYear());
+    const ann=life>0?(price-salvage)/life:0;
+    const bv=calcBookValue(price,life,yr,salvage);
+    const acc=price-bv;
+    const pct=price>0?Math.round((acc/price)*100):0;
+    totalCost+=Number.isFinite(price)?price:0;
+    totalBook+=Number.isFinite(bv)?bv:0;
+    totalDep+=Number.isFinite(acc)?acc:0;
     const st=pct>=100?"🔴 مستهلک":pct>=70?"🟡 رو به پایان":"🟢 خوب";
     return`<tr><td style="color:var(--t3)">${i+1}</td><td style="font-weight:700">${r.name}</td>
     <td><span class="bb bbl">${CAT_LABELS[r.category]||r.category}</span></td>
     <td style="font-size:11px">${r.purchase_date}</td>
-    <td class="tdr" style="color:var(--gd);font-weight:700">$${(+r.purchase_price_usd).toFixed(0)}</td>
-    <td style="text-align:center">${r.useful_life_years} سال</td>
+    <td class="tdr" style="color:var(--gd);font-weight:700">$${price.toFixed(0)}</td>
+    <td style="text-align:center">${life} سال</td>
     <td class="tdr" style="color:var(--tl)">$${ann.toFixed(0)}/سال</td>
     <td class="tdr" style="font-weight:800;color:${bv>0?"var(--gr)":"var(--rd)"}">$${bv.toFixed(0)}</td>
     <td>${st}</td>
     <td style="display:flex;gap:3px">
       <button onclick="editAsset(${r.id})" style="background:var(--bl2);border:1px solid rgba(59,138,245,.3);color:var(--bl);border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer">✏️</button>
-      <button onclick="deleteAsset(${r.id})" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:5px;padding:3px 7px;font-size:11px;cursor:
-
-    cursor:pointer">🗑️</button>
+      <button onclick="deleteAsset(${r.id})" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:5px;padding:3px 7px;font-size:11px;cursor:pointer">🗑️</button>
     </td></tr>`;
   }).join("");
-  document.getElementById("fa-total-cost").textContent="$"+tC.toFixed(0);
-  document.getElementById("fa-book-val").textContent="$"+tB.toFixed(0);
-  document.getElementById("fa-total-dep").textContent="$"+tD.toFixed(0);
+  // 🛡 جلوگیری از نمایش NaN در کارت‌های خلاصه
+  if(isNaN(totalCost)) totalCost=0;
+  if(isNaN(totalBook)) totalBook=0;
+  if(isNaN(totalDep)) totalDep=0;
+  document.getElementById("fa-total-cost").textContent="$"+totalCost.toFixed(0);
+  document.getElementById("fa-book-val").textContent="$"+totalBook.toFixed(0);
+  document.getElementById("fa-total-dep").textContent="$"+totalDep.toFixed(0);
 }
 function calcAssetDep(){
   const price=+(document.getElementById("fa-price-usd").value)||0;
