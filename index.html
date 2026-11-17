@@ -1676,18 +1676,34 @@ notify pgrst, 'reload schema';</pre>
       </div>
       <div class="fg"><label>تامین‌کننده (۲۶)</label><select id="b-supp"></select></div>
       <div class="row2">
-        <div class="fg"><label>ماده (۱۶)</label><select id="b-mat"></select></div>
-        <div class="fg"><label id="b-kg-label">کیلو</label><input type="number" inputmode="decimal" id="b-kg" min="0" step="0.1" oninput="calcBuy()" inputmode="decimal"/></div>
+        <div class="fg"><label>واحد پول</label>
+          <select id="b-currency" onchange="onBuyCurrencyChange()">
+            <option value="USD">USD — دالر</option>
+            <option value="AFN">AFN — افغانی</option>
+          </select>
+        </div>
+        <div class="fg"><label>نرخ دالر (؋)</label><input type="number" inputmode="decimal" id="b-rate" oninput="calcBuy()" inputmode="decimal"/></div>
       </div>
-      <div class="row2">
-        <div class="fg"><label>مبلغ ($)</label><input type="number" inputmode="decimal" id="b-usd" min="0" step="0.01" oninput="calcBuy()" inputmode="decimal"/></div>
-        <div class="fg"><label>نرخ دالر</label><input type="number" inputmode="decimal" id="b-rate" oninput="calcBuy()" inputmode="decimal"/></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 4px;flex-wrap:wrap;gap:4px">
+        <div style="font-size:12px;font-weight:700;color:var(--gd)">📦 اقلام خرید</div>
+        <button type="button" onclick="addBuyItem()" class="btn bsec" style="padding:5px 12px;font-size:11px">+ اضافه کردن جنس</button>
       </div>
-      <div class="row2">
-        <div class="fg"><label>مبلغ (؋) اتومات</label><input id="b-afn" readonly/></div>
-        <div class="fg"><label id="b-upm-label">قیمت/کیلو اتومات</label><input id="b-upm" readonly/></div>
+      <div id="buy-items-list"></div>
+      <div style="background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.15);border-radius:10px;padding:12px;margin-top:8px">
+        <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px">
+          <span style="color:var(--t2)">جمع اقلام ($):</span>
+          <span id="b-usd-total" style="color:var(--bl);font-weight:700">$ 0.00</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px">
+          <span style="color:var(--t2)">جمع اقلام (؋):</span>
+          <span id="b-afn-total" style="color:var(--gd);font-weight:700">؋ 0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px">
+          <span style="color:var(--t2)">میانگین قیمت فی واحد:</span>
+          <span id="b-upm" style="color:var(--tl)">—</span>
+        </div>
       </div>
-      <div class="fg"><label>پرداختی (؋)</label><input type="number" inputmode="decimal" id="b-paid" min="0" oninput="calcBuy()" inputmode="decimal"/></div>
+      <div class="fg" style="margin-top:8px"><label>پرداختی (؋)</label><input type="number" inputmode="decimal" id="b-paid" min="0" oninput="calcBuy()" inputmode="decimal"/></div>
       <div id="b-rem" class="ib warn"></div>
     </div>
     <div class="modal-foot">
@@ -3614,9 +3630,6 @@ function populateDropdowns(){
   if(bs) bs.innerHTML='<option value="">— تامین‌کننده —</option>'+
     SUPPLIERS.map(s=>`<option value="${s.id}">${s.n} | ${usd(S.suppMap[s.id]?.bal||0)}</option>`).join("");
     
-  if(document.getElementById("b-mat"))
-    document.getElementById("b-mat").innerHTML=MATS.map(m=>`<option>${m}</option>`).join("");
-
   // محصولات — نام کامل (مدل + سایز) از جدول products
   const prodNames=getProductNames();
   ["co-prod","br-product"].forEach(id=>{
@@ -4226,7 +4239,7 @@ async function renderBuy(){
     <td>${b.voucher_no?`<span class="bb btl" style="direction:ltr">${b.voucher_no}</span>`:'<span style="color:var(--t3)">—</span>'}</td>
     <td style="font-weight:700">${b.supplier_name}</td>
     <td><span class="bb btl">${b.material}</span></td>
-    <td style="color:var(--gd);font-weight:700">${b.kg} کیلو</td>
+    <td style="color:var(--gd);font-weight:700">${b.kg} ${b.unit==="piece"?"دانه":"کیلو"}</td>
     <td class="tdr" style="color:var(--bl);font-weight:700">${usd(b.amount_usd)}</td>
     <td class="tdr">${afn(b.amount_afn)}</td>
     <td>${+b.remaining_usd>0.01?`<span class="bb br2">${usd(b.remaining_usd)}</span>`:'<span class="bb bg2">تسویه</span>'}</td>
@@ -5159,19 +5172,67 @@ async function deductFinishedGoods(prod,dozen){
   },"?id=eq."+fg.id))!==null;
 }
 
+// ── اقلام خرید چندگانه ──
+let _buyItems=[];
+let _buyItemIdx=0;
+
+// فهرست مواد برای انتخاب قلم خرید — مواد استاندارد + مواد سفارشی موجود در گدام
+function buyMatList(){
+  return [...new Set([...MATS,...Object.keys(S.stockMap||{})])];
+}
+function buyMatOptions(selected){
+  return buyMatList().map(m=>`<option value="${escHTML(m)}"${m===selected?" selected":""}>${escHTML(m)}</option>`).join("");
+}
+// واحد هر ماده از جدول mat_stock گرفته می‌شود (کیلو یا دانه)
+function buyItemUnit(mat){
+  return (S.stockMap[mat]?.unit||"kg")==="piece"?"piece":"kg";
+}
+function buyCurrencyRate(){
+  const rate=+(document.getElementById("b-rate")?.value)||+S.usdRate||68;
+  return rate>0?rate:68;
+}
+// مبلغ هر قلم به افغانی بر اساس واحد پول انتخاب‌شده
+function buyItemAfn(it){
+  const currency=document.getElementById("b-currency")?.value||"USD";
+  const amount=+it.amount||0;
+  return currency==="AFN"?amount:amount*buyCurrencyRate();
+}
+
+function addBuyItem(){
+  const mats=buyMatList();
+  // ماده‌ای که قبلاً انتخاب نشده را پیشنهاد بده
+  const mat=mats.find(m=>!_buyItems.some(it=>it.material===m))||mats[0]||"";
+  _buyItemIdx++;
+  _buyItems.push({idx:_buyItemIdx,material:mat,kg:0,amount:0,unit:buyItemUnit(mat)});
+  renderBuyItems();
+  calcBuy();
+}
+function removeBuyItem(index){
+  _buyItems=_buyItems.filter(x=>x.idx!==index);
+  renderBuyItems();
+  calcBuy();
+}
+function updateBuyItem(index,field,value){
+  const it=_buyItems.find(x=>x.idx===index);
+  if(!it) return;
+  if(field==="kg"||field==="amount") it[field]=+value||0;
+  else it[field]=value;
+  if(field==="material"){
+    it.unit=buyItemUnit(value);
+    renderBuyItems(); // برچسب واحد (کیلو/دانه) باید عوض شود
+  }
+  calcBuy();
+}
 function initBuyModal(){
   document.getElementById("b-date").value=today();
   document.getElementById("b-bill").value="";
   document.getElementById("b-voucher").value="";
-  document.getElementById("b-kg").value="";
-  document.getElementById("b-usd").value="";
+  document.getElementById("b-currency").value="USD";
   document.getElementById("b-rate").value=S.usdRate;
   document.getElementById("b-paid").value="";
-  document.getElementById("b-afn").value="";
-  document.getElementById("b-upm").value="";
   document.getElementById("buy-msg").innerHTML="";
-  onBuyMatChange();
-  calcBuy();
+  _buyItems=[];_buyItemIdx=0;
+  addBuyItem();
   refreshBuyVoucher();
 }
 // شماره حواله خرید را اتومات پیشنهاد می‌دهد (قابل تغییر توسط کاربر)
@@ -5180,26 +5241,64 @@ async function refreshBuyVoucher(){
   if(!el) return;
   el.value=await suggestVoucherNo("purchases","VCH-PUR");
 }
-async function onBuyMatChange(){
-  const mat=document.getElementById("b-mat")?.value;
-  if(!mat) return;
-  const rows=await sbGet("mat_stock",`?material=eq.${encodeURIComponent(mat)}`)||[];
-  const unit=rows[0]?.unit||"kg";
-  const isPiece=unit==="piece";
-  document.getElementById("b-kg-label").textContent=isPiece?"دانه":"کیلو";
-  document.getElementById("b-upm-label").textContent=isPiece?"قیمت/دانه اتومات":"قیمت/کیلو اتومات";
-  document.getElementById("b-kg").step=isPiece?"1":"0.1";
-  document.getElementById("b-kg").dataset.unit=unit;
+function renderBuyItems(){
+  const el=document.getElementById("buy-items-list");
+  if(!el) return;
+  const currency=document.getElementById("b-currency")?.value||"USD";
+  if(!_buyItems.length){
+    el.innerHTML='<div style="text-align:center;color:var(--t3);font-size:12px;padding:8px">+ یک جنس اضافه کن</div>';
+    return;
+  }
+  el.innerHTML=_buyItems.map(it=>{
+    const unitLbl=it.unit==="piece"?"دانه":"کیلو";
+    return '<div style="background:var(--b3);border:1px solid var(--bd);border-radius:8px;padding:8px;margin-bottom:8px">'+
+      '<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">'+
+      '<select onchange="updateBuyItem('+it.idx+',&quot;material&quot;,this.value)" style="flex:1;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-family:inherit;font-size:11px">'+
+      buyMatOptions(it.material)+
+      '</select>'+
+      '<button type="button" onclick="removeBuyItem('+it.idx+')" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:5px 8px;cursor:pointer;font-size:12px;flex-shrink:0">🗑</button></div>'+
+      '<div style="display:flex;gap:6px">'+
+      '<div style="flex:1"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">'+unitLbl+'</div>'+
+      '<input type="number" inputmode="decimal" value="'+(it.kg||"")+'" min="0" step="'+(it.unit==="piece"?"1":"0.1")+'" placeholder="0" oninput="updateBuyItem('+it.idx+',&quot;kg&quot;,this.value)" style="width:100%;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-weight:700;font-family:inherit;font-size:13px"/></div>'+
+      '<div style="flex:1"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">مبلغ ('+currency+')</div>'+
+      '<input type="number" inputmode="decimal" value="'+(it.amount||"")+'" min="0" step="0.01" placeholder="0" oninput="updateBuyItem('+it.idx+',&quot;amount&quot;,this.value)" style="width:100%;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--bl);font-weight:700;font-family:inherit;font-size:13px"/></div>'+
+      '</div>'+
+      '<div style="margin-top:5px;padding:4px 7px;background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.15);border-radius:6px;font-size:11px;font-weight:700;color:var(--gd);text-align:center">قیمت فی '+unitLbl+': <span id="buy-item-upm-'+it.idx+'">—</span></div>'+
+      '</div>';
+  }).join("");
+  updateBuyItemPrices();
+}
+// قیمت فی واحد هر قلم (افغانی) — برای شفافیت میانگین متحرک
+function updateBuyItemPrices(){
+  _buyItems.forEach(it=>{
+    const el=document.getElementById("buy-item-upm-"+it.idx);
+    if(!el) return;
+    const afnVal=buyItemAfn(it);
+    el.textContent=(+it.kg>0&&afnVal>0)?afn(afnVal/(+it.kg)):"—";
+  });
+}
+function onBuyCurrencyChange(){
+  renderBuyItems();
+  calcBuy();
 }
 function calcBuy(){
-  const kg=+(document.getElementById("b-kg").value)||0;
-  const usdAmt=+(document.getElementById("b-usd").value)||0;
-  const rate=+(document.getElementById("b-rate").value)||68;
-  const pAfn=+(document.getElementById("b-paid").value)||0;
-  const tAfn=usdAmt*rate,upm=kg>0?tAfn/kg:0,rem=usdAmt-pAfn/rate;
-  document.getElementById("b-afn").value=afn(tAfn);
-  document.getElementById("b-upm").value=afn(upm);
-  document.getElementById("b-rem").textContent=`⚡ میانگین متحرک اتومات آپدیت | باقی: ${usd(rem)}`;
+  const currency=document.getElementById("b-currency")?.value||"USD";
+  const rate=buyCurrencyRate();
+  const totalNative=_buyItems.reduce((a,it)=>a+(+it.amount||0),0);
+  const totalAfn=currency==="AFN"?totalNative:totalNative*rate;
+  const totalUsd=currency==="AFN"?totalNative/rate:totalNative;
+  const totalKg=_buyItems.reduce((a,it)=>a+(+it.kg||0),0);
+  const paid=+(document.getElementById("b-paid")?.value)||0;
+  const remUSD=totalUsd-paid/rate;
+  const afnEl=document.getElementById("b-afn-total");
+  const usdEl=document.getElementById("b-usd-total");
+  const upmEl=document.getElementById("b-upm");
+  const remEl=document.getElementById("b-rem");
+  if(afnEl) afnEl.textContent=afn(totalAfn);
+  if(usdEl) usdEl.textContent=usd(totalUsd);
+  if(upmEl) upmEl.textContent=totalKg>0?afn(totalAfn/totalKg):"—";
+  if(remEl) remEl.textContent=`⚡ میانگین متحرک اتومات آپدیت | باقی: ${usd(remUSD)}`;
+  updateBuyItemPrices();
 }
 // شناسه عددی تامین‌کننده برای ستون integer جدول purchases
 // ("s12" → 12 ، عدد خالص → همان عدد ، خالی/نامعتبر → null)
@@ -5210,60 +5309,145 @@ function supplierIdToInt(raw){
   const digits=String(raw).replace(/[^0-9]/g,"");
   return digits?parseInt(digits,10):null;
 }
+// میانگین متحرک ماده در mat_stock (PATCH و اگر رکورد نبود POST)
+async function buyApplyStock(mat,kg,unitCostAfn,unit){
+  if(!mat||!(+kg>0)) return true;
+  const cur=S.stockMap[mat]||{kg:0,avgCost:0,val:0,unit:unit||"kg"};
+  const curKg=+cur.kg||0,curAvg=+cur.avgCost||0;
+  const newKg=curKg+(+kg);
+  const newVal=curKg*curAvg+(+kg)*(+unitCostAfn||0);
+  const newAvg=newKg>0?newVal/newKg:0;
+  const body={total_kg:newKg,total_value_afn:newVal,avg_cost:newAvg,updated_at:new Date().toISOString()};
+  const res=await sbPatch("mat_stock",body,`?material=eq.${encodeURIComponent(mat)}`);
+  if(res===null) return false;
+  if(Array.isArray(res)&&res.length===0){
+    const ins=await sbPost("mat_stock",{material:mat,unit:cur.unit||unit||"kg",...body});
+    if(ins===null) return false;
+  }
+  S.stockMap[mat]={kg:newKg,avgCost:newAvg,val:newVal,unit:cur.unit||unit||"kg"};
+  return true;
+}
+// بدهی تامین‌کننده به دالر (مقدار نهایی ذخیره می‌شود)
+async function buyApplySupplierBalance(sidRaw,sn,newBal){
+  const cur=S.suppMap[sidRaw]||S.suppMap[String(supplierIdToInt(sidRaw))]||{bal:0,balAfn:0};
+  const body={balance_usd:+(+newBal||0).toFixed(2),updated_at:new Date().toISOString()};
+  const res=await sbPatch("supplier_balances",body,`?supplier_id=eq.${encodeURIComponent(sidRaw)}`);
+  if(res===null) return false;
+  if(Array.isArray(res)&&res.length===0){
+    const ins=await sbPost("supplier_balances",{supplier_id:sidRaw,supplier_name:sn||cur.name||"",balance_afn:+cur.balAfn||0,...body});
+    if(ins===null) return false;
+  }
+  S.suppMap[sidRaw]={name:sn||cur.name||"",bal:body.balance_usd,balAfn:+cur.balAfn||0};
+  return true;
+}
 async function submitBuy(){
+  const msg=document.getElementById("buy-msg");
+  const buyBtn=document.getElementById("buy-btn");
   const sidRaw=document.getElementById("b-supp").value;
   // supplier_id در دیتابیس integer است → باید عدد یا null برود، نه رشته
   const sid=supplierIdToInt(sidRaw);
-  const mat=document.getElementById("b-mat").value;
-  // همه مقادیر عددی صریحاً با Number() تبدیل می‌شوند
-  const num=id=>{const v=Number(document.getElementById(id).value);return Number.isFinite(v)?v:0;};
-  const kg=num("b-kg");
-  const usdAmt=num("b-usd");
-  const rate=num("b-rate")||68;
-  const pAfn=num("b-paid");
-  if(!sidRaw||!kg||!usdAmt){document.getElementById("buy-msg").innerHTML='<div class="ib err">تامین‌کننده، مقدار و مبلغ الزامی</div>';return;}
-  const tAfn=usdAmt*rate,upm=tAfn/kg,remUSD=usdAmt-pAfn/rate;
-  const sn=SUPPLIERS.find(s=>s.id===sidRaw)?.n||"";
-  document.getElementById("buy-btn").disabled=true;document.getElementById("buy-btn").textContent="در حال ذخیره...";
+  const currency=document.getElementById("b-currency").value;
+  const rate=+(document.getElementById("b-rate").value)||+S.usdRate||68;
+  const pAfn=+(document.getElementById("b-paid").value)||0;
+  const sn=SUPPLIERS.find(s=>s.id===sidRaw)?.n||S.suppMap[sidRaw]?.name||"";
+
+  // ردیف‌های کاملاً خالی نادیده گرفته می‌شوند؛ هر ردیف نیمه‌کاره خطاست
+  const filled=_buyItems.filter(it=>(+it.kg||0)>0||(+it.amount||0)>0);
+  const bad=filled.filter(it=>!((+it.kg||0)>0&&(+it.amount||0)>0));
+  if(!sidRaw){msg.innerHTML='<div class="ib err">تامین‌کننده الزامی است</div>';return;}
+  if(!filled.length){msg.innerHTML='<div class="ib err">حداقل یک جنس با مقدار و مبلغ بیشتر از صفر لازم است</div>';return;}
+  if(bad.length){msg.innerHTML='<div class="ib err">در هر قلم، مقدار و مبلغ باید بیشتر از صفر باشد</div>';return;}
+  if(!(rate>0)){msg.innerHTML='<div class="ib err">نرخ دالر معتبر نیست</div>';return;}
+
+  // هر قلم: محاسبه مبلغ به دالر/افغانی بر اساس واحد پول انتخاب‌شده
+  const items=filled.map(it=>{
+    const kg=+it.kg||0,amount=+it.amount||0;
+    let amountUsd,amountAfn;
+    if(currency==="AFN"){amountAfn=+amount.toFixed(2);amountUsd=+(amount/rate).toFixed(2);}
+    else{amountUsd=+amount.toFixed(2);amountAfn=+(amount*rate).toFixed(2);}
+    return {material:it.material,unit:it.unit,kg,amountUsd,amountAfn,costPerKg:kg>0?+(amountAfn/kg).toFixed(2):0};
+  });
+  const totalAfn=items.reduce((a,r)=>a+r.amountAfn,0);
+  // پرداختی بین اقلام به نسبت مبلغ هر قلم تقسیم می‌شود (جمع = پرداختی کل)
+  let distributed=0;
+  items.forEach((r,i)=>{
+    const rowPaid=i===items.length-1
+      ?Math.max(0,+(pAfn-distributed).toFixed(2))
+      :+(totalAfn>0?pAfn*r.amountAfn/totalAfn:0).toFixed(2);
+    distributed=+(distributed+rowPaid).toFixed(2);
+    r.paidAfn=rowPaid;
+    r.remainingUsd=+(r.amountUsd-rowPaid/rate).toFixed(2);
+  });
+
+  buyBtn.disabled=true;buyBtn.textContent="در حال ذخیره...";
   window._lastSBError=null;
 
-  // شماره حواله/رسید — هر حرکت مواد به یک حواله وصل می‌شود
+  // شماره حواله/رسید — همه اقلام این خرید (یک بل) همین حواله را می‌گیرند
   const voucher=(document.getElementById("b-voucher").value||"").trim()
     ||await suggestVoucherNo("purchases","VCH-PUR");
   const hasVoucherCol=await tableHasColumn("purchases","voucher_no");
   const voucherFields=hasVoucherCol?{voucher_no:voucher}:{};
 
-  // ستون‌ها دقیقاً مطابق دیتابیس شما (unit و status در جدول موجود هستند ولی لازم نیستند)
-  const res=await sbPost("purchases",{
-    date:document.getElementById("b-date").value,
-    purchase_date:document.getElementById("b-date").value,
-    supplier_id:sid,
-    supplier_name:sn,
-    bill:document.getElementById("b-bill").value,
-    material:mat,
-    kg:Number(kg),
-    amount_usd:Number(usdAmt),
-    usd_rate:Number(rate),
-    amount_afn:Number(tAfn),
-    paid_afn:Number(pAfn),
-    remaining_usd:Number(remUSD.toFixed(2)),
-    cost_per_kg:Number(upm.toFixed(2)),
-    ...voucherFields
-  });
-  
-  if(res){
-    const cur=S.stockMap[mat]||{kg:0,avgCost:0,val:0};
-    const newKg=cur.kg+kg,newVal=cur.kg*cur.avgCost+kg*upm,newAvg=newKg>0?newVal/newKg:0;
-    await sbPatch("mat_stock",{total_kg:newKg,total_value_afn:newVal,avg_cost:newAvg,updated_at:new Date().toISOString()},`?material=eq.${encodeURIComponent(mat)}`);
-    const curBal=S.suppMap[sidRaw]?.bal||0;
-    await sbPatch("supplier_balances",{balance_usd:+(curBal+remUSD).toFixed(2),updated_at:new Date().toISOString()},`?supplier_id=eq.${sidRaw}`);
-    await refreshStockMap();await refreshSuppMap();
-    document.getElementById("buy-msg").innerHTML=
-      `<div class="ib ok">✅ خرید ذخیره شد! | حواله: ${voucher}</div>`+
-      (hasVoucherCol?"":'<div class="ib warn">⚠️ ستون <b>voucher_no</b> در جدول purchases نیست — حواله ذخیره نشد. SQL راهنما در صفحه انبار موجود است.</div>');
-    showSaved();setTimeout(()=>{closeModal("modalBuy");renderBuy();},1500);
-  } else document.getElementById("buy-msg").innerHTML = '<div class="ib err" style="direction:ltr;text-align:left">Error: ' + (window._lastSBError || 'Unknown') + '</div>';
-  document.getElementById("buy-btn").disabled=false;document.getElementById("buy-btn").textContent="ثبت خرید ✓";
+  const date=document.getElementById("b-date").value;
+  const bill=document.getElementById("b-bill").value;
+  let savedCount=0,postFailed=0,stockFailed=0,balFailed=0;
+  let supplierBal=+(S.suppMap[sidRaw]?.bal??S.suppMap[sid]?.bal??0);
+
+  // هر قلم یک ردیف purchases می‌شود — همه با یک شماره بل/حواله
+  for(const r of items){
+    const res=await sbPost("purchases",{
+      date,purchase_date:date,
+      supplier_id:sid,supplier_name:sn,
+      bill,material:r.material,
+      kg:r.kg,
+      unit:r.unit,
+      amount_usd:r.amountUsd,
+      usd_rate:rate,
+      amount_afn:r.amountAfn,
+      paid_afn:r.paidAfn,
+      remaining_usd:r.remainingUsd,
+      cost_per_kg:r.costPerKg,
+      ...voucherFields
+    });
+    if(!res){r.failed=true;postFailed++;continue;}
+    savedCount++;
+    // میانگین متحرک انبار برای هر قلم
+    if(!(await buyApplyStock(r.material,r.kg,r.costPerKg,r.unit))) stockFailed++;
+    // بدهی تامین‌کننده برای هر قلم
+    supplierBal=+(supplierBal+r.remainingUsd).toFixed(2);
+    if(!(await buyApplySupplierBalance(sidRaw,sn,supplierBal))) balFailed++;
+  }
+
+  await refreshStockMap();await refreshSuppMap();
+  buyBtn.disabled=false;buyBtn.textContent="ثبت خرید ✓";
+
+  // در صورت خطای جزئی فقط اقلام ذخیره‌نشده در فارم می‌مانند تا دوباره ثبت نشوند
+  if(postFailed){
+    const failed=items.filter(r=>r.failed);
+    _buyItems=failed.map(r=>({
+      idx:++_buyItemIdx,material:r.material,kg:r.kg,unit:r.unit,
+      amount:currency==="AFN"?r.amountAfn:r.amountUsd
+    }));
+    const failedPaid=+failed.reduce((a,r)=>a+r.paidAfn,0).toFixed(2);
+    document.getElementById("b-paid").value=failedPaid||"";
+    renderBuyItems();
+    calcBuy();
+  }
+
+  if(!savedCount){
+    msg.innerHTML=sbErrorHTML("هیچ قلمی ذخیره نشد");
+    return;
+  }
+  const warn=[];
+  if(postFailed) warn.push(`${postFailed} قلم ذخیره نشد`);
+  if(stockFailed) warn.push(`موجودی ${stockFailed} ماده آپدیت نشد`);
+  if(balFailed) warn.push("بدهی تامین‌کننده کامل آپدیت نشد");
+  msg.innerHTML=`<div class="ib ok">✅ ${savedCount} قلم خرید ذخیره شد! | حواله: ${escHTML(voucher)} | جمع: ${afn(totalAfn)}</div>`+
+    (hasVoucherCol?"":'<div class="ib warn">⚠️ ستون <b>voucher_no</b> در جدول purchases نیست — حواله ذخیره نشد. SQL راهنما در صفحه انبار موجود است.</div>')+
+    (warn.length?`<div class="ib warn">⚠️ ${warn.join(" — ")}</div>`:"");
+  showSaved();
+  renderBuy();
+  if(!postFailed) setTimeout(()=>{closeModal("modalBuy");},1500);
 }
 
 // Prod modal — مواد مصرفی دستی
