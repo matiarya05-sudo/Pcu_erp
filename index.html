@@ -49,9 +49,9 @@ body>*{position:relative;z-index:1}
   backdrop-filter:blur(24px);
   border-bottom:1px solid rgba(212,168,67,.15);
 }
-.nav-title{font-size:14px;font-weight:800;
+.nav-title{font-size:14px;font-weight:800;color:var(--gd);
   background:linear-gradient(135deg,var(--gd),var(--g2));
-   :text;-webkit-text-fill-color:transparent}
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .hamburger{background:none;border:none;color:var(--t2);font-size:22px;cursor:pointer;padding:2px;transition:color .2s}
 .hamburger:hover{color:var(--gd)}
 .rate-pill{
@@ -3628,7 +3628,11 @@ function getProductModels(){
 function populateDropdowns(){
   const bs=document.getElementById("b-supp");
   if(bs) bs.innerHTML='<option value="">— تامین‌کننده —</option>'+
-    SUPPLIERS.map(s=>`<option value="${s.id}">${s.n} | ${usd(S.suppMap[s.id]?.bal||0)}</option>`).join("");
+    SUPPLIERS.map(s=>{
+      // بدهی فقط وقتی نمایش داده می‌شود که واقعاً بیشتر از صفر باشد
+      const bal=+(S.suppMap[s.id]?.bal||0);
+      return `<option value="${s.id}">${s.n}${bal>0?" | "+usd(bal):""}</option>`;
+    }).join("");
     
   // محصولات — نام کامل (مدل + سایز) از جدول products
   const prodNames=getProductNames();
@@ -3704,6 +3708,13 @@ const PAGE_TITLES={dash:"داشبورد",sales:"فروش",orders:"فرمایشا
 function goPage(id){
   const adminOnlyPages=["cash","report","reports_more","settings","emp","tax","cheque","partners","expenses","assets"];
   if(adminOnlyPages.includes(id)&&currentUser?.role!=="admin"){goPage("dash");return;}
+  // عنوان صفحه باید قبل از هر return به‌روز شود تا هیچ‌وقت خالی نماند
+  const allTitles={dash:"داشبورد",sales:"فروش",orders:"فرمایشات",buy:"خرید مواد",prod:"تولید",
+    stock:"انبار مواد",cust:"مشتریان",supp:"تامین‌کنندگان",cash:"صندوق افغانی",
+    report:"گزارشات & سود و زیان",reports_more:"گزارش‌های تفصیلی",expenses:"مصارف تفکیکی",
+    emp:"کارمندان و شاگردان",tax:"مالیات",collect:"وصول مطالبات",cheque:"💚 قرض حسنه",
+    partners:"شریکان / سهام‌داران",settings:"تنظیمات",batch:"مکسچر و تولید",assets:"دارایی‌های ثابت"};
+  document.getElementById("pageTitle").textContent = allTitles[id] || id;
   document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
   const pg=document.getElementById("page-"+id);
   if(!pg){return;}
@@ -3712,12 +3723,6 @@ function goPage(id){
   document.querySelector(`.ni[data-page="${id}"]`)?.classList.add("on");
   document.querySelectorAll(".tab-item").forEach(t=>t.classList.remove("on"));
   document.querySelector(`.tab-item[data-tab="${id}"]`)?.classList.add("on");
-  const allTitles={dash:"داشبورد",sales:"فروش",orders:"فرمایشات",buy:"خرید مواد",prod:"تولید",
-    stock:"انبار مواد",cust:"مشتریان",supp:"تامین‌کنندگان",cash:"صندوق افغانی",
-    report:"گزارشات & سود و زیان",reports_more:"گزارش‌های تفصیلی",expenses:"مصارف تفکیکی",
-    emp:"کارمندان و شاگردان",tax:"مالیات",collect:"وصول مطالبات",cheque:"💚 قرض حسنه",
-    partners:"شریکان / سهام‌داران",settings:"تنظیمات",batch:"مکسچر و تولید",assets:"دارایی‌های ثابت"};
-  document.getElementById("pageTitle").textContent=allTitles[id]||id;
   toggleDrawer(false);
   renderPage(id);
 }
@@ -5191,11 +5196,20 @@ function buyCurrencyRate(){
   const rate=+(document.getElementById("b-rate")?.value)||+S.usdRate||68;
   return rate>0?rate:68;
 }
+// تبدیل مبلغ واردشده (به واحد پول انتخاب‌شده) به دالر و افغانی
+// AFN → amount_afn = مبلغ واردشده ، amount_usd = مبلغ / نرخ دالر
+// USD → amount_usd = مبلغ واردشده ، amount_afn = مبلغ × نرخ دالر
+function buyConvertAmount(amount,currency,rate){
+  const amt=+(amount||0);
+  const r=+(rate>0?rate:buyCurrencyRate())||68;
+  return currency==="AFN"
+    ? {amountUsd:+(amt/r).toFixed(2),amountAfn:+amt.toFixed(2)}
+    : {amountUsd:+amt.toFixed(2),amountAfn:+(amt*r).toFixed(2)};
+}
 // مبلغ هر قلم به افغانی بر اساس واحد پول انتخاب‌شده
 function buyItemAfn(it){
   const currency=document.getElementById("b-currency")?.value||"USD";
-  const amount=+it.amount||0;
-  return currency==="AFN"?amount:amount*buyCurrencyRate();
+  return buyConvertAmount(it.amount,currency,buyCurrencyRate()).amountAfn;
 }
 
 function addBuyItem(){
@@ -5250,7 +5264,11 @@ function renderBuyItems(){
     return;
   }
   el.innerHTML=_buyItems.map(it=>{
-    const unitLbl=it.unit==="piece"?"دانه":"کیلو";
+    // واحد از mat_stock خوانده می‌شود: piece → «دانه» ، در غیر این صورت «کیلو»
+    const unitKey=buyItemUnit(it.material);
+    it.unit=unitKey; // همین واحد در ستون unit جدول purchases ذخیره می‌شود
+    const unitLbl=unitKey==="piece"?"دانه":"کیلو";
+    const currencyLbl=currency==="AFN"?"AFN":"USD";
     return '<div style="background:var(--b3);border:1px solid var(--bd);border-radius:8px;padding:8px;margin-bottom:8px">'+
       '<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">'+
       '<select onchange="updateBuyItem('+it.idx+',&quot;material&quot;,this.value)" style="flex:1;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-family:inherit;font-size:11px">'+
@@ -5259,8 +5277,8 @@ function renderBuyItems(){
       '<button type="button" onclick="removeBuyItem('+it.idx+')" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:5px 8px;cursor:pointer;font-size:12px;flex-shrink:0">🗑</button></div>'+
       '<div style="display:flex;gap:6px">'+
       '<div style="flex:1"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">'+unitLbl+'</div>'+
-      '<input type="number" inputmode="decimal" value="'+(it.kg||"")+'" min="0" step="'+(it.unit==="piece"?"1":"0.1")+'" placeholder="0" oninput="updateBuyItem('+it.idx+',&quot;kg&quot;,this.value)" style="width:100%;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-weight:700;font-family:inherit;font-size:13px"/></div>'+
-      '<div style="flex:1"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">مبلغ ('+currency+')</div>'+
+      '<input type="number" inputmode="decimal" value="'+(it.kg||"")+'" min="0" step="'+(unitKey==="piece"?"1":"0.1")+'" placeholder="0" oninput="updateBuyItem('+it.idx+',&quot;kg&quot;,this.value)" style="width:100%;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-weight:700;font-family:inherit;font-size:13px"/></div>'+
+      '<div style="flex:1"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">مبلغ ('+currencyLbl+')</div>'+
       '<input type="number" inputmode="decimal" value="'+(it.amount||"")+'" min="0" step="0.01" placeholder="0" oninput="updateBuyItem('+it.idx+',&quot;amount&quot;,this.value)" style="width:100%;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--bl);font-weight:700;font-family:inherit;font-size:13px"/></div>'+
       '</div>'+
       '<div style="margin-top:5px;padding:4px 7px;background:rgba(212,168,67,.06);border:1px solid rgba(212,168,67,.15);border-radius:6px;font-size:11px;font-weight:700;color:var(--gd);text-align:center">قیمت فی '+unitLbl+': <span id="buy-item-upm-'+it.idx+'">—</span></div>'+
@@ -5282,11 +5300,12 @@ function onBuyCurrencyChange(){
   calcBuy();
 }
 function calcBuy(){
-  const currency=document.getElementById("b-currency")?.value||"USD";
+  const currency=document.getElementById("b-currency")?.value==="AFN"?"AFN":"USD";
   const rate=buyCurrencyRate();
   const totalNative=_buyItems.reduce((a,it)=>a+(+it.amount||0),0);
-  const totalAfn=currency==="AFN"?totalNative:totalNative*rate;
-  const totalUsd=currency==="AFN"?totalNative/rate:totalNative;
+  const totals=buyConvertAmount(totalNative,currency,rate);
+  const totalAfn=totals.amountAfn;
+  const totalUsd=totals.amountUsd;
   const totalKg=_buyItems.reduce((a,it)=>a+(+it.kg||0),0);
   const paid=+(document.getElementById("b-paid")?.value)||0;
   const remUSD=totalUsd-paid/rate;
@@ -5346,8 +5365,8 @@ async function submitBuy(){
   const sidRaw=document.getElementById("b-supp").value;
   // supplier_id در دیتابیس integer است → باید عدد یا null برود، نه رشته
   const sid=supplierIdToInt(sidRaw);
-  const currency=document.getElementById("b-currency").value;
-  const rate=+(document.getElementById("b-rate").value)||+S.usdRate||68;
+  const currency=document.getElementById("b-currency").value==="AFN"?"AFN":"USD";
+  const rate=buyCurrencyRate();
   const pAfn=+(document.getElementById("b-paid").value)||0;
   const sn=SUPPLIERS.find(s=>s.id===sidRaw)?.n||S.suppMap[sidRaw]?.name||"";
 
@@ -5360,12 +5379,16 @@ async function submitBuy(){
   if(!(rate>0)){msg.innerHTML='<div class="ib err">نرخ دالر معتبر نیست</div>';return;}
 
   // هر قلم: محاسبه مبلغ به دالر/افغانی بر اساس واحد پول انتخاب‌شده
+  // اگر AFN انتخاب شده باشد: amount_afn = مبلغ واردشده و amount_usd = مبلغ / نرخ دالر
   const items=filled.map(it=>{
-    const kg=+it.kg||0,amount=+it.amount||0;
-    let amountUsd,amountAfn;
-    if(currency==="AFN"){amountAfn=+amount.toFixed(2);amountUsd=+(amount/rate).toFixed(2);}
-    else{amountUsd=+amount.toFixed(2);amountAfn=+(amount*rate).toFixed(2);}
-    return {material:it.material,unit:it.unit,kg,amountUsd,amountAfn,costPerKg:kg>0?+(amountAfn/kg).toFixed(2):0};
+    const kg=+it.kg||0;
+    const {amountUsd,amountAfn}=buyConvertAmount(it.amount,currency,rate);
+    return {
+      material:it.material,
+      unit:it.unit||buyItemUnit(it.material),
+      kg,amountUsd,amountAfn,
+      costPerKg:kg>0?+(amountAfn/kg).toFixed(2):0
+    };
   });
   const totalAfn=items.reduce((a,r)=>a+r.amountAfn,0);
   // پرداختی بین اقلام به نسبت مبلغ هر قلم تقسیم می‌شود (جمع = پرداختی کل)
