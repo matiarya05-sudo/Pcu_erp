@@ -776,6 +776,7 @@ pre.sql-box{direction:ltr;text-align:left;background:#0b0a10;border:1px solid va
       <div class="nsec">عملیات</div>
       <button class="ni" onclick="goPage('sales')" data-page="sales" data-roles="admin,staff"><span class="em">🛒</span>فروش</button>
       <button class="ni" onclick="goPage('orders')" data-page="orders" data-roles="admin,staff"><span class="em">📋</span>فرمایشات</button>
+      <button class="ni" onclick="goPage('products')" data-page="products" data-roles="admin,staff"><span class="em">📦</span>مدیریت محصولات</button>
       <button class="ni" onclick="goPage('buy')" data-page="buy" data-roles="admin,staff"><span class="em">📦</span>خرید مواد</button>
       <button class="ni" onclick="goPage('prod')" data-page="prod" data-roles="admin,staff"><span class="em">🏭</span>تولید</button>
       <div class="nsec">حساب‌ها</div>
@@ -853,9 +854,16 @@ pre.sql-box{direction:ltr;text-align:left;background:#0b0a10;border:1px solid va
       <div class="card">
         <div class="ct">📦 خرید مواد | <span id="buy-count" style="color:var(--gd)">—</span></div>
         <div class="tw"><table>
-          <thead><tr><th>#</th><th>تاریخ</th><th>حواله</th><th>تامین‌کننده</th><th>جنس</th><th>کیلو</th><th>مبلغ($)</th><th>مبلغ(؋)</th><th>باقی($)</th><th>✏️</th></tr></thead>
+          <thead><tr><th>#</th><th>تاریخ</th><th>حواله</th><th>تامین‌کننده</th><th>جنس</th><th>مقدار</th><th>مبلغ($)</th><th>مبلغ(؋)</th><th>باقی($)</th><th>✏️</th></tr></thead>
           <tbody id="buy-tbody"><tr><td colspan="10" style="text-align:center;padding:20px;color:var(--t3)"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
         </table></div>
+      </div>
+    </div>
+    <!-- PRODUCTS (کاتالوگ محصولات) -->
+    <div id="page-products" class="page">
+      <div class="card">
+        <div class="ct">📦 لیست محصولات (کاتالوگ)</div>
+        <div id="products-list-content"></div>
       </div>
     </div>
     <!-- PROD -->
@@ -1016,7 +1024,7 @@ pre.sql-box{direction:ltr;text-align:left;background:#0b0a10;border:1px solid va
             </div>
           </div>
           <div class="tw"><table>
-            <thead><tr><th>#</th><th>نام ماده</th><th>موجودی (کیلو)</th><th>قیمت/کیلو (؋)</th><th>ارزش کل</th><th>وضعیت</th></tr></thead>
+            <thead><tr><th>#</th><th>نام ماده</th><th>موجودی</th><th>قیمت فی واحد (؋)</th><th>ارزش کل</th><th>وضعیت</th></tr></thead>
             <tbody id="stock-tbody"><tr><td colspan="6" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr></tbody>
           </table></div>
         </div>
@@ -1630,7 +1638,6 @@ notify pgrst, 'reload schema';</pre>
         <div style="font-size:12px;font-weight:700;color:var(--gd)">📦 اقلام بل</div>
         <div style="display:flex;gap:5px">
           <button onclick="addSaleItem()" class="btn bsec" style="padding:5px 12px;font-size:11px">+ اضافه قلم</button>
-          <button onclick="openModal('modalManageProducts')" class="btn bsec" style="padding:5px 10px;font-size:11px;background:rgba(155,110,245,.15);border-color:rgba(155,110,245,.3);color:var(--pp)">⚙️ مدیریت محصولات</button>
         </div>
       </div>
       <div id="sale-items-list"></div>
@@ -1905,6 +1912,7 @@ notify pgrst, 'reload schema';</pre>
             style="width:100%;padding:9px 12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;color:var(--tx);font-size:13px;font-family:inherit;outline:none">
             <option value="kg">کیلو</option>
             <option value="piece">دانه</option>
+            <option value="meter">متر</option>
           </select>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:10px">
@@ -3701,7 +3709,7 @@ function normalizeProductName(name,size){
 }
 
 // ── Navigation ──
-const PAGE_TITLES={dash:"داشبورد",sales:"فروش",orders:"فرمایشات",buy:"خرید مواد",prod:"تولید",
+const PAGE_TITLES={dash:"داشبورد",sales:"فروش",orders:"فرمایشات",products:"مدیریت محصولات",buy:"خرید مواد",prod:"تولید",
   stock:"انبار مواد",cust:"مشتریان",supp:"تامین‌کنندگان",cash:"صندوق افغانی",
   assets:"دارایی‌های ثابت",report:"گزارشات & سود و زیان",settings:"تنظیمات"};
 
@@ -3709,7 +3717,7 @@ function goPage(id){
   const adminOnlyPages=["cash","report","reports_more","settings","emp","tax","cheque","partners","expenses","assets"];
   if(adminOnlyPages.includes(id)&&currentUser?.role!=="admin"){goPage("dash");return;}
   // عنوان صفحه باید قبل از هر return به‌روز شود تا هیچ‌وقت خالی نماند
-  const allTitles={dash:"داشبورد",sales:"فروش",orders:"فرمایشات",buy:"خرید مواد",prod:"تولید",
+  const allTitles={dash:"داشبورد",sales:"فروش",orders:"فرمایشات",products:"مدیریت محصولات",buy:"خرید مواد",prod:"تولید",
     stock:"انبار مواد",cust:"مشتریان",supp:"تامین‌کنندگان",cash:"صندوق افغانی",
     report:"گزارشات & سود و زیان",reports_more:"گزارش‌های تفصیلی",expenses:"مصارف تفکیکی",
     emp:"کارمندان و شاگردان",tax:"مالیات",collect:"وصول مطالبات",cheque:"💚 قرض حسنه",
@@ -3730,6 +3738,7 @@ function renderPage(id){
   if(id==="dash") renderDash();
   else if(id==="sales") renderSales();
   else if(id==="orders") renderOrders();
+  else if(id==="products") renderProductsPage();
   else if(id==="buy") renderBuy();
   else if(id==="prod") renderProd();
   else if(id==="stock") renderStock();
@@ -4244,7 +4253,7 @@ async function renderBuy(){
     <td>${b.voucher_no?`<span class="bb btl" style="direction:ltr">${b.voucher_no}</span>`:'<span style="color:var(--t3)">—</span>'}</td>
     <td style="font-weight:700">${b.supplier_name}</td>
     <td><span class="bb btl">${b.material}</span></td>
-    <td style="color:var(--gd);font-weight:700">${b.kg} ${b.unit==="piece"?"دانه":"کیلو"}</td>
+    <td style="color:var(--gd);font-weight:700">${b.kg} ${unitLabelFa(b.unit)}</td>
     <td class="tdr" style="color:var(--bl);font-weight:700">${usd(b.amount_usd)}</td>
     <td class="tdr">${afn(b.amount_afn)}</td>
     <td>${+b.remaining_usd>0.01?`<span class="bb br2">${usd(b.remaining_usd)}</span>`:'<span class="bb bg2">تسویه</span>'}</td>
@@ -4872,6 +4881,114 @@ async function saveProductsList(){
   closeModal('modalManageProducts');
 }
 
+// ── صفحه مستقل مدیریت محصولات (products) ──
+// لیست از جدول products خوانده می‌شود و کش مشترک (_productsDb) هم تازه می‌شود
+// تا dropdownهای فروش و تولید همیشه محصولات جدید را ببینند.
+async function renderProductsPage(){
+  const el=document.getElementById("products-list-content");
+  if(!el) return;
+  el.innerHTML='<div class="loading"><div class="spinner"></div>در حال بارگذاری...</div>';
+  const rows=await sbGet("products","?select=id,model,size&order=id.asc");
+  if(rows===null){el.innerHTML=sbErrorHTML("خطا در بارگذاری محصولات");return;}
+  _productsDb=rows||[];
+  // dropdownهای فروش/تولید هم از همین کش ساخته می‌شوند — با هر بار باز شدن صفحه تازه شوند
+  populateDropdowns();
+
+  const form=`
+    <div style="background:rgba(155,110,245,.06);border:1px solid rgba(155,110,245,.18);border-radius:10px;padding:12px;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;color:var(--pp);margin-bottom:8px">➕ اضافه کردن محصول جدید</div>
+      <div class="row2">
+        <div class="fg" style="margin-bottom:0"><label>مدل (Model)</label>
+          <input id="pp-new-model" placeholder="مثال: بوت شیما سیاه"/>
+        </div>
+        <div class="fg" style="margin-bottom:0"><label>سایز (Size)</label>
+          <input id="pp-new-size" placeholder="مثال: 7-10"/>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">
+        <button class="btn bpri" id="pp-add-btn" onclick="addProductFromPage()" style="font-size:11px;padding:7px 14px">+ اضافه کردن</button>
+        <div id="products-page-msg" style="flex:1;min-width:120px"></div>
+      </div>
+    </div>`;
+
+  const listHtml=_productsDb.length
+    ? `<div class="tw"><table>
+        <thead><tr><th>#</th><th>مدل (Model)</th><th>سایز (Size)</th><th>حذف</th></tr></thead>
+        <tbody>${_productsDb.map((p,i)=>{
+          const pid=String(p.id??"").replace(/\\/g,"\\\\").replace(/'/g,"\\'");
+          return`<tr>
+            <td style="color:var(--t3)">${i+1}</td>
+            <td style="font-weight:700">${escHTML(p.model||"—")}</td>
+            <td style="direction:ltr;text-align:right">${escHTML(normalizeSize((p.size||"").trim())||"—")}</td>
+            <td>
+              <button onclick="deleteProductFromPage('${pid}')"
+                style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:3px 9px;font-size:11px;cursor:pointer;font-family:inherit">🗑️ حذف</button>
+            </td>
+          </tr>`;
+        }).join("")}</tbody>
+      </table></div>`
+    : '<div class="ib info">هنوز محصولی ثبت نشده — از فرم بالا اضافه کن</div>';
+
+  el.innerHTML=form+listHtml;
+}
+
+async function addProductFromPage(){
+  const modelEl=document.getElementById("pp-new-model");
+  const sizeEl=document.getElementById("pp-new-size");
+  const msg=document.getElementById("products-page-msg");
+  const btn=document.getElementById("pp-add-btn");
+  // مثل مودال مدیریت محصولات: نرمال‌سازی مدل و سایز تا ردیف تکراری ساخته نشود
+  const model=_normTidy(toEnDigits((modelEl?.value||"").trim()));
+  const size=normalizeSize((sizeEl?.value||"").trim());
+  if(!model){
+    if(msg) msg.innerHTML='<span style="color:var(--rd);font-size:11px">نام مدل را وارد کن</span>';
+    modelEl?.focus();
+    return;
+  }
+  const label=productLabel({model,size});
+  if(_productsDb.some(p=>productLabel(p)===label)){
+    if(msg) msg.innerHTML='<span style="color:var(--rd);font-size:11px">این محصول قبلاً ثبت شده</span>';
+    return;
+  }
+  if(btn){btn.disabled=true;btn.textContent="در حال ذخیره...";}
+  window._lastSBError=null;
+  const res=await sbPost("products",{model,size});
+  if(btn){btn.disabled=false;btn.textContent="+ اضافه کردن";}
+  if(res===null){
+    if(msg) msg.innerHTML=sbErrorHTML("خطا در ذخیره محصول");
+    return;
+  }
+  // کش محصولات تازه شود؛ renderProductsPage خودش dropdownها را هم آپدیت می‌کند
+  await loadProductsFromDb();
+  renderMpList();
+  await renderProductsPage();
+  const m=document.getElementById("products-page-msg");
+  if(m) m.innerHTML='<div class="ib ok" style="margin:0">✅ محصول اضافه شد</div>';
+  setTimeout(()=>{
+    const mm=document.getElementById("products-page-msg");
+    if(mm) mm.innerHTML="";
+  },2000);
+}
+
+async function deleteProductFromPage(id){
+  const p=_productsDb.find(x=>String(x.id)===String(id));
+  if(!p) return;
+  const name=productLabel(p)||String(id);
+  if(!confirm(`"${name}" حذف شود؟`)) return;
+  window._lastSBError=null;
+  const res=await sbDelete("products","?id=eq."+encodeURIComponent(p.id));
+  if(res===null){
+    const msg=document.getElementById("products-page-msg");
+    if(msg) msg.innerHTML=sbErrorHTML("خطا در حذف محصول");
+    return;
+  }
+  delete WAGE_RATES[name];
+  await loadProductsFromDb();
+  renderMpList();
+  renderProductsPage();
+  showSaved();
+}
+
 // نمایش جدول نرخ‌ها در تنظیمات
 function renderWageRatesTable(){
   const tbody=document.getElementById("wage-rates-tbody");
@@ -5188,9 +5305,15 @@ function buyMatList(){
 function buyMatOptions(selected){
   return buyMatList().map(m=>`<option value="${escHTML(m)}"${m===selected?" selected":""}>${escHTML(m)}</option>`).join("");
 }
-// واحد هر ماده از جدول mat_stock گرفته می‌شود (کیلو یا دانه)
+// برچسب فارسی واحدها — منبع واحد برای همه فرم‌ها (خرید / تولید / انبار)
+const UNIT_LABELS={kg:"کیلو",piece:"دانه",meter:"متر"};
+const UNIT_STEPS={kg:"0.1",piece:"1",meter:"0.1"};
+function unitLabelFa(unit){return UNIT_LABELS[unit]||UNIT_LABELS.kg;}
+function isKnownUnit(unit){return Object.prototype.hasOwnProperty.call(UNIT_LABELS,unit);}
+// واحد هر ماده از جدول mat_stock گرفته می‌شود (کیلو / دانه / متر)
 function buyItemUnit(mat){
-  return (S.stockMap[mat]?.unit||"kg")==="piece"?"piece":"kg";
+  const u=S.stockMap[mat]?.unit||"kg";
+  return isKnownUnit(u)?u:"kg";
 }
 function buyCurrencyRate(){
   const rate=+(document.getElementById("b-rate")?.value)||+S.usdRate||68;
@@ -5237,7 +5360,9 @@ function updateBuyItem(index,field,value){
   }
   calcBuy();
 }
-function initBuyModal(){
+async function initBuyModal(){
+  // فهرست مواد همیشه از mat_stock تازه خوانده می‌شود تا ماده تازه‌اضافه‌شده فوراً در dropdown بیاید
+  await refreshStockMap();
   document.getElementById("b-date").value=today();
   document.getElementById("b-bill").value="";
   document.getElementById("b-voucher").value="";
@@ -5264,10 +5389,10 @@ function renderBuyItems(){
     return;
   }
   el.innerHTML=_buyItems.map(it=>{
-    // واحد از mat_stock خوانده می‌شود: piece → «دانه» ، در غیر این صورت «کیلو»
+    // واحد از mat_stock خوانده می‌شود: piece → «دانه» ، meter → «متر» ، در غیر این صورت «کیلو»
     const unitKey=buyItemUnit(it.material);
     it.unit=unitKey; // همین واحد در ستون unit جدول purchases ذخیره می‌شود
-    const unitLbl=unitKey==="piece"?"دانه":"کیلو";
+    const unitLbl=unitLabelFa(unitKey);
     const currencyLbl=currency==="AFN"?"AFN":"USD";
     return '<div style="background:var(--b3);border:1px solid var(--bd);border-radius:8px;padding:8px;margin-bottom:8px">'+
       '<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">'+
@@ -5277,7 +5402,7 @@ function renderBuyItems(){
       '<button type="button" onclick="removeBuyItem('+it.idx+')" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:5px 8px;cursor:pointer;font-size:12px;flex-shrink:0">🗑</button></div>'+
       '<div style="display:flex;gap:6px">'+
       '<div style="flex:1"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">'+unitLbl+'</div>'+
-      '<input type="number" inputmode="decimal" value="'+(it.kg||"")+'" min="0" step="'+(unitKey==="piece"?"1":"0.1")+'" placeholder="0" oninput="updateBuyItem('+it.idx+',&quot;kg&quot;,this.value)" style="width:100%;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-weight:700;font-family:inherit;font-size:13px"/></div>'+
+      '<input type="number" inputmode="decimal" value="'+(it.kg||"")+'" min="0" step="'+(UNIT_STEPS[unitKey]||"0.1")+'" placeholder="0" oninput="updateBuyItem('+it.idx+',&quot;kg&quot;,this.value)" style="width:100%;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-weight:700;font-family:inherit;font-size:13px"/></div>'+
       '<div style="flex:1"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">مبلغ ('+currencyLbl+')</div>'+
       '<input type="number" inputmode="decimal" value="'+(it.amount||"")+'" min="0" step="0.01" placeholder="0" oninput="updateBuyItem('+it.idx+',&quot;amount&quot;,this.value)" style="width:100%;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--bl);font-weight:700;font-family:inherit;font-size:13px"/></div>'+
       '</div>'+
@@ -5329,9 +5454,12 @@ function supplierIdToInt(raw){
   return digits?parseInt(digits,10):null;
 }
 // میانگین متحرک ماده در mat_stock (PATCH و اگر رکورد نبود POST)
+// واحدهای kg / piece / meter هر سه یکسان مدیریت می‌شوند
 async function buyApplyStock(mat,kg,unitCostAfn,unit){
   if(!mat||!(+kg>0)) return true;
-  const cur=S.stockMap[mat]||{kg:0,avgCost:0,val:0,unit:unit||"kg"};
+  const cur=S.stockMap[mat]||{kg:0,avgCost:0,val:0,unit:isKnownUnit(unit)?unit:"kg"};
+  // واحد معتبر (kg/piece/meter) حفظ می‌شود؛ در غیر این صورت واحد قبلی ماده
+  const stockUnit=isKnownUnit(unit)?unit:(isKnownUnit(cur.unit)?cur.unit:"kg");
   const curKg=+cur.kg||0,curAvg=+cur.avgCost||0;
   const newKg=curKg+(+kg);
   const newVal=curKg*curAvg+(+kg)*(+unitCostAfn||0);
@@ -5340,10 +5468,10 @@ async function buyApplyStock(mat,kg,unitCostAfn,unit){
   const res=await sbPatch("mat_stock",body,`?material=eq.${encodeURIComponent(mat)}`);
   if(res===null) return false;
   if(Array.isArray(res)&&res.length===0){
-    const ins=await sbPost("mat_stock",{material:mat,unit:cur.unit||unit||"kg",...body});
+    const ins=await sbPost("mat_stock",{material:mat,unit:stockUnit,...body});
     if(ins===null) return false;
   }
-  S.stockMap[mat]={kg:newKg,avgCost:newAvg,val:newVal,unit:cur.unit||unit||"kg"};
+  S.stockMap[mat]={kg:newKg,avgCost:newAvg,val:newVal,unit:stockUnit};
   return true;
 }
 // بدهی تامین‌کننده به دالر (مقدار نهایی ذخیره می‌شود)
@@ -5385,7 +5513,8 @@ async function submitBuy(){
     const {amountUsd,amountAfn}=buyConvertAmount(it.amount,currency,rate);
     return {
       material:it.material,
-      unit:it.unit||buyItemUnit(it.material),
+      // kg / piece / meter — همان واحدی که در mat_stock ثبت شده
+      unit:isKnownUnit(it.unit)?it.unit:buyItemUnit(it.material),
       kg,amountUsd,amountAfn,
       costPerKg:kg>0?+(amountAfn/kg).toFixed(2):0
     };
@@ -5496,6 +5625,7 @@ function refreshProdMatsTotal(){
   if(all) all.innerHTML='جمع هزینه مواد: <b style="color:var(--gd)">'+afn(prodMatsTotal())+'</b>';
 }
 // گزینه‌های فهرست مواد — مواد هم‌خانواده همان بخش اول می‌آیند
+// (فهرست از mat_stock ساخته می‌شود، پس ماده تازه‌اضافه‌شده هم فوراً دیده می‌شود)
 function prodMatOptions(kind,selected){
   const mats=Object.keys(S.stockMap||{});
   if(!mats.length) return '<option value="">— ماده‌ای در انبار نیست —</option>';
@@ -5505,7 +5635,8 @@ function prodMatOptions(kind,selected){
   });
   return ordered.map(m=>{
     const st=S.stockMap[m]||{kg:0,avgCost:0};
-    return `<option value="${m}"${m===selected?" selected":""}>${m} — ${(+st.kg||0).toFixed(2)}kg | ${afn(st.avgCost)}/kg</option>`;
+    const uLbl=unitLabelFa(st.unit);
+    return `<option value="${m}"${m===selected?" selected":""}>${m} — ${(+st.kg||0).toFixed(2)} ${uLbl} | ${afn(st.avgCost)}/${uLbl}</option>`;
   }).join("");
 }
 function renderProdMats(){
@@ -5516,7 +5647,7 @@ function renderProdMats(){
     box.innerHTML=rows.map(r=>`<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
       <select id="pm-mat-${r.id}" onchange="updateProdMatRow(${r.id},'m',this.value)"
         style="flex:2;width:auto;min-width:0;padding:8px 10px;background:var(--b4);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-size:12px;font-family:inherit">${prodMatOptions(kind,r.m)}</select>
-      <input type="number" id="pm-kg-${r.id}" value="${r.kg||""}" min="0" step="0.01" placeholder="کیلو" inputmode="decimal" oninput="updateProdMatRow(${r.id},'kg',this.value)"
+      <input type="number" id="pm-kg-${r.id}" value="${r.kg||""}" min="0" step="0.01" placeholder="${unitLabelFa(S.stockMap[r.m]?.unit)}" inputmode="decimal" oninput="updateProdMatRow(${r.id},'kg',this.value)"
         style="flex:1;width:auto;min-width:0;padding:8px 10px;background:var(--b4);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-size:12px;font-family:inherit;direction:ltr"/>
       <button type="button" onclick="removeProdMatRow(${r.id})" title="حذف"
         style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;flex-shrink:0">✕</button>
@@ -5591,7 +5722,9 @@ async function adjustMatStock(mat,deltaKg){
 
 
 // Prod modal
-function initProdModal(){
+async function initProdModal(){
+  // ماده اولیه/بسته‌بندی از mat_stock تازه خوانده می‌شود تا ماده تازه‌اضافه‌شده فوراً در dropdown بیاید
+  await refreshStockMap();
   document.getElementById("p-date").value=today();
   document.getElementById("p-voucher").value="";
   document.getElementById("p-doz").value="";
@@ -6781,7 +6914,7 @@ async function runReport(type){
     _lastRptData=rows;
     out.innerHTML=`<div class="ct" style="margin-bottom:10px">🏭 لجر کامل تامین‌کنندگان</div>
     <div class="tw"><table>
-      <thead><tr><th>تاریخ</th><th>تامین‌کننده</th><th>ماده</th><th>کیلو</th><th>مبلغ ($)</th><th>مبلغ (؋)</th><th>پرداختی</th><th>باقی ($)</th></tr></thead>
+      <thead><tr><th>تاریخ</th><th>تامین‌کننده</th><th>ماده</th><th>مقدار</th><th>مبلغ ($)</th><th>مبلغ (؋)</th><th>پرداختی</th><th>باقی ($)</th></tr></thead>
       <tbody>${rows.map(r=>`<tr>
         <td>${r.date||"—"}</td>
         <td style="font-weight:700">${r.supplier_name}</td>
@@ -7162,19 +7295,20 @@ function switchStockTab(tab){
 // ── ADD NEW MATERIAL ──
 function onNewMatUnitChange(){
   const unit=document.getElementById("new_mat_unit")?.value||"kg";
-  const isPiece=unit==="piece";
+  const lbl=unitLabelFa(unit);
   const kgLbl=document.getElementById("new_mat_kg_lbl");
   const costLbl=document.getElementById("new_mat_cost_lbl");
   const kgInp=document.getElementById("new_mat_kg");
-  if(kgLbl) kgLbl.textContent=isPiece?"موجودی اولیه (دانه)":"موجودی اولیه (کیلو)";
-  if(costLbl) costLbl.textContent=isPiece?"قیمت فی دانه (؋)":"قیمت فی کیلو (؋)";
-  if(kgInp) kgInp.step=isPiece?"1":"0.1";
+  if(kgLbl) kgLbl.textContent=`موجودی اولیه (${lbl})`;
+  if(costLbl) costLbl.textContent=`قیمت فی ${lbl} (؋)`;
+  if(kgInp) kgInp.step=UNIT_STEPS[unit]||"0.1";
 }
 async function addNewMaterial(){
   const name=document.getElementById("new_mat_name")?.value?.trim();
   const kg=+(document.getElementById("new_mat_kg")?.value)||0;
   const cost=+(document.getElementById("new_mat_cost")?.value)||0;
-  const unit=document.getElementById("new_mat_unit")?.value||"kg";
+  const rawUnit=document.getElementById("new_mat_unit")?.value||"kg";
+  const unit=isKnownUnit(rawUnit)?rawUnit:"kg";
   const msg=document.getElementById("new-mat-msg");
   if(!name){if(msg)msg.innerHTML='<span style="color:var(--rd)">نام ماده را وارد کن</span>';return;}
   const btn=document.getElementById("add-mat-btn");
@@ -7219,14 +7353,15 @@ async function renderStock(){
   const fgRows=await sbGet('finished_goods','?select=total_value')||[];
   const totalFG=fgRows.reduce((a,r)=>a+(+r.total_value||0),0);
   document.getElementById('stock-fg-val').textContent=afn(totalFG);
-  const MATS_LIST=["دی‌اوپی (DOP)","ریزن","کرش سیاه","کرش آبی","کرش چاکلیتی","کرش براون","کرش سفید","اشترک","تیتانیوم","لایت","ای سی (AC)","پلاستیک (۹/۱۲)","پلاستیک (۱۱/۱۴)","پلاستیک (۱۲/۱۴)","بکل","نگینه"];
+  // فهرست مواد استاندارد از ثابت سراسری MATS می‌آید (مواد جدید از mat_stock خوانده می‌شوند)
+  const MATS_LIST=MATS;
   // همه مواد از stockMap — مرتب الفبایی
   const allStockMats=[...new Set([...MATS_LIST,...Object.keys(S.stockMap)])].sort((a,b)=>a.localeCompare(b,'fa'));
   window._allStockMats=allStockMats;
   document.getElementById('stock-tbody').innerHTML=allStockMats.map((m,i)=>{
     const st=S.stockMap[m]||{kg:0,avgCost:0,unit:'kg'};
     const isPiece=st.unit==='piece';
-    const unitLbl=isPiece?'دانه':'کیلو';
+    const unitLbl=unitLabelFa(st.unit);
     const threshold=isPiece?10:5;
     const qty=isPiece?Math.round(+st.kg||0):(+st.kg||0).toFixed(2);
     const sta=st.kg<=0?'🔴 ندارد':st.kg<threshold?'🟡 کم':'🟢 کافی';
@@ -7242,7 +7377,8 @@ async function renderStock(){
   renderRecon();
 }
 async function initEditStockModal(){
-  const MATS_LIST=["دی‌اوپی (DOP)","ریزن","کرش سیاه","کرش آبی","کرش چاکلیتی","کرش براون","کرش سفید","اشترک","تیتانیوم","لایت","ای سی (AC)","پلاستیک (۹/۱۲)","پلاستیک (۱۱/۱۴)","پلاستیک (۱۲/۱۴)","بکل","نگینه"];
+  // فهرست مواد استاندارد از ثابت سراسری MATS می‌آید (مواد جدید از mat_stock خوانده می‌شوند)
+  const MATS_LIST=MATS;
   const rows=await sbGet('mat_stock','?order=material.asc')||[];
   const stockMap={};
   rows.forEach(r=>stockMap[r.material]=r);
@@ -7259,8 +7395,8 @@ function renderEditStockList(MATS_LIST,allMats,stockMap){
     const key='idx'+idx;
     const isExtra=!MATS_LIST.includes(mat);
     const unit=r.unit||'kg';
-    const unitLabel=unit==='piece'?'دانه':'کیلو';
-    const costLabel=unit==='piece'?'قیمت/دانه (؋)':'قیمت/کیلو (؋)';
+    const unitLabel=unitLabelFa(unit);
+    const costLabel=`قیمت/${unitLabel} (؋)`;
     return`<div id="row_${key}" style="margin-bottom:10px;padding:10px;background:var(--b3);border-radius:8px;border:1px solid var(--bd)">
       <div style="display:flex;align-items:flex-end;gap:6px;margin-bottom:8px">
         <div style="flex:1">
@@ -7274,13 +7410,14 @@ function renderEditStockList(MATS_LIST,allMats,stockMap){
             style="padding:6px 8px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:inherit">
             <option value="kg" ${unit==='kg'?'selected':''}>کیلو</option>
             <option value="piece" ${unit==='piece'?'selected':''}>دانه</option>
+            <option value="meter" ${unit==='meter'?'selected':''}>متر</option>
           </select>
         </div>
         <button onclick="deleteExtraMat(window._stockIdxMap&&window._stockIdxMap['${key}']||'','${key}')" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:6px 8px;font-size:13px;cursor:pointer;flex-shrink:0" title="حذف / صفر کردن">🗑️</button>
       </div>
       <div style="display:flex;gap:6px">
         <div style="flex:1"><div id="esk_kg_lbl_${key}" style="font-size:10px;color:var(--t2);margin-bottom:2px">${unitLabel}</div>
-        <input type="number" inputmode="decimal" id="esk_kg_${key}" value="${r.total_kg||0}" step="${unit==='piece'?'1':'0.1'}"
+        <input type="number" inputmode="decimal" id="esk_kg_${key}" value="${r.total_kg||0}" step="${UNIT_STEPS[unit]||'0.1'}"
           style="width:100%;padding:6px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-size:12px;font-family:inherit;direction:ltr;text-align:right"/></div>
         <div style="flex:1"><div id="esk_cost_lbl_${key}" style="font-size:10px;color:var(--t2);margin-bottom:2px">${costLabel}</div>
         <input type="number" inputmode="decimal" id="esk_cost_${key}" value="${r.avg_cost||0}" step="0.01"
@@ -7293,10 +7430,10 @@ function renderEditStockList(MATS_LIST,allMats,stockMap){
 }
 function renderUnitLabel(key){
   const unit=document.getElementById('esk_unit_'+key)?.value||'kg';
-  const lbl=unit==='piece'?'دانه':'کیلو';
-  const costLbl=unit==='piece'?'قیمت/دانه (؋)':'قیمت/کیلو (؋)';
+  const lbl=unitLabelFa(unit);
+  const costLbl=`قیمت/${lbl} (؋)`;
   const kgInp=document.getElementById('esk_kg_'+key);
-  if(kgInp) kgInp.step=unit==='piece'?'1':'0.1';
+  if(kgInp) kgInp.step=UNIT_STEPS[unit]||'0.1';
   const klbl=document.getElementById('esk_kg_lbl_'+key);
   if(klbl) klbl.textContent=lbl;
   const clbl=document.getElementById('esk_cost_lbl_'+key);
@@ -7308,7 +7445,8 @@ window._delStock=async function(idx){
   await deleteStockRow(window._allStockMats[idx],idx);
 };
 async function deleteStockRow(mat,rowIdx){
-  const MATS_LIST=["دی‌اوپی (DOP)","ریزن","کرش سیاه","کرش آبی","کرش چاکلیتی","کرش براون","کرش سفید","اشترک","تیتانیوم","لایت","ای سی (AC)","پلاستیک (۹/۱۲)","پلاستیک (۱۱/۱۴)","پلاستیک (۱۲/۱۴)","بکل","نگینه"];
+  // فهرست مواد استاندارد از ثابت سراسری MATS می‌آید (مواد جدید از mat_stock خوانده می‌شوند)
+  const MATS_LIST=MATS;
   const isStandard=MATS_LIST.includes(mat);
   if(isStandard){
     if(!confirm(`"${mat}" صفر شود؟`))return;
@@ -7321,7 +7459,8 @@ async function deleteStockRow(mat,rowIdx){
   renderStock();
 }
 async function deleteExtraMat(mat,key){
-  const MATS_LIST=["دی‌اوپی (DOP)","ریزن","کرش سیاه","کرش آبی","کرش چاکلیتی","کرش براون","کرش سفید","اشترک","تیتانیوم","لایت","ای سی (AC)","پلاستیک (۹/۱۲)","پلاستیک (۱۱/۱۴)","پلاستیک (۱۲/۱۴)","بکل","نگینه"];
+  // فهرست مواد استاندارد از ثابت سراسری MATS می‌آید (مواد جدید از mat_stock خوانده می‌شوند)
+  const MATS_LIST=MATS;
   const isStandard=MATS_LIST.includes(mat);
   if(isStandard){
     if(!confirm(`"${mat}" صفر شود؟`))return;
@@ -7659,7 +7798,7 @@ async function openEditRecord(table,id){
   let fields="";
   if(table==="sales"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>مشتری</label><input id="ef-cust_name" value="${r.cust_name||""}"/></div></div><div class="row2"><div class="fg"><label>درجن</label><input type="number" inputmode="decimal" id="ef-dozen" value="${r.dozen||0}" inputmode="decimal"/></div><div class="fg"><label>قیمت فی درجن</label><input type="number" inputmode="decimal" id="ef-price_per_doz" value="${r.price_per_doz||0}" inputmode="decimal"/></div></div><div class="fg"><label>وصول (؋)</label><input type="number" inputmode="decimal" id="ef-paid" value="${r.paid||0}" inputmode="decimal"/></div>`;}
   else if(table==="cash_ledger"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>نوع</label><select id="ef-category"><option value="in" ${r.category==="in"?"selected":""}>ورودی</option><option value="out" ${r.category==="out"?"selected":""}>خروجی</option></select></div></div><div class="fg"><label>موضوع</label><input id="ef-type" value="${r.type||""}"/></div><div class="fg"><label>شرح</label><input id="ef-description" value="${r.description||""}"/></div><div class="row2"><div class="fg"><label>مبلغ ورودی</label><input type="number" inputmode="decimal" id="ef-amount_in" value="${r.amount_in||0}" inputmode="decimal"/></div><div class="fg"><label>مبلغ خروجی</label><input type="number" inputmode="decimal" id="ef-amount_out" value="${r.amount_out||0}" inputmode="decimal"/></div></div>`;}
-  else if(table==="purchases"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>تامین‌کننده</label><input id="ef-supplier_name" value="${r.supplier_name||""}"/></div></div><div class="row2"><div class="fg"><label>جنس</label><input id="ef-material" value="${r.material||""}"/></div><div class="fg"><label>کیلو</label><input type="number" inputmode="decimal" id="ef-kg" value="${r.kg||0}"/></div></div><div class="row2"><div class="fg"><label>مبلغ ($)</label><input type="number" inputmode="decimal" id="ef-amount_usd" value="${r.amount_usd||0}"/></div><div class="fg"><label>نرخ دالر</label><input type="number" inputmode="decimal" id="ef-usd_rate" value="${r.usd_rate||68}"/></div></div><div class="row2"><div class="fg"><label>پرداختی (؋)</label><input type="number" inputmode="decimal" id="ef-paid_afn" value="${r.paid_afn||0}"/></div><div class="fg"><label>شماره حواله</label><input id="ef-voucher_no" value="${r.voucher_no||""}"/></div></div>`;}
+  else if(table==="purchases"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>تامین‌کننده</label><input id="ef-supplier_name" value="${r.supplier_name||""}"/></div></div><div class="row2"><div class="fg"><label>جنس</label><input id="ef-material" value="${r.material||""}"/></div><div class="fg"><label>مقدار</label><input type="number" inputmode="decimal" id="ef-kg" value="${r.kg||0}"/></div></div><div class="row2"><div class="fg"><label>مبلغ ($)</label><input type="number" inputmode="decimal" id="ef-amount_usd" value="${r.amount_usd||0}"/></div><div class="fg"><label>نرخ دالر</label><input type="number" inputmode="decimal" id="ef-usd_rate" value="${r.usd_rate||68}"/></div></div><div class="row2"><div class="fg"><label>پرداختی (؋)</label><input type="number" inputmode="decimal" id="ef-paid_afn" value="${r.paid_afn||0}"/></div><div class="fg"><label>شماره حواله</label><input id="ef-voucher_no" value="${r.voucher_no||""}"/></div></div>`;}
   else if(table==="production"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>سرکاریگر</label><input id="ef-worker" value="${r.worker||""}"/></div></div><div class="row2"><div class="fg"><label>درجن</label><input type="number" inputmode="decimal" id="ef-dozen" value="${r.dozen||0}" inputmode="decimal"/></div><div class="fg"><label>اجرت کل</label><input type="number" inputmode="decimal" id="ef-total_wage" value="${r.total_wage||0}" inputmode="decimal"/></div></div><div class="fg"><label>پرداختی</label><input type="number" inputmode="decimal" id="ef-paid_wage" value="${r.paid_wage||0}" inputmode="decimal"/></div><div class="row2"><div class="fg"><label>شماره حواله</label><input id="ef-voucher_no" value="${r.voucher_no||""}"/></div><div class="fg"><label>ضایعات (درجن)</label><input type="number" inputmode="decimal" id="ef-scrap_dozen" value="${r.scrap_dozen||0}" inputmode="decimal"/></div></div>`;}
   document.getElementById("em-title").textContent=`✏️ ویرایش #${id}`;
   document.getElementById("ef-fields").innerHTML=fields;
