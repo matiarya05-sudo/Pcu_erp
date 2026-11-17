@@ -5236,6 +5236,7 @@ async function submitBuy(){
   // ستون‌ها دقیقاً مطابق دیتابیس شما (unit و status در جدول موجود هستند ولی لازم نیستند)
   const res=await sbPost("purchases",{
     date:document.getElementById("b-date").value,
+    purchase_date:document.getElementById("b-date").value,
     supplier_id:sid,
     supplier_name:sn,
     bill:document.getElementById("b-bill").value,
