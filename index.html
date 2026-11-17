@@ -1713,16 +1713,29 @@ notify pgrst, 'reload schema';</pre>
         </select>
       </div>
       <div class="row2">
-        <div class="fg"><label>مدل</label>
-          <select id="p-prod" onchange="calcProd()"></select>
+        <div class="fg"><label>مدل (بدون سایز)</label>
+          <!-- این فهرست باید با BASE_MODELS در جاوااسکریپت یکسان باشد -->
+          <select id="p-prod" onchange="calcProd()">
+            <option value="بوت شیما سیاه">بوت شیما سیاه</option>
+            <option value="بوت شیما سفید">بوت شیما سفید</option>
+            <option value="بوت زنانه سیاه">بوت زنانه سیاه</option>
+            <option value="بوت دخترانه">بوت دخترانه</option>
+            <option value="چپلک حمام اول">چپلک حمام اول</option>
+            <option value="چپلک حمام دوم">چپلک حمام دوم</option>
+            <option value="چپلک حمام سفید دوم">چپلک حمام سفید دوم</option>
+            <option value="چپلک زنانه آپردار">چپلک زنانه آپردار</option>
+            <option value="چپلک زنانه اول">چپلک زنانه اول</option>
+            <option value="چپلک دخترانه دوم">چپلک دخترانه دوم</option>
+          </select>
         </div>
         <div class="fg"><label>سایز</label><input id="p-size" type="text" placeholder="مثلاً 7-10" oninput="calcProd()"/></div>
       </div>
       <div class="fg"><label>درجن</label><input type="number" inputmode="numeric" id="p-doz" min="1" step="1" oninput="calcProd()"/></div>
       <div class="row2">
-        <div class="fg"><label>نرخ اجرت فی درجن (؋)</label><input type="number" inputmode="decimal" id="p-rate" min="0" oninput="calcProd()" inputmode="decimal"/></div>
+        <div class="fg"><label>نرخ اجرت فی درجن (؋) — اختیاری</label><input type="number" inputmode="decimal" id="p-rate" min="0" placeholder="اختیاری" oninput="calcProd()"/></div>
         <div class="fg"><label>اجرت کل اتومات</label><input id="p-wage" readonly/></div>
       </div>
+      <div class="ib info" style="font-size:10.5px;margin-bottom:10px">💡 اجرت الزامی نیست — می‌توانی نرخ را خالی بگذاری و فقط هزینه مواد را دستی وارد کنی.</div>
       <div class="fg"><label>هزینه سرباری فی درجن (؋) — برق، کرایه، شاگرد</label><input type="number" id="p-overhead" min="0" step="0.01" oninput="calcProd()" inputmode="decimal"/></div>
       <!-- ══ مواد اولیه تولید ══ -->
       <div class="pm-section raw">
@@ -3561,21 +3574,26 @@ async function loadProductsFromDb(){
   }catch(e){ console.error("loadProductsFromDb:",e); }
   return _productsDb;
 }
-// نام نمایشی محصول — دقیقاً model + " " + size
-function productLabel(p){ return (p?.model||"")+" "+(p?.size||""); }
+// نام نمایشی محصول — مدل + سایز (بدون فاصله اضافی وقتی سایز خالی است)
+function productLabel(p){
+  // سایز نرمال می‌شود تا «۱۰-۷» و «10-7» یک محصول دیده شوند
+  return [(p?.model||"").trim(),normalizeSize((p?.size||"").trim())].filter(Boolean).join(" ");
+}
 // فهرست نام محصولات برای پر کردن <select>ها (اگر جدول خالی بود، فهرست پیش‌فرض)
 function getProductNames(){
-  const names=_productsDb.map(productLabel);
+  const names=[...new Set(_productsDb.map(productLabel).map(n=>n.trim()).filter(Boolean))];
   return names.length?names:PRODUCTS_LIST;
 }
-// مدل‌های یکتا برای فرم تولید (در آنجا مدل و سایز جدا وارد می‌شوند)
+// مدل‌های پایه (بدون سایز) برای فرم تولید — همیشه BASE_MODELS + مدل‌های سفارشی جدول products
 function getProductModels(){
-  const models=[...new Set(_productsDb.map(p=>(p?.model||"").trim()).filter(Boolean))];
-  if(models.length) return models;
-  // پیش‌فرض: از نام‌های PRODUCTS_LIST بخش مدل جدا شود (سایز انتهایی حذف)
-  return [...new Set(PRODUCTS_LIST.map(n=>_normTidy(n)
-    .replace(/\s+[0-9۰-۹]+(\s*[-–]\s*[0-9۰-۹]+)?(\s+(اول|دوم|سوم))?$/,"")
-    .trim()).filter(Boolean))];
+  const all=[...BASE_MODELS,..._productsDb.map(p=>(p?.model||"").trim()).filter(Boolean)];
+  const seen=new Set();
+  return all.filter(m=>{
+    const key=_normTidy(m);
+    if(!key||seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 function populateDropdowns(){
@@ -4672,13 +4690,37 @@ function initModal(id){
 let _selCust=null;
 
 // ══ PRODUCTS & WAGE RATES ══
-const PRODUCTS_LIST = [
-  "بوت شیما سیاه ۷-۱۰","بوت شیما سیاه ۱-۶","بوت شیما سیاه ۹-۱۳",
-  "چپلک حمام دوم","چپلک حمام اول","چپلک حمام سفید دوم",
-  "بوت شیما سفید ۷-۱۰","بوت شیما سفید ۱-۶","بوت شیما سفید ۹-۱۳",
-  "چپلک زنانه آپردار","چپلک زنانه ۰۵ اول","چپلک دخترانه ۰۳ دوم",
-  "بوت زنانه سیاه","بوت دخترانه ۱-۵","بوت دخترانه ۷-۱۳"
+// مدل‌های پایه (بدون سایز) — منبع واحد برای <select id="p-prod"> و جدول products
+// سایزها در فیلد جداگانه p-size وارد می‌شوند
+const BASE_MODELS = [
+  "بوت شیما سیاه",
+  "بوت شیما سفید",
+  "بوت زنانه سیاه",
+  "بوت دخترانه",
+  "چپلک حمام اول",
+  "چپلک حمام دوم",
+  "چپلک حمام سفید دوم",
+  "چپلک زنانه آپردار",
+  "چپلک زنانه اول",
+  "چپلک دخترانه دوم"
 ];
+// سایزهای هر مدل — همین ترکیب‌ها در جدول products (seed_products.sql) ثبت می‌شوند
+const MODEL_SIZES = {
+  "بوت شیما سیاه":      ["1-6","7-10","9-13"],
+  "بوت شیما سفید":      ["1-6","7-10","9-13"],
+  "بوت زنانه سیاه":     ["1-6","7-10","9-13"],
+  "بوت دخترانه":        ["1-5","5-9","7-13"],
+  "چپلک حمام اول":      ["1-6","7-10","9-13"],
+  "چپلک حمام دوم":      ["1-6","7-10","9-13"],
+  "چپلک حمام سفید دوم": ["1-6","7-10","9-13"],
+  "چپلک زنانه آپردار":  ["1-6","7-10","9-13"],
+  "چپلک زنانه اول":     ["1-6","7-10","9-13"],
+  "چپلک دخترانه دوم":   ["1-5","5-9","7-13"]
+};
+// فهرست کامل محصولات (مدل + سایز) — fallback وقتی جدول products در دسترس نیست
+const PRODUCTS_LIST = BASE_MODELS.flatMap(model =>
+  MODEL_SIZES[model].map(size => (model + " " + size).trim())
+);
 const WAGE_RATES={};
 PRODUCTS_LIST.forEach(p=>{WAGE_RATES[p]={j:22,s:25};});
 async function loadWageRates(){
@@ -4755,13 +4797,14 @@ async function deleteMpItem(i){
 }
 
 async function addNewProduct(){
-  const name=(document.getElementById('mp-new-name')?.value||'').trim();
-  const size=(document.getElementById('mp-new-size')?.value||'').trim();
+  const name=_normTidy(toEnDigits((document.getElementById('mp-new-name')?.value||'').trim()));
+  const size=normalizeSize((document.getElementById('mp-new-size')?.value||'').trim());
   const j=+(document.getElementById('mp-new-j')?.value)||22;
   const s=+(document.getElementById('mp-new-s')?.value)||25;
   const msg=document.getElementById('mp-add-msg');
   if(!name){if(msg)msg.innerHTML='<span style="color:var(--rd)">نام را وارد کن</span>';return;}
-  const label=name+" "+size;
+  // برچسب نرمال‌شده تا سایز خالی/فارسی/معکوس ردیف تکراری نسازد
+  const label=productLabel({model:name,size});
   if(_productsDb.some(p=>productLabel(p)===label)){if(msg)msg.innerHTML='<span style="color:var(--rd)">قبلاً هست</span>';return;}
   if(msg)msg.innerHTML='<span style="color:var(--t2)">در حال ذخیره...</span>';
   window._lastSBError=null;
@@ -5364,9 +5407,12 @@ function onMatCostInput(el){
 }
 function calcProd(){
   const doz=+(document.getElementById("p-doz").value)||0;
+  // اجرت اختیاری است — خالی/صفر مجاز است و با هزینه مواد دستی هم فرم ثبت می‌شود
   const rate=+(document.getElementById("p-rate").value)||0;
-  // نام کامل محصول = مدل + سایز، با همان نرمال‌سازی سراسری (ارقام انگلیسی + سایز مرتب)
-  const prod=normalizeProductName(document.getElementById("p-prod").value.trim(),document.getElementById("p-size").value.trim());
+  // نام کامل محصول = مدل (بدون سایز) + سایز واردشده — دقیقاً مثل submitProd
+  const model=document.getElementById("p-prod").value.trim();
+  const size=normalizeSize(document.getElementById("p-size").value.trim());
+  const prod=(model+" "+size).trim();
   // هزینه مواد فی درجن: اگر مواد مصرفی دستی انتخاب شده باشد از همان‌ها، وگرنه اتومات از رسپی
   const mcEl=document.getElementById("p-mat-cost");
   if(mcEl && _prodMats.length>0){
@@ -5374,7 +5420,7 @@ function calcProd(){
     mcEl.value=doz>0?+(matTotal/doz).toFixed(2):+matTotal.toFixed(2);
     delete mcEl.dataset.manual;
   } else if(mcEl && mcEl.dataset.manual!=="1"){
-    const autoPerDoz=calcCOGS(prod,1)||calcCOGS(document.getElementById("p-prod").value.trim(),1);
+    const autoPerDoz=calcCOGS(prod,1)||calcCOGS(model,1);
     mcEl.value=autoPerDoz?+autoPerDoz.toFixed(2):"";
   }
   const matCostPerDoz=+(mcEl?.value)||0;
@@ -5399,10 +5445,10 @@ async function submitProd(){
   if(doz<=0){msgEl.innerHTML='<div class="ib err">تعداد درجن باید بیشتر از صفر باشد</div>';return;}
   const worker=document.getElementById("p-worker").value;
   const model=document.getElementById("p-prod").value.trim();
-  // نرمال‌سازی سایز: ارقام فارسی → انگلیسی، جدا کردن با «-»، مرتب‌سازی صعودی و اتصال دوباره
-  // «۱۰-۷» → «7-10» و سپس نام محصول = نام + فاصله + سایز
-  const sizeNorm=normalizeSize(document.getElementById("p-size").value);
-  const prod=(normalizeProductName(model)+" "+sizeNorm).trim();
+  // نام کامل محصول = مدل + سایز (همان ترکیب فرم)
+  // سایز نرمال می‌شود: ارقام فارسی → انگلیسی و «۱۰-۷» → «7-10»
+  const prod=(model+" "+normalizeSize(document.getElementById("p-size").value.trim())).trim();
+  // اجرت اختیاری است؛ اگر خالی باشد صفر ثبت می‌شود و بهای تمام‌شده فقط از مواد/سرباری می‌آید
   const wRate=+(document.getElementById("p-rate").value)||0;
   const wage=doz*wRate,paid=+(document.getElementById("p-paid").value)||0;
   const matCostPerDoz=+(document.getElementById("p-mat-cost").value)||0;
