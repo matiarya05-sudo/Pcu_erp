@@ -3285,6 +3285,19 @@ async function sbPost(table,body){ return sb(table,"POST",body); }
 async function sbPatch(table,body,params){ return sb(table,"PATCH",body,params); }
 async function sbDelete(table,params){ return sb(table,"DELETE",null,params); }
 
+// فرار دادن متن خطا تا پیام کامل Supabase به‌صورت متن (نه HTML) نمایش داده شود
+function escHTML(v){
+  return String(v??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
+// نمایش کامل خطای Supabase: HTTP status، جدول، متد و متن پاسخ سرور
+function sbErrorHTML(prefix="خطا در ذخیره"){
+  const detail=window._lastSBError||"خطای نامشخص از سرور";
+  return `<div class="ib err" style="flex-direction:column;align-items:flex-start;gap:5px">`+
+    `<div style="font-weight:800">❌ ${escHTML(prefix)}</div>`+
+    `<pre style="margin:0;white-space:pre-wrap;word-break:break-word;direction:ltr;text-align:left;font-size:10px;line-height:1.45;width:100%;max-height:220px;overflow:auto;opacity:.9">${escHTML(detail)}</pre>`+
+    `</div>`;
+}
+
 // ── ساختار دیتابیس: بررسی وجود ستون (با کش) ──
 // اگر ستون جدید (scrap_waste / voucher_no) در دیتابیس نباشد، ذخیره کردن
 // بقیه فیلدها خراب نمی‌شود؛ فقط همان فیلدهای اضافه ارسال نمی‌شوند.
@@ -5494,16 +5507,24 @@ async function submitProd(){
   msgEl.innerHTML='<div class="ib info">⏳ ثبت تولید، کسر مواد و انتقال به گدام...</div>';
   window._lastSBError=null;
 
-  // ۴) ستون‌های اختیاری (اگر SQL اجرا نشده باشد ارسال نمی‌شوند و ثبت تولید خراب نمی‌شود)
+  // ۴) ستون‌های اختیاری — هر ستون جداگانه بررسی می‌شود تا نبودِ یکی، ارسال بقیه را متوقف نکند.
+  // در دیتابیس فعلی voucher_no / scrap_unit / scrap_dozen وجود دارند و باید ارسال شوند.
+  const [hasVoucherCol,hasScrapWasteCol,hasScrapUnitCol,hasScrapDozenCol]=await Promise.all([
+    tableHasColumn("production","voucher_no"),
+    tableHasColumn("production","scrap_waste"),
+    tableHasColumn("production","scrap_unit"),
+    tableHasColumn("production","scrap_dozen")
+  ]);
   const opt={};
-  const hasVoucherCol=await tableHasColumn("production","voucher_no");
-  const hasScrapCol=await tableHasColumn("production","scrap_waste");
-  if(hasVoucherCol) opt.voucher_no=voucher;
-  if(hasScrapCol){
-    opt.scrap_waste=scrap.qty;
-    opt.scrap_unit=scrap.unit;
-    opt.scrap_dozen=scrapDoz;
-  }
+  if(hasVoucherCol) opt.voucher_no=voucher||"";
+  if(hasScrapWasteCol) opt.scrap_waste=+scrap.qty||0;
+  if(hasScrapUnitCol) opt.scrap_unit=scrap.unit||"dozen";
+  if(hasScrapDozenCol) opt.scrap_dozen=+scrapDoz||0;
+  // فقط ستون‌های لازم برای حواله/ضایعات گزارش می‌شوند (scrap_waste قدیمی اختیاری است)
+  const missingProdCols=[];
+  if(!hasVoucherCol) missingProdCols.push("voucher_no");
+  if(!hasScrapUnitCol) missingProdCols.push("scrap_unit");
+  if(!hasScrapDozenCol) missingProdCols.push("scrap_dozen");
 
   // ۵) ثبت رکورد تولید
   const _prdate=document.getElementById("p-date").value;
@@ -5515,8 +5536,7 @@ async function submitProd(){
     ...opt
   });
   if(!res){
-    msgEl.innerHTML='<div class="ib err">خطا در ثبت تولید — هیچ تغییری در انبار انجام نشد'+
-      '<div style="direction:ltr;text-align:left;font-size:10px;margin-top:4px">'+(window._lastSBError||"")+'</div></div>';
+    msgEl.innerHTML=sbErrorHTML("خطا در ثبت تولید — هیچ تغییری در انبار انجام نشد");
     btn.disabled=false;btn.textContent="ثبت تولید ✓";return;
   }
 
@@ -5563,7 +5583,7 @@ async function submitProd(){
     (scrapDoz>0?` (تولید ${doz} − ضایعات ${scrapDoz} ${scrap.unit==="kg"?"≈":""})`:"")+`</span></div>`+
     (matErrors.length?`<div class="ib warn">⚠️ کسر این مواد ناموفق بود: ${matErrors.join("، ")}</div>`:"")+
     (!fgOk?'<div class="ib err">⚠️ انتقال به گدام جنس تولیدشده ناموفق بود</div>':"")+
-    ((hasVoucherCol&&hasScrapCol)?"":'<div class="ib warn">⚠️ ستون‌های <b>voucher_no / scrap_waste</b> در جدول production نیستند — حواله و ضایعات ذخیره نشد. SQL صفحه انبار را اجرا کن.</div>');
+    (missingProdCols.length?'<div class="ib warn">⚠️ ستون‌های <b>'+missingProdCols.join(" / ")+'</b> در جدول production نیستند — این فیلدها ذخیره نشدند. SQL صفحه انبار را اجرا کن.</div>':"");
 
   if(fgOk||matErrors.length===0) showSaved();
   setTimeout(()=>{closeModal("modalProd");renderProd();},1900);
@@ -7192,18 +7212,104 @@ async function editFG(id){
   document.getElementById('fg-note').value=r.note||'';
   openModal('modalAddFG');
 }
+// کلید یکسان‌سازی‌شده یک ردیف finished_goods — نام (و سایز قدیمی) با normalizeProductName
+function finishedGoodsKey(row){
+  const rName=normalizeProductName(row?.product_name||"");
+  const rSize=normalizeSize(row?.size_range||"");
+  // ردیف‌های قدیمی سایز را در size_range نگه می‌دارند؛ اگر نام خودش سایز را دارد دوباره اضافه نشود
+  return (rSize && !rName.endsWith(" "+rSize)) ? normalizeProductName(rName,rSize) : rName;
+}
 async function submitFG(){
-  const name=document.getElementById('fg-name').value.trim();
+  const msgEl=document.getElementById('fg-msg');
+  const btn=document.getElementById('fg-btn');
+  const rawName=(document.getElementById('fg-name').value||"").trim();
+  const rawSize=(document.getElementById('fg-size').value||"").trim();
+  const size=normalizeSize(rawSize);
   const dozen=+(document.getElementById('fg-dozen').value)||0;
   const price=+(document.getElementById('fg-price').value)||0;
-  if(!name||!dozen){document.getElementById('fg-msg').innerHTML='<div class="ib err">نام و تعداد الزامی است</div>';return;}
-  document.getElementById('fg-btn').disabled=true;
+  const note=(document.getElementById('fg-note').value||"").trim();
+  if(!rawName||!(dozen>0)){msgEl.innerHTML='<div class="ib err">نام و تعداد (بیشتر از صفر) الزامی است</div>';return;}
+
+  // نام کامل نرمال‌شده: «مدل + سایز» بدون تکرار سایز اگر کاربر آن را در نام نوشته باشد
+  const nameNorm=normalizeProductName(rawName);
+  const fullName=(size && !nameNorm.endsWith(" "+size))
+    ? normalizeProductName(rawName,size)
+    : nameNorm;
   const editId=document.getElementById('fg-edit-id').value;
-  const body={product_name:name,size_range:document.getElementById('fg-size').value,dozen,unit_price:price,total_value:dozen*price,note:document.getElementById('fg-note').value,updated_at:new Date().toISOString()};
-  const res=editId?await sbPatch('finished_goods',body,`?id=eq.${editId}`):await sbPost('finished_goods',body);
-  document.getElementById('fg-btn').disabled=false;
-  if(res){showSaved();closeModal('modalAddFG');renderFG();}
-  else document.getElementById('fg-msg').innerHTML='<div class="ib err">خطا! دوباره امتحان کن</div>';
+
+  btn.disabled=true;
+  window._lastSBError=null;
+  try{
+    // ── حالت ویرایش: مقادیر فرم جایگزین می‌شوند ──
+    if(editId){
+      const body={
+        product_name:nameNorm,
+        size_range:size,
+        dozen,
+        unit_price:price,
+        total_value:+(dozen*price).toFixed(2),
+        note,
+        updated_at:new Date().toISOString()
+      };
+      const res=await sbPatch('finished_goods',body,`?id=eq.${editId}`);
+      if(Array.isArray(res)&&res.length>0){showSaved();closeModal('modalAddFG');renderFG();}
+      else msgEl.innerHTML=sbErrorHTML("خطا در بروزرسانی جنس");
+      return;
+    }
+
+    // ── حالت افزودن: اگر همان محصول با normalizeProductName وجود دارد، تعداد جمع شود ──
+    const rows=await sbGet('finished_goods','?select=id,product_name,size_range,dozen,unit_price,note&order=id.asc');
+    if(rows===null){msgEl.innerHTML=sbErrorHTML("خطا در خواندن گدام جنس");return;}
+    const key=fullName;
+    // اول تطابق مستقیم نام محصول (normalizeProductName)، بعد ردیف‌های قدیمی که سایز را جدا نگه می‌دارند
+    const existing=(rows||[]).find(r=>
+      normalizeProductName(r.product_name||"")===key || finishedGoodsKey(r)===key
+    );
+
+    if(existing){
+      const oldDoz=+existing.dozen||0;
+      const oldUnit=+existing.unit_price||0;
+      const newDoz=+(oldDoz+dozen).toFixed(3);
+      // اگر قیمت جدید وارد شده باشد میانگین وزنی؛ اگر خالی باشد قیمت قبلی حفظ می‌شود
+      let unitPrice=oldUnit;
+      if(price>0){
+        unitPrice=(oldUnit>0&&oldDoz>0&&newDoz>0)
+          ?+(((oldDoz*oldUnit)+(dozen*price))/newDoz).toFixed(2)
+          :price;
+      }
+      const body={
+        dozen:newDoz,
+        unit_price:unitPrice,
+        total_value:+(newDoz*unitPrice).toFixed(2),
+        note:note||existing.note||"",
+        updated_at:new Date().toISOString()
+      };
+      const res=await sbPatch('finished_goods',body,`?id=eq.${existing.id}`);
+      if(Array.isArray(res)&&res.length>0){showSaved();closeModal('modalAddFG');renderFG();}
+      else msgEl.innerHTML=sbErrorHTML("خطا در بروزرسانی تعداد جنس");
+      return;
+    }
+
+    // ── محصول جدید ──
+    const body={
+      product_name:fullName,
+      size_range:size,
+      dozen,
+      unit_price:price,
+      total_value:+(dozen*price).toFixed(2),
+      note,
+      updated_at:new Date().toISOString()
+    };
+    const res=await sbPost('finished_goods',body);
+    // POST موفق حتی اگر پاسخ خالی باشد ([])، خطا نیست؛ فقط null یعنی خطای Supabase
+    if(res!==null){showSaved();closeModal('modalAddFG');renderFG();}
+    else msgEl.innerHTML=sbErrorHTML("خطا در ثبت جنس جدید");
+  }catch(e){
+    window._lastSBError=`Unexpected error — submitFG: ${e?.message||e}`;
+    msgEl.innerHTML=sbErrorHTML("خطا در ذخیره جنس");
+  }finally{
+    btn.disabled=false;
+  }
 }
 async function deleteFG(id){
   if(!confirm('این جنس پاک شود؟')) return;
