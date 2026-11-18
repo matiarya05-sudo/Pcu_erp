@@ -4517,7 +4517,17 @@ async function openPersonStatement(type,id,name){
       type:"فروش",
       desc:(r.product||"—")+" | "+(r.dozen||0)+" درجن",
       debit:+(r.total||r.total_amount||0),
-      credit:+(r.paid||r.amount_received||0),
+      credit:+(r.paid||0),
+      usd:0
+    }));
+    // وصولی‌های ثبت‌شده در collection_payments (علاوه بر paid فاکتورها)
+    const collects=await sbGet("collection_payments",`?cust_name=eq.${encodeURIComponent(name)}&select=date,amount,notes,receipt_no`)||[];
+    collects.forEach(r=>rows.push({
+      date:String(r.date||"").slice(0,10)||"—",
+      type:"وصول",
+      desc:"وصول از مشتری"+(r.receipt_no?" | رسید "+r.receipt_no:"")+(r.notes?" | "+r.notes:""),
+      debit:0,
+      credit:+(r.amount||0),
       usd:0
     }));
     rows.sort((a,b)=>a.date.localeCompare(b.date));
@@ -5127,9 +5137,13 @@ async function pickCust(id){
   sel.style.display="flex";
   sel.innerHTML="<span>⏳ بارگذاری حساب "+_selCust.n+"...</span>";
   try{
+    // فروش‌ها و وصولی‌ها با نام (و در صورت وجود، ولایت) مشتری خوانده می‌شوند
+    // چون cust_id در جدول sales ممکن است خالی باشد
+    const qName="cust_name=eq."+encodeURIComponent(_selCust.n||"")
+      +((_selCust.p&&_selCust.p!=="نامشخص")?"&province=eq."+encodeURIComponent(_selCust.p):"");
     const [sales,collects]=await Promise.all([
-      sbGet("sales","?cust_id=eq."+id+"&select=total,paid"),
-      sbGet("sales","?cust_id=eq."+id+"&select=paid,amount_received")
+      sbGet("sales","?"+qName+"&select=total,paid"),
+      sbGet("collection_payments","?"+qName+"&select=amount")
     ]);
     const ob=+(_selCust.ob)||0;
     const totS=(sales||[]).reduce((a,r)=>a+(+r.total||0),0);
@@ -6020,32 +6034,56 @@ async function submitCash(){
 
 // ── CUSTOMERS ویرایش ──
 let _provF="همه",_custSrch="";
+// کلید مشتری: اول با cust_id، بعد با «نام + ولایت» و در آخر با نام
+function _custKeyOf(row,custById,custByName,custByNameProv){
+  if(row&&row.cust_id!==null&&row.cust_id!==undefined&&custById[String(row.cust_id)]) return String(row.cust_id);
+  const nm=String(row?.cust_name||"").trim();
+  if(!nm) return null;
+  const pv=String(row?.province||"").trim();
+  const byProv=(pv&&custByNameProv[nm+"|"+pv])?custByNameProv[nm+"|"+pv]:null;
+  if(byProv) return String(byProv.id);
+  const list=custByName[nm];
+  return (list&&list.length)?String(list[0].id):null;
+}
 async function renderCust(){
-  const salesRows=await sbGet("sales","?select=cust_id,total,paid,remaining")||[];
-  const payments=await sbGet("sales","?select=cust_id,paid,amount_received")||[];
+  const [salesRows,collectRows]=await Promise.all([
+    sbGet("sales","?select=cust_id,cust_name,province,total,paid,remaining"),
+    sbGet("collection_payments","?select=cust_id,cust_name,province,amount")
+  ]);
+  const sales=salesRows||[];
+  const collects=collectRows||[];
 
-  // جمع پرداخت‌های ✅ برگشت شد برای هر مشتری
-  const collectMap={};
-  payments.forEach(p=>{
-    if(!collectMap[p.cust_id]) collectMap[p.cust_id]=0;
-    collectMap[p.cust_id]+=+p.amount||0;
+  // نگاشت مشتری‌ها بر اساس id و نام (cust_id در جدول sales ممکن است خالی باشد)
+  const custById={},custByName={},custByNameProv={};
+  CUSTOMERS.forEach(c=>{
+    const nm=(c.n||"").trim(), pv=(c.p||"").trim();
+    custById[String(c.id)]=c;
+    (custByName[nm]=custByName[nm]||[]).push(c);
+    if(nm&&pv&&!custByNameProv[nm+"|"+pv]) custByNameProv[nm+"|"+pv]=c;
   });
 
+  // مجموع فروش و وصول هر مشتری — وصول از ستون paid جدول sales
   const salesMap={};
-  salesRows.forEach(s=>{
-    if(!salesMap[s.cust_id]) salesMap[s.cust_id]={tot:0,paid:0,rem:0};
-    salesMap[s.cust_id].tot+=+s.total||0;
-    salesMap[s.cust_id].paid+=+s.paid||0;
-    salesMap[s.cust_id].rem+=+s.remaining||0;
+  sales.forEach(s=>{
+    const k=_custKeyOf(s,custById,custByName,custByNameProv); if(!k) return;
+    if(!salesMap[k]) salesMap[k]={tot:0,paid:0,rem:0};
+    salesMap[k].tot+=+s.total||0;
+    salesMap[k].paid+=+s.paid||0;
+    salesMap[k].rem+=+s.remaining||0;
   });
 
-  // اضافه کردن وصول به paid
-  Object.keys(collectMap).forEach(cid=>{
-    if(!salesMap[cid]) salesMap[cid]={tot:0,paid:0,rem:0};
-    salesMap[cid].paid+=collectMap[cid];
+  // پرداخت‌های اضافی ثبت‌شده در جدول collection_payments
+  const collectMap={};
+  collects.forEach(p=>{
+    const k=_custKeyOf(p,custById,custByName,custByNameProv); if(!k) return;
+    collectMap[k]=(collectMap[k]||0)+(+p.amount||0);
   });
 
-  const totalBal=CUSTOMERS.reduce((a,c)=>a+(c.ob||0),0)+salesRows.reduce((a,r)=>a+(+r.remaining||0),0)-payments.reduce((a,p)=>a+(+p.amount||0),0);
+  // جمع طلبات = موجودی اول + مجموع فروش − (paid فروش + وصولی‌های collection_payments)
+  const totalBal=CUSTOMERS.reduce((a,c)=>a+(+c.ob||0),0)
+    +sales.reduce((a,r)=>a+(+r.total||0),0)
+    -sales.reduce((a,r)=>a+(+r.paid||0),0)
+    -collects.reduce((a,p)=>a+(+p.amount||0),0);
   document.getElementById("cust-total-kpi").textContent=afn(Math.max(0,totalBal));
   document.getElementById("cust-cnt").textContent=CUSTOMERS.length;
   const provs=["همه",...new Set(CUSTOMERS.map(c=>c.p))];
@@ -6066,7 +6104,10 @@ function renderCustTable(salesMap){
   document.getElementById("cust-tbody").innerHTML=list.map((c,i)=>{
     const sm=salesMap[c.id]||{tot:0,paid:0,rem:0};
     const collected=collectMap[c.id]||0;
-    const tot=Math.max(0,(c.ob||0)+sm.tot-sm.paid-collected);
+    // وصول کل = paid جدول فروش + پرداخت‌های collection_payments
+    const paidTotal=sm.paid+collected;
+    // طلب کل = موجودی اول + فروش − وصول کل
+    const tot=Math.max(0,(+c.ob||0)+sm.tot-paidTotal);
     const phoneBtn=c.ph?`<a href="tel:${c.ph}" style="background:rgba(46,204,122,.1);border:1px solid rgba(46,204,122,.3);color:var(--gr);border-radius:6px;padding:3px 7px;cursor:pointer;font-size:10px;text-decoration:none">📞</a>
       <a href="https://wa.me/93${c.ph.replace(/^0/,'')}" target="_blank" style="background:rgba(37,211,102,.15);border:1px solid rgba(37,211,102,.3);color:#25d366;border-radius:6px;padding:3px 7px;cursor:pointer;font-size:10px;text-decoration:none">💬</a>`
       :`<span style="color:var(--t3);font-size:10px">—</span>`;
@@ -6077,7 +6118,7 @@ function renderCustTable(salesMap){
       <td style="font-size:11px">${phoneBtn}</td>
       <td class="tdr" style="color:var(--t2)">${afn(c.ob)}</td>
       <td class="tdr" style="color:var(--bl)">${afn(sm.tot)}</td>
-      <td class="tdr" style="color:var(--gr)">${afn(sm.paid+collected)}</td>
+      <td class="tdr" style="color:var(--gr)">${afn(paidTotal)}</td>
       <td>${tot>0?`<span class="bb br2">${afn(tot)}</span>`:'<span class="bb bg2">تسویه ✅</span>'}</td>
       <td style="display:flex;gap:4px">${isAdmin?`<button onclick="openEditCust('${c.id}')" style="background:var(--g3);border:1px solid rgba(232,160,32,.3);color:var(--gd);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">✏️</button>
         <button onclick="openCustCRM('${c.id}','${c.n.replace(/'/g,'')}')" style="background:var(--bl2);border:1px solid rgba(59,158,255,.3);color:var(--bl);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">📝</button>
