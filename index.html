@@ -1442,27 +1442,46 @@ notify pgrst, 'reload schema';</pre>
 
     <!-- EXPENSES — مصارف شرکت -->
     <div id="page-expenses" class="page">
-      <!-- KPI: مجموع مصارف این ماه -->
-      <div class="kg" style="grid-template-columns:1fr">
+      <div class="kg k3">
         <div class="kc rd">
           <div class="ke">💸</div>
-          <div class="kl">مجموع مصارف این ماه</div>
+          <div class="kl" id="exp-kpi-label">مجموع مصارف این ماه</div>
           <div class="kv" id="exp-month-total">—</div>
           <div class="ks" id="exp-month-sub">—</div>
         </div>
+        <div class="kc gd">
+          <div class="ke">🧮</div>
+          <div class="kl">مصرف واقعی فی درجن</div>
+          <div class="kv" id="exp-per-doz">—</div>
+          <div class="ks" id="exp-per-doz-sub">—</div>
+        </div>
+        <div class="kc bl">
+          <div class="ke">🏭</div>
+          <div class="kl">درجن تولید شده (دوره)</div>
+          <div class="kv" id="exp-doz-total">—</div>
+          <div class="ks" id="exp-doz-sub">—</div>
+        </div>
       </div>
       <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
           <div class="ct" style="margin-bottom:0">💸 مصارف شرکت</div>
-          <button class="btn bpri" onclick="openExpenseModal()" style="padding:7px 14px;font-size:12px">+ ثبت مصرف</button>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="btn bsec" onclick="setExpenseRange('week')" id="exp-tab-week" style="font-size:11px;padding:6px 12px">این هفته</button>
+            <button class="btn bpri" onclick="setExpenseRange('month')" id="exp-tab-month" style="font-size:11px;padding:6px 12px">این ماه</button>
+            <button class="btn bsec" onclick="setExpenseRange('all')" id="exp-tab-all" style="font-size:11px;padding:6px 12px">همه</button>
+            <button class="btn bpri" onclick="openExpenseModal()" style="padding:7px 14px;font-size:12px">+ ثبت مصرف</button>
+          </div>
         </div>
         <div class="tw"><table>
           <thead><tr><th>#</th><th>تاریخ</th><th>دسته</th><th>شرح</th><th class="tdr">مبلغ (؋)</th><th></th></tr></thead>
           <tbody id="exp-tbody"></tbody>
         </table></div>
         <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(240,82,82,.08);border:1px solid rgba(240,82,82,.2);border-radius:10px;padding:12px;margin-top:12px">
-          <span style="font-size:13px;color:var(--t2)">مجموع کل مصارف:</span>
+          <span style="font-size:13px;color:var(--t2)" id="exp-total-label">مجموع مصارف (این ماه)</span>
           <span id="exp-total" style="font-size:16px;font-weight:900;color:var(--rd)">؋ 0</span>
+        </div>
+        <div class="ib info" style="margin-top:10px;font-size:10.5px;line-height:1.7">
+          💡 مصارف شرکت فقط برای گزارش است و در سود و زیان دوباره کسر نمی‌شود. سرباری تولید هنگام ثبت تولید در فیلد «سرباری فی درجن» داخل بهای تمام‌شده (COGS) حساب می‌شود. نرخ مرجع مقایسه: ۱۵۰ ؋ فی درجن.
         </div>
       </div>
     </div>
@@ -1803,6 +1822,7 @@ notify pgrst, 'reload schema';</pre>
   <div class="modal">
     <div class="modal-head"><h3>💵 ثبت عملیات نقدی</h3><button class="close-btn" onclick="closeModal('modalCash')">✕</button></div>
     <div class="modal-body">
+      <div id="cash-msg"></div>
       <div class="fg"><label>تاریخ</label><input id="c-date"/></div>
       <div class="fg"><label>نوع</label>
         <select id="c-cat" onchange="updateCashTypes()">
@@ -1810,8 +1830,37 @@ notify pgrst, 'reload schema';</pre>
           <option value="out">⬇️ خروجی</option>
         </select>
       </div>
-      <div class="fg"><label>موضوع عملیات</label>
+      <div class="fg" id="c-type-wrap"><label>موضوع عملیات</label>
         <select id="c-type" onchange="checkCustomCashType()"></select>
+      </div>
+      <div class="fg" id="c-paykind-wrap" style="display:none">
+        <label>نوع پرداخت</label>
+        <select id="c-paykind" onchange="updateCashOutFields()">
+          <option value="company_expense">💸 مصرف شرکت</option>
+          <option value="partner_withdraw">🤝 برداشت شریک</option>
+          <option value="employee_pay">👷 معاش/پیش‌پرداخت کارمند</option>
+          <option value="loan_out">🏦 قرض داده شده</option>
+          <option value="other_out">📋 سایر</option>
+        </select>
+      </div>
+      <div class="fg" id="c-expcat-wrap" style="display:none">
+        <label>دسته مصرف (مصرف شرکت)</label>
+        <select id="c-expcat" onchange="checkCashExpCatCustom()"></select>
+      </div>
+      <div class="fg" id="c-expcat-new-wrap" style="display:none">
+        <label>موضوع جدید مصرف</label>
+        <input id="c-expcat-new" placeholder="مثال: تعمیر ماشین، خرید وسایل..."/>
+      </div>
+      <div class="fg" id="c-person-wrap" style="display:none">
+        <label id="c-person-lbl">انتخاب شریک / کارمند</label>
+        <select id="c-person"></select>
+      </div>
+      <div class="fg" id="c-empkind-wrap" style="display:none">
+        <label>نوع پرداخت معاش</label>
+        <select id="c-empkind">
+          <option value="salary">معاش</option>
+          <option value="advance">پیش‌پرداخت</option>
+        </select>
       </div>
       <div class="fg" id="c-custom-wrap" style="display:none">
         <label>موضوع جدید را بنویس</label>
@@ -1821,8 +1870,9 @@ notify pgrst, 'reload schema';</pre>
         <input id="c-desc" placeholder="مثال: موجودی افتتاحیه، حواله از غزنی..."/>
       </div>
       <div class="fg"><label>مبلغ (؋)</label>
-        <input type="number" inputmode="decimal" id="c-amt" min="0" placeholder="0" inputmode="decimal"/>
+        <input type="number" inputmode="decimal" id="c-amt" min="0" placeholder="0"/>
       </div>
+      <div id="c-out-hint" class="ib info" style="display:none;font-size:10.5px;margin-top:4px"></div>
     </div>
     <div class="modal-foot">
       <button class="btn bsec" onclick="closeModal('modalCash')">انصراف</button>
@@ -2764,14 +2814,13 @@ notify pgrst, 'reload schema';</pre>
         <div class="fg"><label>مبلغ (؋)</label><input type="number" inputmode="decimal" id="exp-amt" min="0" placeholder="0"/></div>
       </div>
       <div class="fg"><label>دسته‌بندی</label>
-        <select id="exp-cat"
+        <select id="exp-cat" onchange="checkExpenseCatCustom()"
           style="width:100%;padding:9px;background:var(--b3);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-family:inherit;font-size:13px">
-          <option value="کرایه موتر">کرایه موتر</option>
-          <option value="بل برق">بل برق</option>
-          <option value="پرزه جات">پرزه جات</option>
-          <option value="معاشات">معاشات</option>
-          <option value="سایر">سایر</option>
         </select>
+      </div>
+      <div class="fg" id="exp-cat-new-wrap" style="display:none">
+        <label>موضوع جدید مصرف</label>
+        <input id="exp-cat-new" placeholder="مثال: تعمیر ماشین، خرید وسایل..."/>
       </div>
       <div class="fg"><label>شرح / توضیح</label>
         <input id="exp-desc" placeholder="مثال: بل برق ماه حمل، معاش ندیم..."/>
@@ -3496,7 +3545,8 @@ const RECIPES={
   کودکانه:[{m:"دی‌اوپی (DOP)",q:0.6},{m:"ریزن",q:0.2},{m:"تیتانیوم",q:0.04},{m:"ای سی (AC)",q:0.08},{m:"کرش سیاه",q:0.15}],
 };
 const CASH_IN=["وصول از مشتری","سرمایه شریک","قرض دریافتی","سایر ورودی"];
-const CASH_OUT=["خرید مواد (افغانی)","اجرت جمشید","اجرت دفتر","معاش شاگردان","کرایه","برق","مصارف اداری","سایر خروجی"];
+// نرخ مرجع (استاندارد) سرباری فی درجن — برای مقایسه با مصرف واقعی فی درجن
+const STANDARD_OVERHEAD_PER_DOZ=150;
 
 // ── Helpers ──
 const afn=(n,dec=0)=>{const v=+(n||0);const d=dec||(v>0&&v<100?2:0);const rounded=d?Math.round(v*Math.pow(10,d))/Math.pow(10,d):Math.round(v);return"؋ "+rounded.toLocaleString("fa-IR",{minimumFractionDigits:d,maximumFractionDigits:d});};
@@ -3806,11 +3856,12 @@ async function renderDash(){
   }
 
   // ── داشبورد Admin — همه اطلاعات مالی ──
-  const [salesData,prodData,cashData,suppRows]=await Promise.all([
+  const [salesData,prodData,cashData,suppRows,expRows]=await Promise.all([
     sbGet("sales","?select=total,remaining,cogs,province"),
     sbGet("production","?select=total_wage"),
     sbGet("cash_ledger","?select=category,amount_in,amount_out"),
     sbGet("supplier_balances","?select=balance_usd"),
+    sbGet("expenses","?select=amount"),
   ]);
   // فقط اگر همه null برگشت → واقعاً قطع است
   if(salesData===null && prodData===null && cashData===null){setSyncOff();return;}
@@ -3827,6 +3878,7 @@ async function renderDash(){
   const custNew=(salesData||[]).reduce((a,r)=>a+(+r.remaining||0),0);
   const suppUSD=(suppRows||[]).reduce((a,r)=>a+(+r.balance_usd||0),0);
   const invVal=Object.values(S.stockMap).reduce((a,m)=>a+(m.kg*m.avgCost),0);
+  const expTotal=(expRows||[]).reduce((a,r)=>a+(+r.amount||0),0);
 
   let alerts="";
   const hasCashData=(cashData||[]).length>0;
@@ -3840,6 +3892,7 @@ async function renderDash(){
     {l:"سود ناخالص",v:afn(gp),s:ts>0?Math.round(gp/ts*100)+"% حاشیه":"—",c:"gr",e:"💹"},
     {l:"بدهی تامین‌کنندگان",v:usd(suppUSD),s:"≈ "+afn(suppUSD*S.usdRate),c:"rd",e:"🏭"},
     {l:"سود خالص",v:afn(np),s:"",c:np>=0?"gr":"rd",e:"📊"},
+    {l:"مصارف شرکت",v:afn(expTotal),s:"اطلاعاتی — بدون تأثیر بر سود",c:"gd",e:"💸"},
     {l:"ارزش موجودی",v:afn(invVal),s:"میانگین متحرک",c:"tl",e:"📦"},
   ].map(k=>`<div class="kc ${k.c}"><div class="ke">${k.e}</div><div class="kl">${k.l}</div><div class="kv">${k.v}</div>${k.s?`<div class="ks">${k.s}</div>`:""}</div>`).join("");
 
@@ -3860,9 +3913,11 @@ async function renderDash(){
     {l:"درآمد فروش",v:afn(ts),c:"var(--bl)"},{l:"(−) هزینه تولید",v:afn(tc),c:"var(--rd)"},
     {l:"= سود ناخالص",v:afn(gp),c:"var(--gr)",b:true},{l:"(−) دستمزد",v:afn(tw),c:"var(--rd)"},
     {l:"= سود خالص",v:afn(np),c:"var(--g2)",b:true},
+    {l:"مصارف شرکت (اطلاعاتی)",v:afn(expTotal),c:"var(--gd)"},
   ].map(r=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bd);font-size:12px">
     <span style="color:${r.b?"var(--tx)":"var(--t2)"};font-weight:${r.b?700:400}">${r.l}</span>
-    <span style="font-weight:${r.b?800:600};color:${r.c}">${r.v}</span></div>`).join("");
+    <span style="font-weight:${r.b?800:600};color:${r.c}">${r.v}</span></div>`).join("")+
+    `<div class="ib info" style="margin-top:9px;font-size:10px;line-height:1.7">💡 سرباری تولید هنگام ثبت تولید در فیلد «سرباری فی درجن» داخل COGS حساب می‌شود؛ مصارف شرکت فقط اطلاعاتی است و دوباره از سود کسر نمی‌شود. نرخ مرجع: ${afn(STANDARD_OVERHEAD_PER_DOZ)} فی درجن.</div>`;
 }
 
 // ── SALES ──
@@ -4578,11 +4633,12 @@ function printStatement(){
 // ── REPORT ──
 async function renderReport(){
   document.getElementById("report-kpis").innerHTML='<div class="loading" style="grid-column:1/-1"><div class="spinner"></div></div>';
-  const [sRows,pRows,cRows,suppRows]=await Promise.all([
+  const [sRows,pRows,cRows,suppRows,expRows]=await Promise.all([
     sbGet("sales","?select=total,cogs,remaining"),
     sbGet("production","?select=total_wage"),
     sbGet("cash_ledger","?select=category,amount_in,amount_out"),
     sbGet("supplier_balances","?select=balance_usd"),
+    sbGet("expenses","?select=amount"),
   ]);
   const ts=(sRows||[]).reduce((a,r)=>a+(+r.total||0),0);
   const tc=(sRows||[]).reduce((a,r)=>a+(+r.cogs||0),0);
@@ -4596,10 +4652,12 @@ async function renderReport(){
   const custNew=(sRows||[]).reduce((a,r)=>a+(+r.remaining||0),0);
   const suppUSD=(suppRows||[]).reduce((a,r)=>a+(+r.balance_usd||0),0);
   const invVal=Object.values(S.stockMap).reduce((a,m)=>a+(m.kg*m.avgCost),0);
+  const expTotal=(expRows||[]).reduce((a,r)=>a+(+r.amount||0),0);
 
   document.getElementById("report-kpis").innerHTML=[
     {l:"کل فروش",v:afn(ts),c:"bl"},{l:"هزینه تولید",v:afn(tc),c:"rd"},
     {l:"سود ناخالص",v:afn(gp),c:"gr"},{l:"سود خالص",v:afn(np),c:"gd"},
+    {l:"مصارف شرکت (اطلاعاتی)",v:afn(expTotal),c:"gd"},
   ].map(k=>`<div class="kc ${k.c}"><div class="kl">${k.l}</div><div class="kv" style="font-size:13px">${k.v}</div></div>`).join("");
 
   document.getElementById("pl-detail").innerHTML=[
@@ -4610,9 +4668,11 @@ async function renderReport(){
     {l:"= سود خالص",v:afn(np),c:"var(--g2)",b:true},
     {l:"Gross Margin %",v:(ts>0?Math.round(gp/ts*100):0)+"%",c:"var(--gd)"},
     {l:"Net Margin %",v:(ts>0?Math.round(np/ts*100):0)+"%",c:"var(--gd)"},
+    {l:"مصارف شرکت (اطلاعاتی — بدون تأثیر بر سود)",v:afn(expTotal),c:"var(--gd)"},
   ].map(r=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--bd);font-size:12px">
     <span style="color:${r.b?"var(--tx)":"var(--t2)"};font-weight:${r.b?700:400}">${r.l}</span>
-    <span style="font-weight:${r.b?800:600};color:${r.c}">${r.v}</span></div>`).join("");
+    <span style="font-weight:${r.b?800:600};color:${r.c}">${r.v}</span></div>`).join("")+
+    `<div class="ib info" style="margin-top:9px;font-size:10px;line-height:1.7">💡 سرباری تولید از طریق فیلد «سرباری فی درجن» در بهای تمام‌شده (COGS) لحاظ می‌شود؛ بنابراین مصارف شرکت دوباره از سود کسر نمی‌شود (جلوگیری از دوباره‌شماری). نرخ مرجع مقایسه: ${afn(STANDARD_OVERHEAD_PER_DOZ)} فی درجن.</div>`;
 
   document.getElementById("bs-detail").innerHTML=`
     <div style="font-size:11px;font-weight:700;color:var(--gr);margin-bottom:7px">دارایی‌ها</div>
@@ -5924,20 +5984,89 @@ async function submitProd(){
 }
 
 // Cash modal
+let _cashPartners=[], _cashEmps=[], _cashPersonKind="";
+
 function initCashModal(){
-  document.getElementById("c-date").value=today();
-  document.getElementById("c-cat").value="in";
-  document.getElementById("c-desc").value="";
-  document.getElementById("c-amt").value="";
+  const set=(id,v)=>{const el=document.getElementById(id); if(el) el.value=v;};
+  set("c-date",today());
+  set("c-cat","in");
+  set("c-desc","");
+  set("c-amt","");
+  set("c-custom-type","");
+  set("c-expcat-new","");
+  set("c-paykind","company_expense");
+  set("c-empkind","salary");
+  const typeSel=document.getElementById("c-type"); if(typeSel) typeSel.value="";
+  _cashPersonKind="";
+  const msg=document.getElementById("cash-msg"); if(msg) msg.innerHTML="";
+  const btn=document.getElementById("cash-btn"); if(btn){btn.disabled=false;btn.textContent="ثبت ✓";}
   updateCashTypes();
+  // بارگذاری دسته‌های مصرف و اشخاص از Supabase
+  Promise.all([getExpenseCategories(), loadCashPersons()]).then(()=>{
+    if(document.getElementById("c-cat")?.value==="out") updateCashOutFields();
+  });
 }
+
 function updateCashTypes(){
-  const cat=document.getElementById("c-cat").value;
-  const list=cat==="in"?CASH_IN:CASH_OUT;
-  document.getElementById("c-type").innerHTML=
-    list.map(t=>`<option value="${t}">${t}</option>`).join("")+
-    `<option value="__custom__">➕ موضوع جدید...</option>`;
+  const cat=document.getElementById("c-cat")?.value||"in";
+  const typeWrap=document.getElementById("c-type-wrap");
+  const payWrap=document.getElementById("c-paykind-wrap");
+  if(typeWrap) typeWrap.style.display=cat==="out"?"none":"block";
+  if(payWrap) payWrap.style.display=cat==="out"?"block":"none";
+  if(cat==="out"){
+    updateCashOutFields();
+    return;
+  }
+  const typeSel=document.getElementById("c-type");
+  if(typeSel){
+    const cur=typeSel.value;
+    typeSel.innerHTML=CASH_IN.map(t=>`<option value="${escHTML(t)}">${escHTML(t)}</option>`).join("")
+      +`<option value="__custom__">➕ موضوع جدید...</option>`;
+    if(cur&&(CASH_IN.includes(cur)||cur==="__custom__")) typeSel.value=cur;
+  }
+  // پنهان کردن فیلدهای مخصوص خروجی
+  ["c-expcat-wrap","c-expcat-new-wrap","c-person-wrap","c-empkind-wrap","c-out-hint"].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.style.display="none";
+  });
   checkCustomCashType();
+}
+
+// فیلدهای وابسته به «نوع پرداخت» در حالت خروجی
+function updateCashOutFields(){
+  const cat=document.getElementById("c-cat")?.value;
+  const kind=document.getElementById("c-paykind")?.value||"company_expense";
+  const isOut=cat==="out";
+  const expWrap=document.getElementById("c-expcat-wrap");
+  const expNewWrap=document.getElementById("c-expcat-new-wrap");
+  const personWrap=document.getElementById("c-person-wrap");
+  const empKindWrap=document.getElementById("c-empkind-wrap");
+  const customWrap=document.getElementById("c-custom-wrap");
+  const hint=document.getElementById("c-out-hint");
+  const showExp=isOut&&kind==="company_expense";
+  const showPerson=isOut&&(kind==="partner_withdraw"||kind==="employee_pay");
+  const showEmp=isOut&&kind==="employee_pay";
+  const showOther=isOut&&kind==="other_out";
+
+  if(expWrap) expWrap.style.display=showExp?"block":"none";
+  if(expNewWrap) expNewWrap.style.display=(showExp&&document.getElementById("c-expcat")?.value==="__new__")?"block":"none";
+  if(personWrap) personWrap.style.display=showPerson?"block":"none";
+  if(empKindWrap) empKindWrap.style.display=showEmp?"block":"none";
+  if(customWrap) customWrap.style.display=showOther?"block":"none";
+  const lbl=document.getElementById("c-person-lbl");
+  if(lbl) lbl.textContent=kind==="partner_withdraw"?"شریک":"کارمند";
+
+  if(showExp) fillCashExpCatSelect();
+  if(showPerson) fillCashPersonSelect(kind);
+
+  if(hint){
+    hint.style.display=isOut?"block":"none";
+    hint.innerHTML=
+      kind==="company_expense"?"💡 این مبلغ از صندوق کسر شده و در «مصارف شرکت» هم ثبت می‌شود.":
+      kind==="partner_withdraw"?"💡 این مبلغ از صندوق کسر شده و در حساب شریک به عنوان «برداشت» ثبت می‌شود.":
+      kind==="employee_pay"?"💡 این مبلغ از صندوق کسر شده و در پرداخت‌های کارمند ثبت می‌شود.":
+      kind==="loan_out"?"💡 این مبلغ فقط در صندوق به عنوان «قرض داده شده» ثبت می‌شود.":
+      "💡 این مبلغ فقط در صندوق به عنوان خروجی «سایر» ثبت می‌شود.";
+  }
 }
 
 function checkCustomCashType(){
@@ -5952,64 +6081,194 @@ function syncCustomType(){
   if(descEl&&!descEl.value) descEl.value=customVal;
 }
 
-function getCashType(){
-  const sel=document.getElementById("c-type")?.value;
-  if(sel==="__custom__"){
-    const custom=document.getElementById("c-custom-type")?.value?.trim();
-    if(!custom) return null;
-    // اضافه به لیست برای دفعه بعد
-    const cat=document.getElementById("c-cat")?.value;
-    if(cat==="in"&&!CASH_IN.includes(custom)) CASH_IN.push(custom);
-    if(cat==="out"&&!CASH_OUT.includes(custom)) CASH_OUT.push(custom);
-    return custom;
+// ── دسته‌های مصرف در مودال صندوق ──
+async function fillCashExpCatSelect(){
+  const sel=document.getElementById("c-expcat");
+  if(!sel) return;
+  const cur=sel.value;
+  const cats=await getExpenseCategories();
+  if(!document.getElementById("c-expcat")) return;
+  sel.innerHTML=cats.map(c=>`<option value="${escHTML(c)}">${escHTML(c)}</option>`).join("")
+    +`<option value="__new__">➕ موضوع جدید...</option>`;
+  if(cur&&(cur==="__new__"||cats.includes(cur))) sel.value=cur;
+  else if(cats.length) sel.value=cats[0];
+  checkCashExpCatCustom();
+}
+
+function checkCashExpCatCustom(){
+  const sel=document.getElementById("c-expcat");
+  const wrap=document.getElementById("c-expcat-new-wrap");
+  if(!sel||!wrap) return;
+  const isNew=sel.value==="__new__";
+  wrap.style.display=isNew?"block":"none";
+  if(isNew) setTimeout(()=>document.getElementById("c-expcat-new")?.focus(),50);
+}
+
+// ── شریکان / کارمندان برای خروجی صندوق ──
+async function loadCashPersons(){
+  const [p,e]=await Promise.all([
+    sbGet("partners","?select=*"),
+    sbGet("employees","?select=*")
+  ]);
+  _cashPartners=(p||[]).filter(x=>x&&x.is_active!==false);
+  _cashEmps=(e||[]).filter(x=>x&&x.is_active!==false);
+}
+
+function _cashPersonName(x){ return String(x?.name_fa||x?.name||"—").trim(); }
+
+function fillCashPersonSelect(kind){
+  const sel=document.getElementById("c-person");
+  if(!sel) return;
+  const list=kind==="partner_withdraw"?_cashPartners:_cashEmps;
+  // با تغییر نوع (شریک ↔ کارمند) انتخاب قبلی پاک می‌شود تا idهای هم‌عدد قاطی نشوند
+  const cur=kind===_cashPersonKind?sel.value:"";
+  _cashPersonKind=kind;
+  if(!list.length){
+    sel.innerHTML=`<option value="">— ${kind==="partner_withdraw"?"هیچ شریکی":"هیچ کارمندی"} ثبت نشده —</option>`;
+    return;
   }
-  return sel||null;
+  sel.innerHTML=list.map(x=>`<option value="${escHTML(String(x.id))}">${escHTML(_cashPersonName(x))}</option>`).join("");
+  if(cur&&list.some(x=>String(x.id)===cur)) sel.value=cur;
 }
 
 async function submitCash(){
   const cat=document.getElementById("c-cat").value;
   const amt=+(document.getElementById("c-amt").value)||0;
-  if(!amt){alert("مبلغ را بنویس!");return;}
+  const date=(document.getElementById("c-date").value||"").trim()||today();
+  const desc=(document.getElementById("c-desc")?.value||"").trim();
+  const msg=document.getElementById("cash-msg");
+  const setMsg=html=>{if(msg) msg.innerHTML=html;};
+  setMsg("");
+  if(!(amt>0)){alert("مبلغ را درست بنویس!");return;}
 
-  // گرفتن موضوع
+  const btn=document.getElementById("cash-btn");
+  if(btn){btn.disabled=true;btn.textContent="در حال ذخیره...";}
+  try{
+    if(cat==="out") await submitCashOutflow(date,amt,desc,setMsg);
+    else await submitCashInflow(date,amt,desc,setMsg);
+  }catch(e){
+    setMsg(sbErrorHTML("خطای غیرمنتظره"));
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent="ثبت ✓";}
+  }
+}
+
+// ورودی صندوق — همان مسیر قبلی
+async function submitCashInflow(date,amt,desc,setMsg){
   const typeEl=document.getElementById("c-type");
   const typeVal=typeEl?.value||"";
   let cashType=typeVal;
   if(typeVal==="__custom__"){
     cashType=(document.getElementById("c-custom-type")?.value||"").trim();
-    if(!cashType){alert("موضوع جدید را بنویس!");return;}
-    if(cat==="in"&&!CASH_IN.includes(cashType)) CASH_IN.push(cashType);
-    if(cat==="out"&&!CASH_OUT.includes(cashType)) CASH_OUT.push(cashType);
+    if(!cashType){setMsg('<div class="ib err">موضوع جدید را بنویس!</div>');return;}
+    if(!CASH_IN.includes(cashType)) CASH_IN.push(cashType);
   }
-  if(!cashType){alert("موضوع عملیات را انتخاب کن!");return;}
-
-  const desc=document.getElementById("c-desc")?.value||"";
-  document.getElementById("cash-btn").disabled=true;
-  document.getElementById("cash-btn").textContent="در حال ذخیره...";
+  if(!cashType){setMsg('<div class="ib err">موضوع عملیات را انتخاب کن!</div>');return;}
 
   const res=await sbPost("cash_ledger",{
-    date:document.getElementById("c-date").value||today(),
-    category:cat,
+    date,
+    category:"in",
     type:cashType,
     description:desc||cashType,
-    amount_in:cat==="in"?amt:0,
-    amount_out:cat==="out"?amt:0
+    amount_in:amt,
+    amount_out:0
   });
+  if(!res){setMsg(sbErrorHTML("خطا در ثبت ورودی صندوق"));return;}
 
-  document.getElementById("cash-btn").disabled=false;
-  document.getElementById("cash-btn").textContent="ثبت ✓";
-
-  if(res){
-    showSaved();
-    closeModal("modalCash");
-    renderCash();
-  } else {
-    alert("خطا در ذخیره! اینترنت را چک کن و دوباره امتحان کن");
-  }
+  showSaved();
+  closeModal("modalCash");
+  renderCash();
 }
 
-// ══ EXPENSES — مصارف شرکت ══
-const EXPENSE_CATS=["کرایه موتر","بل برق","پرزه جات","معاشات","سایر"];
+// خروجی صندوق — با مسیردهی به دفتر مربوطه
+async function submitCashOutflow(date,amt,desc,setMsg){
+  const kind=document.getElementById("c-paykind")?.value||"company_expense";
+  let cashType="", expCat=null, personId="", personName="", empKind="salary", expenseIso=null;
+
+  if(kind==="company_expense"){
+    expCat=await resolveExpenseCategoryFromSelect("c-expcat","c-expcat-new");
+    if(!expCat){setMsg('<div class="ib err">دسته مصرف را انتخاب کن یا موضوع جدید را بنویس!</div>');return;}
+    const parsed=_expToIso(date);
+    if(parsed.err==="format"){setMsg('<div class="ib err">تاریخ را مثل ۱۴۰۵/۰۸/۲۷ بنویس!</div>');return;}
+    if(parsed.err==="day"){setMsg('<div class="ib err">این تاریخ در تقویم وجود ندارد!</div>');return;}
+    expenseIso=parsed.iso;
+    cashType="مصرف شرکت — "+expCat;
+  }else if(kind==="partner_withdraw"){
+    const sel=document.getElementById("c-person");
+    personId=sel?.value||"";
+    if(!personId){setMsg('<div class="ib err">شریک را انتخاب کن! (اول در بخش شریکان شریک ثبت کن)</div>');return;}
+    personName=sel.options[sel.selectedIndex]?.text||"";
+    cashType="برداشت شریک — "+personName;
+  }else if(kind==="employee_pay"){
+    const sel=document.getElementById("c-person");
+    personId=sel?.value||"";
+    if(!personId){setMsg('<div class="ib err">کارمند را انتخاب کن! (اول در بخش کارمندان کارمند ثبت کن)</div>');return;}
+    personName=sel.options[sel.selectedIndex]?.text||"";
+    empKind=document.getElementById("c-empkind")?.value||"salary";
+    cashType=(empKind==="advance"?"پیش‌پرداخت معاش — ":"معاش — ")+personName;
+  }else if(kind==="loan_out"){
+    cashType="قرض داده شده";
+  }else{
+    const custom=(document.getElementById("c-custom-type")?.value||"").trim();
+    cashType=custom||"سایر خروجی";
+  }
+
+  // ۱) همیشه از صندوق کسر می‌شود
+  window._lastSBError=null;
+  const cashRes=await sbPost("cash_ledger",{
+    date,category:"out",type:cashType,
+    description:desc||cashType,
+    amount_in:0,amount_out:amt
+  });
+  if(!cashRes){setMsg(sbErrorHTML("خطا در ثبت خروجی صندوق"));return;}
+  const cashId=cashRes[0]?.id;
+
+  // ۲) ثبت در دفتر مربوطه (در صورت نیاز)
+  let ok=true, extraErr="";
+  if(kind==="company_expense"){
+    window._lastSBError=null;
+    const r=await sbPost("expenses",{expense_date:expenseIso,category_fa:expCat,description_fa:desc||cashType,amount:amt});
+    if(!r){ok=false;extraErr=window._lastSBError||"";}
+  }else if(kind==="partner_withdraw"){
+    window._lastSBError=null;
+    const r=await sbPost("partner_transactions",{
+      partner_id:parseInt(personId),partner_name:personName,
+      date,transaction_date:date,type:"withdraw",
+      amount_afn:amt,amount_usd:0,description:desc||cashType
+    });
+    if(!r){ok=false;extraErr=window._lastSBError||"";}
+  }else if(kind==="employee_pay"){
+    window._lastSBError=null;
+    const r=await sbPost("employee_payments",{
+      employee_id:+personId,employee_name:personName,
+      date,amount_afn:amt,type:empKind,notes:desc||cashType
+    });
+    if(!r){ok=false;extraErr=window._lastSBError||"";}
+  }
+
+  // ۳) اگر ثبت دفتر مربوطه شکست خورد، تراکنش صندوق برگشت داده می‌شود
+  if(!ok){
+    if(cashId) await sbDelete("cash_ledger","?id=eq."+encodeURIComponent(cashId));
+    setMsg('<div class="ib err" style="flex-direction:column;align-items:flex-start;gap:5px">'+
+      '<div style="font-weight:800">❌ ثبت در دفتر مربوطه انجام نشد — تراکنش صندوق برگشت داده شد.</div>'+
+      '<pre style="margin:0;white-space:pre-wrap;word-break:break-word;direction:ltr;text-align:left;font-size:10px;line-height:1.45;width:100%;max-height:220px;overflow:auto;opacity:.9">'+escHTML(extraErr||"خطای نامشخص")+'</pre></div>');
+    return;
+  }
+
+  showSaved();
+  closeModal("modalCash");
+  renderCash();
+  if(document.getElementById("page-expenses")?.classList.contains("active")) renderExpenses();
+  if(document.getElementById("page-partners")?.classList.contains("active")) renderPartners();
+  if(document.getElementById("page-emp")?.classList.contains("active")) renderEmp();
+}
+
+
+// دسته‌های پیش‌فرض — اگر جدول expense_categories خالی یا در دسترس نبود
+const EXPENSE_CAT_FALLBACK=["کرایه موتر","بل برق","پرزه جات","معاشات","سایر"];
+let EXPENSE_CATS_CACHE=null;
+let _expCatNameCol=null;
+let _expRowsCache=[], _expProdCache=[], _expRange="month";
 
 // ارقام فارسی/عربی → لاتین (برای ذخیره و مقایسه تاریخ)
 function _expDigits(v){
@@ -6032,6 +6291,15 @@ function _expParseDate(v){
     fa:`${y}/${String(mo).padStart(2,"0")}/${String(d).padStart(2,"0")}`
   };
 }
+// پذیرش هم تاریخ فارسی و هم ISO میلادی (مثل 2026-08-27)
+function _expToIso(v){
+  const raw=_expDigits(v).trim();
+  const iso=raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if(iso&&+iso[1]>1900){
+    return {iso:`${iso[1]}-${String(+iso[2]).padStart(2,"0")}-${String(+iso[3]).padStart(2,"0")}`};
+  }
+  return _expParseDate(raw);
+}
 // تاریخ ذخیره‌شده (میلادی ISO یا «۱۴۰۵-۸-۲۷») → نمایش «۱۴۰۵/۰۸/۲۷»
 function _expFaDate(v){
   const s=_expDigits(v).trim();
@@ -6040,21 +6308,133 @@ function _expFaDate(v){
   const y=+m[1]>1900?+m[1]-621:+m[1];
   return `${y}/${String(+m[2]).padStart(2,"0")}/${String(+m[3]).padStart(2,"0")}`;
 }
-// مرتب‌سازی عددی تاریخ (هم 2026-08-27 و هم 1405/8/27 را درست می‌خواند)
+// مرتب‌سازی عددی تاریخ — اول به کلید فارسی تبدیل می‌شود تا رکوردهای
+// میلادی (2026-08-27) و فارسی (1405/08/27) در یک ترتیب درست بیایند
 function _expSortNum(v){
-  const m=_expDigits(v).match(/(\d{3,4})\D+(\d{1,2})\D+(\d{1,2})/);
+  return _expFaKey(v);
+}
+// کلید تاریخ فارسی برای مقایسه بازه‌ها (میلادی → فارسی)
+function _expFaKey(v){
+  const m=_expFaDate(v).match(/^(\d{3,4})\D(\d{1,2})\D(\d{1,2})/);
   if(!m) return 0;
   return (+m[1])*10000+(+m[2])*100+(+m[3]);
 }
+// کلید شروع هفته جاری (شنبه) در تقویم فارسی
+function _expWeekStartKey(){
+  const parts=_expDigits(today()).split(/[^\d]+/).map(Number);
+  if(parts.length<3) return 0;
+  const dt=new Date(parts[0]+621,parts[1]-1,parts[2]);
+  if(isNaN(dt.getTime())) return 0;
+  const sinceSat=(dt.getDay()+1)%7; // شنبه = ۰
+  dt.setDate(dt.getDate()-sinceSat);
+  return (dt.getFullYear()-621)*10000+(dt.getMonth()+1)*100+dt.getDate();
+}
 
-function openExpenseModal(){
+// ── دسته‌های مصرف: خواندن/نوشتن جدول expense_categories در Supabase ──
+// نام ستون ممکن است name_fa / name / category_fa / title باشد؛ اولی که موجود بود استفاده می‌شود.
+async function _detectExpenseCatNameCol(){
+  if(_expCatNameCol) return _expCatNameCol;
+  for(const c of ["name","name_fa","category_fa","category_name","title","title_fa"]){
+    if(await tableHasColumn("expense_categories",c)){_expCatNameCol=c;break;}
+  }
+  return _expCatNameCol;
+}
+
+async function getExpenseCategories(force=false){
+  if(EXPENSE_CATS_CACHE&&!force) return EXPENSE_CATS_CACHE;
+  // نام‌ها از سه منبع جمع می‌شوند: جدول دسته‌ها + دسته‌های قبلاً استفاده‌شده در مصارف + پیش‌فرض‌ها
+  const [rows,usedRows]=await Promise.all([
+    sbGet("expense_categories","?select=*"),
+    sbGet("expenses","?select=category_fa"),
+  ]);
+  if(rows===null&&usedRows===null) return EXPENSE_CAT_FALLBACK.slice(); // خطای شبکه/جدول → کش نکن تا دفعه بعد دوباره تلاش شود
+  const names=[];
+  const push=n=>{
+    n=String(n??"").trim();
+    if(n&&!names.includes(n)) names.push(n);
+  };
+  (Array.isArray(rows)?rows:[]).forEach(r=>
+    push(r?.name_fa??r?.name??r?.category_fa??r?.category_name??r?.title??r?.title_fa));
+  (Array.isArray(usedRows)?usedRows:[]).forEach(r=>push(r?.category_fa));
+  EXPENSE_CAT_FALLBACK.forEach(push);
+  if(rows!==null) await _detectExpenseCatNameCol();
+  EXPENSE_CATS_CACHE=names;
+  return EXPENSE_CATS_CACHE;
+}
+
+async function addExpenseCategory(name){
+  const nm=String(name||"").trim();
+  if(!nm) return false;
+  if(EXPENSE_CATS_CACHE?.includes(nm)) return true;
+  const col=await _detectExpenseCatNameCol();
+  if(!col){
+    window._lastSBError="جدول expense_categories یا ستون نام آن در Supabase پیدا نشد";
+    return false;
+  }
+  const body={[col]:nm};
+  if(await tableHasColumn("expense_categories","is_active")) body.is_active=true;
+  window._lastSBError=null;
+  const res=await sbPost("expense_categories",body);
+  if(res===null){
+    // اگر نام قبلاً در جدول بود (خطای تکراری/409)، خطا نیست — دوباره از سرور می‌خوانیم
+    const fresh=await getExpenseCategories(true);
+    if(fresh.includes(nm)){EXPENSE_CATS_CACHE=fresh;return true;}
+    return false;
+  }
+  if(!EXPENSE_CATS_CACHE) EXPENSE_CATS_CACHE=[];
+  if(!EXPENSE_CATS_CACHE.includes(nm)) EXPENSE_CATS_CACHE.push(nm);
+  return true;
+}
+
+// پر کردن سلکت دسته‌ها + گزینه «➕ موضوع جدید...»
+function _fillExpenseCatSelect(selId,wrapId,selected){
+  const sel=document.getElementById(selId);
+  if(!sel) return;
+  const cats=(EXPENSE_CATS_CACHE||EXPENSE_CAT_FALLBACK).slice();
+  const cur=selected||sel.value;
+  sel.innerHTML=cats.map(c=>`<option value="${escHTML(c)}">${escHTML(c)}</option>`).join("")
+    +`<option value="__new__">➕ موضوع جدید...</option>`;
+  if(cur&&(cur==="__new__"||cats.includes(cur))) sel.value=cur;
+  else if(cats.length) sel.value=cats[0];
+  if(wrapId){
+    const wrap=document.getElementById(wrapId);
+    if(wrap) wrap.style.display=sel.value==="__new__"?"block":"none";
+  }
+}
+
+function checkExpenseCatCustom(){
+  const sel=document.getElementById("exp-cat");
+  const wrap=document.getElementById("exp-cat-new-wrap");
+  if(!sel||!wrap) return;
+  const isNew=sel.value==="__new__";
+  wrap.style.display=isNew?"block":"none";
+  if(isNew) setTimeout(()=>document.getElementById("exp-cat-new")?.focus(),50);
+}
+
+// خواندن دسته انتخاب‌شده؛ اگر «موضوع جدید» بود در Supabase ذخیره می‌شود
+async function resolveExpenseCategoryFromSelect(selId,inputId){
+  const sel=document.getElementById(selId);
+  let cat=sel?.value||"";
+  if(cat==="__new__"){
+    cat=(document.getElementById(inputId)?.value||"").trim();
+    if(!cat) return null;
+    await addExpenseCategory(cat);
+  }
+  return cat||null;
+}
+
+async function openExpenseModal(){
   const msg=document.getElementById("exp-msg"); if(msg) msg.innerHTML="";
   const btn=document.getElementById("exp-btn"); if(btn){btn.disabled=false;btn.textContent="ثبت مصرف ✓";}
   const d=document.getElementById("exp-date"); if(d) d.value=today();
-  const cat=document.getElementById("exp-cat"); if(cat) cat.value=EXPENSE_CATS[0];
   const desc=document.getElementById("exp-desc"); if(desc) desc.value="";
   const amt=document.getElementById("exp-amt"); if(amt) amt.value="";
+  const newInp=document.getElementById("exp-cat-new"); if(newInp) newInp.value="";
+  const sel=document.getElementById("exp-cat");
+  if(sel) sel.innerHTML='<option value="">⏳ در حال بارگذاری دسته‌ها...</option>';
   openModal("modalExpense");
+  await getExpenseCategories();
+  _fillExpenseCatSelect("exp-cat","exp-cat-new-wrap");
 }
 
 
@@ -6062,14 +6442,18 @@ async function submitExpense(){
   const msg=document.getElementById("exp-msg");
   const btn=document.getElementById("exp-btn");
   const dateRaw=(document.getElementById("exp-date")?.value||"").trim()||today();
-  const cat=document.getElementById("exp-cat")?.value||EXPENSE_CATS[0];
   const desc=(document.getElementById("exp-desc")?.value||"").trim();
   const amt=+(document.getElementById("exp-amt")?.value)||0;
 
-  const parsed=_expParseDate(dateRaw);
+  const parsed=_expToIso(dateRaw);
   if(parsed.err==="format"){if(msg)msg.innerHTML='<div class="ib err">تاریخ را مثل ۱۴۰۵/۰۸/۲۷ بنویس!</div>';return;}
   if(parsed.err==="day"){if(msg)msg.innerHTML='<div class="ib err">این تاریخ در تقویم وجود ندارد — روز را اصلاح کن!</div>';return;}
   if(amt<=0){if(msg)msg.innerHTML='<div class="ib err">مبلغ را درست بنویس!</div>';return;}
+
+  const catSel=document.getElementById("exp-cat")?.value||"";
+  const cat=await resolveExpenseCategoryFromSelect("exp-cat","exp-cat-new");
+  if(!cat){if(msg)msg.innerHTML='<div class="ib err">دسته مصرف را انتخاب کن یا موضوع جدید را بنویس!</div>';return;}
+  const catSaved=catSel!=="__new__"||!!(EXPENSE_CATS_CACHE||[]).includes(cat);
 
   if(btn){btn.disabled=true;btn.textContent="در حال ذخیره...";}
   window._lastSBError=null;
@@ -6082,10 +6466,11 @@ async function submitExpense(){
   if(btn){btn.disabled=false;btn.textContent="ثبت مصرف ✓";}
   if(!res){ if(msg) msg.innerHTML=sbErrorHTML("خطا در ثبت مصرف"); return; }
 
-  if(msg) msg.innerHTML='<div class="ib ok">✅ مصرف ثبت شد</div>';
+  if(msg) msg.innerHTML='<div class="ib ok">✅ مصرف ثبت شد</div>'+
+    (catSaved?'':'<div class="ib warn" style="margin-top:6px;font-size:10.5px">⚠️ موضوع جدید در جدول expense_categories ذخیره نشد — ولی در همین مصرف ثبت گردید.</div>');
   showSaved();
   renderExpenses();
-  setTimeout(()=>closeModal("modalExpense"),800);
+  setTimeout(()=>closeModal("modalExpense"),catSaved?800:2600);
 }
 
 async function deleteExpense(id){
@@ -6099,38 +6484,109 @@ async function deleteExpense(id){
 
 async function renderExpenses(){
   const tb=document.getElementById("exp-tbody");
-  const monthEl=document.getElementById("exp-month-total");
-  const monthSub=document.getElementById("exp-month-sub");
-  const totEl=document.getElementById("exp-total");
-
   if(tb) tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:18px"><div class="spinner" style="margin:auto"></div></td></tr>';
 
-  const rows=await sbGet("expenses","?select=id,expense_date,category_fa,description_fa,amount");
+  const [rows,prodRows]=await Promise.all([
+    sbGet("expenses","?select=id,expense_date,category_fa,description_fa,amount"),
+    sbGet("production","?select=dozen,date")
+  ]);
   if(rows===null){
     if(tb) tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:18px;color:var(--rd)">خطا در بارگذاری مصارف — اتصال را چک کن</td></tr>';
     return;
   }
+  _expRowsCache=Array.isArray(rows)?rows:[];
+  _expProdCache=Array.isArray(prodRows)?prodRows:[];
+  renderExpenseTable();
+}
+
+// تب بازه زمانی: این هفته / این ماه / همه
+function setExpenseRange(range){
+  _expRange=range==="week"||range==="all"?range:"month";
+  renderExpenseTable();
+}
+
+function _expRangeLabel(){
+  return _expRange==="week"?"این هفته":_expRange==="all"?"همه دوره‌ها":"این ماه";
+}
+
+function _syncExpenseTabs(){
+  const map={week:"exp-tab-week",month:"exp-tab-month",all:"exp-tab-all"};
+  Object.keys(map).forEach(k=>{
+    const b=document.getElementById(map[k]);
+    if(b) b.className="btn "+(k===_expRange?"bpri":"bsec");
+  });
+}
+
+// رندر جدول و KPI بر اساس بازه انتخاب‌شده
+function renderExpenseTable(){
+  _syncExpenseTabs();
+  const tb=document.getElementById("exp-tbody");
+  const monthEl=document.getElementById("exp-month-total");
+  const monthSub=document.getElementById("exp-month-sub");
+  const totEl=document.getElementById("exp-total");
+  const totLbl=document.getElementById("exp-total-label");
+  const kpiLbl=document.getElementById("exp-kpi-label");
+  const perDozEl=document.getElementById("exp-per-doz");
+  const perDozSub=document.getElementById("exp-per-doz-sub");
+  const dozEl=document.getElementById("exp-doz-total");
+  const dozSub=document.getElementById("exp-doz-sub");
 
   // جدیدترین تاریخ اول؛ در تاریخ مساوی، بالاترین id اول
-  const list=(rows||[]).slice().sort((a,b)=>
+  const list=_expRowsCache.slice().sort((a,b)=>
     (_expSortNum(b.expense_date)-_expSortNum(a.expense_date))||((+b.id||0)-(+a.id||0))
   );
-
+  const nowKey=_expFaKey(today());
+  const weekStart=_expWeekStartKey();
   const curMonth=today().slice(0,7); // مثلاً 1405/11
-  const monthRows=list.filter(r=>_expFaDate(r.expense_date).slice(0,7)===curMonth);
-  const monthSum=monthRows.reduce((a,r)=>a+(+r.amount||0),0);
-  const allSum=list.reduce((a,r)=>a+(+r.amount||0),0);
+  const inRange=v=>{
+    if(_expRange==="all") return true;
+    const fa=_expFaDate(v);
+    if(_expRange==="month") return fa.slice(0,7)===curMonth;
+    const k=_expFaKey(v);
+    return !!k&&k>=weekStart&&k<=nowKey;
+  };
+  const filtered=list.filter(r=>inRange(r.expense_date));
+  const sum=filtered.reduce((a,r)=>a+(+r.amount||0),0);
+  const dozenTotal=_expProdCache.filter(p=>inRange(p.date)).reduce((a,p)=>a+(+p.dozen||0),0);
+  const perDoz=dozenTotal>0?sum/dozenTotal:0;
+  const rangeLbl=_expRangeLabel();
 
-  if(monthEl) monthEl.textContent=afn(monthSum);
-  if(monthSub) monthSub.textContent=monthRows.length?`${monthRows.length} مورد در ماه ${curMonth}`:"در این ماه مصرفی ثبت نشده";
-  if(totEl) totEl.textContent=afn(allSum);
+  if(kpiLbl) kpiLbl.textContent="مجموع مصارف "+rangeLbl;
+  if(monthEl) monthEl.textContent=afn(sum);
+  if(monthSub) monthSub.textContent=filtered.length?`${filtered.length} مورد — ${rangeLbl}`:`در ${rangeLbl} مصرفی ثبت نشده`;
+  if(totEl) totEl.textContent=afn(sum);
+  if(totLbl) totLbl.textContent="مجموع مصارف ("+rangeLbl+")";
+  if(dozEl) dozEl.textContent=dozenTotal.toLocaleString("fa-IR")+" درجن";
+  if(dozSub) dozSub.textContent=dozenTotal>0?"مبنای محاسبه مصرف فی درجن":"در این دوره تولیدی ثبت نشده";
+
+  if(perDozEl){
+    if(dozenTotal>0){
+      perDozEl.textContent=afn(perDoz,2);
+      perDozEl.style.color=perDoz>STANDARD_OVERHEAD_PER_DOZ?"var(--rd)":"var(--gr)";
+    }else{
+      perDozEl.textContent="—";
+      perDozEl.style.color="var(--t3)";
+    }
+  }
+  if(perDozSub){
+    if(dozenTotal>0){
+      const diff=perDoz-STANDARD_OVERHEAD_PER_DOZ;
+      const diffTxt=Math.round(Math.abs(diff)*100)/100;
+      const cmp=Math.abs(diff)<0.005?"برابر نرخ استاندارد":
+        diff>0?`${diffTxt.toLocaleString("fa-IR")} ؋ بیشتر از استاندارد`:
+        `${diffTxt.toLocaleString("fa-IR")} ؋ کمتر از استاندارد`;
+      perDozSub.textContent=`نرخ استاندارد: ${afn(STANDARD_OVERHEAD_PER_DOZ)} — ${cmp}`;
+    }else{
+      perDozSub.textContent=`نرخ استاندارد: ${afn(STANDARD_OVERHEAD_PER_DOZ)} فی درجن`;
+    }
+  }
 
   if(!tb) return;
-  if(!list.length){
-    tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:22px;color:var(--t3)">هنوز مصرفی ثبت نشده — با دکمه ＋ ثبت کن</td></tr>';
+  if(!filtered.length){
+    tb.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:22px;color:var(--t3)">در ${rangeLbl} مصرفی ثبت نشده — با دکمه ＋ ثبت کن</td></tr>`;
     return;
   }
-  tb.innerHTML=list.map((r,i)=>`
+  tb.innerHTML=filtered.map((r,i)=>`
     <tr>
       <td style="color:var(--t3)">${i+1}</td>
       <td style="font-size:11px;white-space:nowrap">${escHTML(_expFaDate(r.expense_date))}</td>
