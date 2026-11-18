@@ -785,6 +785,7 @@ pre.sql-box{direction:ltr;text-align:left;background:#0b0a10;border:1px solid va
       <button class="ni" onclick="goPage('collect')" data-page="collect" data-roles="admin,staff"><span class="em">💰</span>وصول مطالبات</button>
       <button class="ni" onclick="goPage('supp')" data-page="supp" data-roles="admin,staff"><span class="em">🏭</span>تامین‌کنندگان</button>
       <button class="ni" onclick="goPage('cash')" data-page="cash" data-roles="admin"><span class="em">💵</span>صندوق افغانی</button>
+      <button class="ni" onclick="goPage('expenses')" data-page="expenses" data-roles="admin"><span class="em">💸</span>مصارف شرکت</button>
       <button class="ni" onclick="goPage('cheque')" data-page="cheque" data-roles="admin"><span class="em">🏦</span>چک و اقساط</button>
       <div class="nsec">منابع انسانی</div>
       <button class="ni" onclick="goPage('emp')" data-page="emp" data-roles="admin"><span class="em">👨‍💼</span>کارمندان و شاگردان</button>
@@ -1439,48 +1440,30 @@ notify pgrst, 'reload schema';</pre>
       </div>
     </div>
 
-    <!-- EXPENSES -->
+    <!-- EXPENSES — مصارف شرکت -->
     <div id="page-expenses" class="page">
+      <!-- KPI: مجموع مصارف این ماه -->
+      <div class="kg" style="grid-template-columns:1fr">
+        <div class="kc rd">
+          <div class="ke">💸</div>
+          <div class="kl">مجموع مصارف این ماه</div>
+          <div class="kv" id="exp-month-total">—</div>
+          <div class="ks" id="exp-month-sub">—</div>
+        </div>
+      </div>
       <div class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-          <div class="ct" style="margin-bottom:0">💸 مصارف تفکیکی فابریکه</div>
-          <button class="btn bpri" onclick="openModal('modalExpense')" style="padding:7px 14px;font-size:12px">+ ثبت مصرف</button>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:12px">
+          <div class="ct" style="margin-bottom:0">💸 مصارف شرکت</div>
+          <button class="btn bpri" onclick="openExpenseModal()" style="padding:7px 14px;font-size:12px">+ ثبت مصرف</button>
         </div>
-        <!-- فیلتر ماه -->
-        <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-          <select id="exp-filter-month" onchange="renderExpenses()"
-            style="flex:1;padding:8px;background:var(--b3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:inherit;font-size:12px">
-            <option value="">همه ماه‌ها</option>
-          </select>
-          <select id="exp-filter-cat" onchange="renderExpenses()"
-            style="flex:1;padding:8px;background:var(--b3);border:1px solid var(--bd);border-radius:8px;color:var(--tx);font-family:inherit;font-size:12px">
-            <option value="">همه دسته‌ها</option>
-          </select>
-        </div>
-        <!-- KPI دسته‌بندی -->
-        <div id="exp-kpi-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px"></div>
-        <!-- جمع کل -->
-        <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(240,82,82,.08);border:1px solid rgba(240,82,82,.2);border-radius:10px;padding:12px;margin-bottom:12px">
-          <span style="font-size:13px;color:var(--t2)">مجموع مصارف:</span>
-          <span id="exp-total" style="font-size:16px;font-weight:900;color:var(--rd)">؋ 0</span>
-        </div>
-        <!-- مدیریت دسته‌بندی -->
-        <details style="margin-bottom:12px">
-          <summary style="cursor:pointer;font-size:12px;color:var(--gd);padding:8px 0;font-weight:700">⚙️ مدیریت دسته‌بندی‌ها</summary>
-          <div style="margin-top:8px;background:var(--b3);border-radius:8px;padding:10px">
-            <div id="exp-cats-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px"></div>
-            <div style="display:flex;gap:6px">
-              <input id="exp-new-cat" placeholder="دسته جدید..."
-                style="flex:1;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-family:inherit;font-size:12px"/>
-              <button onclick="addExpenseCat()" class="btn bpri" style="padding:7px 12px;font-size:11px">+ اضافه</button>
-            </div>
-          </div>
-        </details>
-        <!-- جدول -->
         <div class="tw"><table>
-          <thead><tr><th>#</th><th>تاریخ</th><th>دسته</th><th>شرح</th><th class="tdr">مبلغ</th><th>✏️</th></tr></thead>
+          <thead><tr><th>#</th><th>تاریخ</th><th>دسته</th><th>شرح</th><th class="tdr">مبلغ (؋)</th><th></th></tr></thead>
           <tbody id="exp-tbody"></tbody>
         </table></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(240,82,82,.08);border:1px solid rgba(240,82,82,.2);border-radius:10px;padding:12px;margin-top:12px">
+          <span style="font-size:13px;color:var(--t2)">مجموع کل مصارف:</span>
+          <span id="exp-total" style="font-size:16px;font-weight:900;color:var(--rd)">؋ 0</span>
+        </div>
       </div>
     </div>
 
@@ -2770,34 +2753,28 @@ notify pgrst, 'reload schema';</pre>
   </div>
 </div>
 
-<!-- ══ MODAL مصرف ══ -->
+<!-- ══ MODAL مصرف شرکت ══ -->
 <div class="modal-overlay" id="modalExpense">
   <div class="modal">
-    <div class="modal-head"><h3>💸 ثبت مصرف</h3><button class="close-btn" onclick="closeModal('modalExpense')">✕</button></div>
+    <div class="modal-head"><h3>💸 ثبت مصرف شرکت</h3><button class="close-btn" onclick="closeModal('modalExpense')">✕</button></div>
     <div class="modal-body">
       <div id="exp-msg"></div>
       <div class="row2">
-        <div class="fg"><label>تاریخ</label><input id="exp-date"/></div>
-        <div class="fg"><label>مبلغ (؋)</label><input type="number" inputmode="decimal" id="exp-amt" min="0" placeholder="0" inputmode="decimal"/></div>
+        <div class="fg"><label>تاریخ</label><input id="exp-date" placeholder="۱۴۰۵/۰۸/۲۷"/></div>
+        <div class="fg"><label>مبلغ (؋)</label><input type="number" inputmode="decimal" id="exp-amt" min="0" placeholder="0"/></div>
       </div>
       <div class="fg"><label>دسته‌بندی</label>
-        <select id="exp-cat" onchange="checkCustomExpCat()"
+        <select id="exp-cat"
           style="width:100%;padding:9px;background:var(--b3);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-family:inherit;font-size:13px">
+          <option value="کرایه موتر">کرایه موتر</option>
+          <option value="بل برق">بل برق</option>
+          <option value="پرزه جات">پرزه جات</option>
+          <option value="معاشات">معاشات</option>
+          <option value="سایر">سایر</option>
         </select>
-      </div>
-      <div class="fg" id="exp-custom-wrap" style="display:none">
-        <label>دسته جدید را بنویس</label>
-        <input id="exp-custom-cat" placeholder="مثال: تعمیرات لوله..."/>
       </div>
       <div class="fg"><label>شرح / توضیح</label>
-        <input id="exp-desc" placeholder="مثال: برق ماه حمل، معاش ندیم..."/>
-      </div>
-      <div class="fg"><label>از صندوق کم شود؟</label>
-        <select id="exp-deduct"
-          style="width:100%;padding:9px;background:var(--b3);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-family:inherit;font-size:13px">
-          <option value="yes">✅ بله — از صندوق افغانی کم شود</option>
-          <option value="no">❌ نه — فقط ریکورد شود</option>
-        </select>
+        <input id="exp-desc" placeholder="مثال: بل برق ماه حمل، معاش ندیم..."/>
       </div>
     </div>
     <div class="modal-foot">
@@ -3719,7 +3696,7 @@ function goPage(id){
   // عنوان صفحه باید قبل از هر return به‌روز شود تا هیچ‌وقت خالی نماند
   const allTitles={dash:"داشبورد",sales:"فروش",orders:"فرمایشات",products:"مدیریت محصولات",buy:"خرید مواد",prod:"تولید",
     stock:"انبار مواد",cust:"مشتریان",supp:"تامین‌کنندگان",cash:"صندوق افغانی",
-    report:"گزارشات & سود و زیان",reports_more:"گزارش‌های تفصیلی",expenses:"مصارف تفکیکی",
+    report:"گزارشات & سود و زیان",reports_more:"گزارش‌های تفصیلی",expenses:"مصارف شرکت",
     emp:"کارمندان و شاگردان",tax:"مالیات",collect:"وصول مطالبات",cheque:"💚 قرض حسنه",
     partners:"شریکان / سهام‌داران",settings:"تنظیمات",batch:"مکسچر و تولید",assets:"دارایی‌های ثابت"};
   document.getElementById("pageTitle").textContent = allTitles[id] || id;
@@ -3754,7 +3731,7 @@ function renderPage(id){
   else if(id==="tax") renderTax();
   else if(id==="cheque") renderCheque();
   else if(id==="partners") renderPartners();
-  else if(id==="expenses"){loadExpCats().then(()=>{renderExpenses();renderExpCatsList();});}
+  else if(id==="expenses") renderExpenses();
   else if(id==="settings") renderSettings();
 }
 
@@ -3775,6 +3752,7 @@ function openFab(){
   else if(cp==="batch") openModal("modalNewBatch");
   else if(cp==="emp") openModal("modalAddEmp");
   else if(cp==="cash"&&currentUser?.role==="admin") openModal("modalCash");
+  else if(cp==="expenses") openExpenseModal();
   else openModal("modalSale");
 }
 function openModal(id){document.getElementById(id).classList.add("open");initModal(id);}
@@ -6028,6 +6006,139 @@ async function submitCash(){
   } else {
     alert("خطا در ذخیره! اینترنت را چک کن و دوباره امتحان کن");
   }
+}
+
+// ══ EXPENSES — مصارف شرکت ══
+const EXPENSE_CATS=["کرایه موتر","بل برق","پرزه جات","معاشات","سایر"];
+
+// ارقام فارسی/عربی → لاتین (برای ذخیره و مقایسه تاریخ)
+function _expDigits(v){
+  return String(v??"")
+    .replace(/[۰-۹]/g,c=>"۰۱۲۳۴۵۶۷۸۹".indexOf(c))
+    .replace(/[٠-٩]/g,c=>"٠١٢٣٤٥٦٧٨٩".indexOf(c));
+}
+// تاریخ «۱۴۰۵/۸/۲۷» → تاریخ متناظر در تقویم همین اپ (سال + ۶۲۱)
+// ستون expenses.expense_date از نوع date است، پس باید تاریخ میلادی معتبر ذخیره شود
+// خروجی: {iso:"2026-08-27", fa:"1405/08/27"} یا {err:"format"|"day"}
+function _expParseDate(v){
+  const m=_expDigits(v).trim().match(/^(\d{3,4})\D+(\d{1,2})\D+(\d{1,2})$/);
+  if(!m) return {err:"format"};
+  const y=+m[1],mo=+m[2],d=+m[3];
+  if(y<1300||y>1500||mo<1||mo>12||d<1||d>31) return {err:"format"};
+  const g=new Date(y+621,mo-1,d);
+  if(g.getFullYear()!==y+621||g.getMonth()!==mo-1||g.getDate()!==d) return {err:"day"};
+  return {
+    iso:`${y+621}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}`,
+    fa:`${y}/${String(mo).padStart(2,"0")}/${String(d).padStart(2,"0")}`
+  };
+}
+// تاریخ ذخیره‌شده (میلادی ISO یا «۱۴۰۵-۸-۲۷») → نمایش «۱۴۰۵/۰۸/۲۷»
+function _expFaDate(v){
+  const s=_expDigits(v).trim();
+  const m=s.match(/^(\d{3,4})\D(\d{1,2})\D(\d{1,2})/);
+  if(!m) return s||"—";
+  const y=+m[1]>1900?+m[1]-621:+m[1];
+  return `${y}/${String(+m[2]).padStart(2,"0")}/${String(+m[3]).padStart(2,"0")}`;
+}
+// مرتب‌سازی عددی تاریخ (هم 2026-08-27 و هم 1405/8/27 را درست می‌خواند)
+function _expSortNum(v){
+  const m=_expDigits(v).match(/(\d{3,4})\D+(\d{1,2})\D+(\d{1,2})/);
+  if(!m) return 0;
+  return (+m[1])*10000+(+m[2])*100+(+m[3]);
+}
+
+function openExpenseModal(){
+  const msg=document.getElementById("exp-msg"); if(msg) msg.innerHTML="";
+  const btn=document.getElementById("exp-btn"); if(btn){btn.disabled=false;btn.textContent="ثبت مصرف ✓";}
+  const d=document.getElementById("exp-date"); if(d) d.value=today();
+  const cat=document.getElementById("exp-cat"); if(cat) cat.value=EXPENSE_CATS[0];
+  const desc=document.getElementById("exp-desc"); if(desc) desc.value="";
+  const amt=document.getElementById("exp-amt"); if(amt) amt.value="";
+  openModal("modalExpense");
+}
+
+
+async function submitExpense(){
+  const msg=document.getElementById("exp-msg");
+  const btn=document.getElementById("exp-btn");
+  const dateRaw=(document.getElementById("exp-date")?.value||"").trim()||today();
+  const cat=document.getElementById("exp-cat")?.value||EXPENSE_CATS[0];
+  const desc=(document.getElementById("exp-desc")?.value||"").trim();
+  const amt=+(document.getElementById("exp-amt")?.value)||0;
+
+  const parsed=_expParseDate(dateRaw);
+  if(parsed.err==="format"){if(msg)msg.innerHTML='<div class="ib err">تاریخ را مثل ۱۴۰۵/۰۸/۲۷ بنویس!</div>';return;}
+  if(parsed.err==="day"){if(msg)msg.innerHTML='<div class="ib err">این تاریخ در تقویم وجود ندارد — روز را اصلاح کن!</div>';return;}
+  if(amt<=0){if(msg)msg.innerHTML='<div class="ib err">مبلغ را درست بنویس!</div>';return;}
+
+  if(btn){btn.disabled=true;btn.textContent="در حال ذخیره...";}
+  window._lastSBError=null;
+  const res=await sbPost("expenses",{
+    expense_date:parsed.iso,
+    category_fa:cat,
+    description_fa:desc||cat,
+    amount:amt
+  });
+  if(btn){btn.disabled=false;btn.textContent="ثبت مصرف ✓";}
+  if(!res){ if(msg) msg.innerHTML=sbErrorHTML("خطا در ثبت مصرف"); return; }
+
+  if(msg) msg.innerHTML='<div class="ib ok">✅ مصرف ثبت شد</div>';
+  showSaved();
+  renderExpenses();
+  setTimeout(()=>closeModal("modalExpense"),800);
+}
+
+async function deleteExpense(id){
+  if(!confirm(`مصرف #${id} حذف شود؟`)) return;
+  window._lastSBError=null;
+  const res=await sbDelete("expenses","?id=eq."+encodeURIComponent(id));
+  if(res===null){alert("خطا در حذف: "+(window._lastSBError||""));return;}
+  showSaved();
+  renderExpenses();
+}
+
+async function renderExpenses(){
+  const tb=document.getElementById("exp-tbody");
+  const monthEl=document.getElementById("exp-month-total");
+  const monthSub=document.getElementById("exp-month-sub");
+  const totEl=document.getElementById("exp-total");
+
+  if(tb) tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:18px"><div class="spinner" style="margin:auto"></div></td></tr>';
+
+  const rows=await sbGet("expenses","?select=id,expense_date,category_fa,description_fa,amount");
+  if(rows===null){
+    if(tb) tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:18px;color:var(--rd)">خطا در بارگذاری مصارف — اتصال را چک کن</td></tr>';
+    return;
+  }
+
+  // جدیدترین تاریخ اول؛ در تاریخ مساوی، بالاترین id اول
+  const list=(rows||[]).slice().sort((a,b)=>
+    (_expSortNum(b.expense_date)-_expSortNum(a.expense_date))||((+b.id||0)-(+a.id||0))
+  );
+
+  const curMonth=today().slice(0,7); // مثلاً 1405/11
+  const monthRows=list.filter(r=>_expFaDate(r.expense_date).slice(0,7)===curMonth);
+  const monthSum=monthRows.reduce((a,r)=>a+(+r.amount||0),0);
+  const allSum=list.reduce((a,r)=>a+(+r.amount||0),0);
+
+  if(monthEl) monthEl.textContent=afn(monthSum);
+  if(monthSub) monthSub.textContent=monthRows.length?`${monthRows.length} مورد در ماه ${curMonth}`:"در این ماه مصرفی ثبت نشده";
+  if(totEl) totEl.textContent=afn(allSum);
+
+  if(!tb) return;
+  if(!list.length){
+    tb.innerHTML='<tr><td colspan="6" style="text-align:center;padding:22px;color:var(--t3)">هنوز مصرفی ثبت نشده — با دکمه ＋ ثبت کن</td></tr>';
+    return;
+  }
+  tb.innerHTML=list.map((r,i)=>`
+    <tr>
+      <td style="color:var(--t3)">${i+1}</td>
+      <td style="font-size:11px;white-space:nowrap">${escHTML(_expFaDate(r.expense_date))}</td>
+      <td><span style="display:inline-block;padding:2px 9px;border-radius:20px;background:rgba(212,168,67,.12);color:var(--gd);font-size:10px;font-weight:700">${escHTML(r.category_fa||"سایر")}</span></td>
+      <td style="font-size:12px">${escHTML(r.description_fa||"—")}</td>
+      <td class="tdr" style="color:var(--rd);font-weight:800">${afn(r.amount)}</td>
+      <td><button onclick="deleteExpense(${+r.id})" title="حذف" style="background:none;border:none;color:var(--rd);cursor:pointer;font-size:13px;padding:2px 6px">🗑️</button></td>
+    </tr>`).join("");
 }
 
 // ══ آپدیت‌های v8 ══
