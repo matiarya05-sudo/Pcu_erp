@@ -3944,6 +3944,77 @@ async function renderDash(){
     `<div class="ib info" style="margin-top:9px;font-size:10px;line-height:1.7">💡 سرباری تولید هنگام ثبت تولید در فیلد «سرباری فی درجن» داخل COGS حساب می‌شود؛ مصارف شرکت فقط اطلاعاتی است و دوباره از سود کسر نمی‌شود. نرخ مرجع: ${afn(STANDARD_OVERHEAD_PER_DOZ)} فی درجن.</div>`;
 }
 
+// ══ WHATSAPP ══
+// پاک‌سازی شماره: فاصله/خط تیره حذف، صفر اول حذف، و اگر با ۷ شروع شود «93» اضافه می‌شود
+function getWhatsAppUrl(phone,message){
+  let p=String(phone||"").replace(/\D/g,"");
+  p=p.replace(/^00+/,"").replace(/^0+/,"");
+  if(p.startsWith("7")) p="93"+p;
+  if(!p) return "";
+  return `https://wa.me/${p}?text=${encodeURIComponent(message||"")}`;
+}
+// شماره واتساپ مشتری — اول با id، بعد با نام (و در صورت امکان همان ولایت)
+function findCustPhone(name,id,prov){
+  if(id!==undefined&&id!==null&&id!==""){
+    const byId=CUSTOMERS.find(c=>String(c.id)===String(id));
+    if(byId&&byId.ph) return byId.ph;
+  }
+  const nm=String(name||"").trim();
+  if(!nm) return "";
+  const same=CUSTOMERS.filter(c=>(c.n||"").trim()===nm&&c.ph);
+  if(!same.length) return "";
+  const pv=String(prov||"").trim();
+  return ((same.find(c=>String(c.p||"").trim()===pv)||same[0]).ph)||"";
+}
+// متن فاکتور یک ردیف فروش برای واتساپ
+function saleInvoiceMessage(s){
+  const money=v=>afn(Math.round(+v||0));
+  const pn=(s&&s.product)||"—";
+  const prodName=pn==="STD"?"PCU استاندارد":pn==="VIP"?"PCU ویژه":pn==="PCU"?"PCU کودکانه":pn;
+  return [
+    "🧾 فاکتور فروش — فابریکه حیات‌زاده",
+    "شماره بل: "+((s&&(s.bill||s.id))||"—"),
+    "مشتری: "+((s&&s.cust_name)||"—"),
+    "ولایت: "+((s&&s.province)||"—"),
+    "تاریخ: "+((s&&s.date)||"—"),
+    "────────────────",
+    "جنس: "+prodName,
+    "تعداد: "+(+((s&&s.dozen)||0))+" درجن",
+    "قیمت فی درجن: "+money(s&&s.price_per_doz),
+    "────────────────",
+    "مجموع: "+money(s&&s.total),
+    "پرداخت‌شده: "+money(s&&s.paid),
+    "باقی: "+money(s&&s.remaining),
+    "",
+    "تشکر از اعتماد شما 🌹"
+  ].join("\n");
+}
+// دکمه واتساپ در لیست فروش
+function waSaleInvoice(saleId){
+  const s=(allSales||[]).find(x=>String(x.id)===String(saleId));
+  if(!s) return;
+  const url=getWhatsAppUrl(findCustPhone(s.cust_name,s.cust_id,s.province),saleInvoiceMessage(s));
+  if(!url){alert("شماره واتساپ این مشتری ثبت نشده است");return;}
+  window.open(url,"_blank");
+}
+// دکمه واتساپ در لیست مشتریان — یادآوری «طلب کل»
+function waCustReminder(custId){
+  const c=CUSTOMERS.find(x=>String(x.id)===String(custId));
+  if(!c) return;
+  const debt=(window._custDebtMap||{})[c.id];
+  const amount=(typeof debt==="number")?debt:Math.max(0,+c.ob||0);
+  const msg=[
+    "سلام "+c.n+"،",
+    "طلب فعلی شما "+amount.toLocaleString("fa-IR")+" افغانی است.",
+    "لطفاً در اسرع وقت تسویه کنید.",
+    "",
+    "فابریکه حیات‌زاده"
+  ].join("\n");
+  const url=getWhatsAppUrl(c.ph,msg);
+  if(!url){alert("شماره واتساپ این مشتری ثبت نشده است");return;}
+  window.open(url,"_blank");
+}
+
 // ── SALES ──
 let allSales=[];
 async function renderSales(){
@@ -3969,7 +4040,10 @@ function renderSalesRows(list){
     <td class="tdr" style="color:var(--gr)">${afn(s.paid)}</td>
     <td>${+s.remaining>0?`<span class="bb br2">${afn(s.remaining)}</span>`:'<span class="bb bg2">تسویه</span>'}</td>
     <td class="tdr" style="color:var(--gr)">${afn(s.gross_profit)}</td>
-    <td><button onclick="printInvoice(${s.id})" title="چاپ فاکتور" style="${_editBtnStyle('gd')}">🖨️</button></td>
+    <td style="display:flex;gap:3px">
+      <button onclick="printInvoice(${s.id})" title="چاپ فاکتور" style="${_editBtnStyle('gd')}">🖨️</button>
+      <button onclick="waSaleInvoice(${s.id})" title="ارسال فاکتور با واتساپ" style="${_editBtnStyle('gr')}">💬</button>
+    </td>
     <td style="display:flex;gap:3px">
       <button onclick="openEditRecord('sales',${s.id})" style="${_editBtnStyle('bl')}" title="ویرایش">✏️</button>
       <button onclick="deleteRecord('sales',${s.id},'renderSales')" style="${_editBtnStyle('rd')}" title="حذف">🗑️</button>
@@ -5107,6 +5181,9 @@ function initSaleModal(){
   document.getElementById("s-paid").value="";
   document.getElementById("s-rem").value="";
   document.getElementById("sale-msg").innerHTML="";
+  // دکمه ثبت بعد از مودال قبلی ممکن است غیرفعال مانده باشد
+  const sb=document.getElementById("sale-btn");
+  if(sb){sb.disabled=false;sb.textContent="ثبت بل ✓";}
   document.getElementById("cust-dd").style.display="none";
   document.getElementById("cust-sel").style.display="none";
   _selCust=null;
@@ -5339,13 +5416,42 @@ function calcSaleWage(){
 
   // اگر همه اقلام با موفقیت ثبت شدند:
   if(savedRows.length === validItems.length){
-    document.getElementById("sale-msg").innerHTML=`<div class="ib ok">✅ بل با ${validItems.length} قلم ثبت شد! | جمع: ${afn(totAll)}</div>`;
+    // متن فاکتور برای واتساپ — چند خطی تا مشتری راحت بخواند
+    const waMoney=v=>afn(Math.round(+v||0));
+    const waBillNo=billNo||(savedRows[0]&&(savedRows[0].bill||savedRows[0].id))||"—";
+    const waMsg=[
+      "🧾 فاکتور فروش — فابریکه حیات‌زاده",
+      "شماره بل: "+waBillNo,
+      "مشتری: "+custName,
+      "ولایت: "+custProv,
+      "تاریخ: "+saleDate,
+      "────────────────",
+      ...validItems.map((it,i)=>(i+1)+") "+it.prod+" — "+it.doz+" درجن × "+waMoney(it.prc)+" = "+waMoney(it.doz*it.prc)),
+      "────────────────",
+      "مجموع: "+waMoney(totAll),
+      "پرداخت‌شده: "+waMoney(paid),
+      "باقی: "+waMoney(Math.max(0,totAll-paid)),
+      "",
+      "تشکر از اعتماد شما 🌹"
+    ].join("\n");
+    const waUrl=getWhatsAppUrl(findCustPhone(custName,_custIdRaw,custProv),waMsg);
+    document.getElementById("sale-msg").innerHTML=`<div class="ib ok">✅ بل با ${validItems.length} قلم ثبت شد! | جمع: ${afn(totAll)}</div>`+
+      (waUrl
+        ?`<div style="margin-top:8px"><a href="${waUrl}" target="_blank" style="display:inline-block;background:rgba(37,211,102,.15);border:1px solid rgba(37,211,102,.3);color:#25d366;border-radius:8px;padding:7px 12px;text-decoration:none;font-weight:700;font-size:11px">💬 ارسال فاکتور با واتساپ</a></div>`
+        :`<div class="ib warn" style="margin-top:8px;font-size:10.5px">⚠️ شماره واتساپ این مشتری ثبت نشده — فاکتور ذخیره شد.</div>`);
+    // دکمه ثبت تا بسته‌شدن مودال غیرفعال می‌ماند تا فاکتور دوباره ثبت نشود
+    document.getElementById("sale-btn").textContent="ثبت شد ✓";
     showSaved();
-    setTimeout(()=>{closeModal("modalSale");renderSales();}, 1500);
+    setTimeout(()=>renderSales(),800);
+    // اگر دکمه واتساپ هست، مودال باز می‌ماند تا کاربر فاکتور را بفرستد
+    if(!waUrl) setTimeout(()=>closeModal("modalSale"),1500);
   }
   
-  document.getElementById("sale-btn").disabled=false;
-  document.getElementById("sale-btn").textContent="ثبت بل ✓";
+  // در صورت موفقیت، دکمه تا بسته‌شدن مودال غیرفعال می‌ماند (جلوگیری از ثبت دوباره)
+  if(savedRows.length !== validItems.length){
+    document.getElementById("sale-btn").disabled=false;
+    document.getElementById("sale-btn").textContent="ثبت بل ✓";
+  }
 }
 
 // کسر تعداد فروش‌رفته از گدام جنس تولیدشده (finished_goods)
@@ -6706,8 +6812,11 @@ function renderCustTable(salesMap){
     const paidTotal=sm.paid+collected;
     // طلب کل = موجودی اول + فروش − وصول کل
     const tot=Math.max(0,(+c.ob||0)+sm.tot-paidTotal);
+    // طلب کل هر مشتری برای پیام واتساپ — همان عددی که در ستون «طلب کل» دیده می‌شود
+    (window._custDebtMap=window._custDebtMap||{})[c.id]=tot;
+    const waBtn=`<button onclick="waCustReminder('${c.id}')" title="یادآوری طلب با واتساپ" style="${_editBtnStyle('gr')}">💬</button>`;
     const phoneBtn=c.ph?`<a href="tel:${c.ph}" style="background:rgba(46,204,122,.1);border:1px solid rgba(46,204,122,.3);color:var(--gr);border-radius:6px;padding:3px 7px;cursor:pointer;font-size:10px;text-decoration:none">📞</a>
-      <a href="https://wa.me/93${c.ph.replace(/^0/,'')}" target="_blank" style="background:rgba(37,211,102,.15);border:1px solid rgba(37,211,102,.3);color:#25d366;border-radius:6px;padding:3px 7px;cursor:pointer;font-size:10px;text-decoration:none">💬</a>`
+      <a href="${getWhatsAppUrl(c.ph,'')||'#'}" target="_blank" style="background:rgba(37,211,102,.15);border:1px solid rgba(37,211,102,.3);color:#25d366;border-radius:6px;padding:3px 7px;cursor:pointer;font-size:10px;text-decoration:none">💬</a>`
       :`<span style="color:var(--t3);font-size:10px">—</span>`;
     return`<tr>
       <td style="color:var(--t3)">${i+1}</td>
@@ -6718,9 +6827,9 @@ function renderCustTable(salesMap){
       <td class="tdr" style="color:var(--bl)">${afn(sm.tot)}</td>
       <td class="tdr" style="color:var(--gr)">${afn(paidTotal)}</td>
       <td>${tot>0?`<span class="bb br2">${afn(tot)}</span>`:'<span class="bb bg2">تسویه ✅</span>'}</td>
-      <td style="display:flex;gap:4px">${isAdmin?`<button onclick="openEditCust('${c.id}')" style="background:var(--g3);border:1px solid rgba(232,160,32,.3);color:var(--gd);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">✏️</button>
+      <td style="display:flex;gap:4px">${waBtn}${isAdmin?`<button onclick="openEditCust('${c.id}')" style="background:var(--g3);border:1px solid rgba(232,160,32,.3);color:var(--gd);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">✏️</button>
         <button onclick="openCustCRM('${c.id}','${c.n.replace(/'/g,'')}')" style="background:var(--bl2);border:1px solid rgba(59,158,255,.3);color:var(--bl);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">📝</button>
-        <button onclick="openPersonStatement('cust','${c.id}','${c.n.replace(/'/g,'')}')" style="background:var(--gr2);border:1px solid rgba(46,204,122,.3);color:var(--gr);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">📊</button>`:"—"}</td>
+        <button onclick="openPersonStatement('cust','${c.id}','${c.n.replace(/'/g,'')}')" style="background:var(--gr2);border:1px solid rgba(46,204,122,.3);color:var(--gr);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">📊</button>`:""}</td>
     </tr>`;
   }).join("");
 }
