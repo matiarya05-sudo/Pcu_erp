@@ -3696,6 +3696,16 @@ function calcCOGS(prod,doz){
     return s+r.q*ac*doz;
   },0);
 }
+// بهای تمام‌شده واقعی فی درجن = مجموع mat_cogs تولیدات آن محصول ÷ مجموع درجن تولیدشده
+// (mat_cogs در جدول production به صورت TOTAL کل بچ ذخیره می‌شود)
+async function getRealCogsPerDozen(prod){
+  const key=normalizeProductName(prod);
+  const rows=await sbGet("production","?select=product,dozen,mat_cogs")||[];
+  const mine=rows.filter(r=>r&&r.product&&normalizeProductName(r.product)===key);
+  const totalCogs=mine.reduce((a,r)=>a+(+r.mat_cogs||0),0);
+  const totalDoz=mine.reduce((a,r)=>a+(+r.dozen||0),0);
+  return totalDoz>0?totalCogs/totalDoz:0;
+}
 
 // تبدیل ارقام فارسی (۰-۹) و عربی (٠-٩) به ارقام انگلیسی (0-9)
 function toEnDigits(str){
@@ -3857,8 +3867,8 @@ async function renderDash(){
 
   // ── داشبورد Admin — همه اطلاعات مالی ──
   const [salesData,prodData,cashData,suppRows,expRows]=await Promise.all([
-    sbGet("sales","?select=total,remaining,cogs,province"),
-    sbGet("production","?select=total_wage"),
+    sbGet("sales","?select=total,remaining,cogs,dozen,product,province"),
+    sbGet("production","?select=product,dozen,mat_cogs,total_wage"),
     sbGet("cash_ledger","?select=category,amount_in,amount_out"),
     sbGet("supplier_balances","?select=balance_usd"),
     sbGet("expenses","?select=amount"),
@@ -3867,7 +3877,21 @@ async function renderDash(){
   if(salesData===null && prodData===null && cashData===null){setSyncOff();return;}
   setSyncOn();
   const ts=(salesData||[]).reduce((a,r)=>a+(+r.total||0),0);
-  const tc=(salesData||[]).reduce((a,r)=>a+(+r.cogs||0),0);
+  // هزینه تولید (COGS) مستقیماً از ستون cogs جدول فروش خوانده می‌شود
+  // برای فاکتورهای قدیمی که cogs ندارند، از بهای تمام‌شده واقعی تولید همان محصول استفاده می‌شود
+  const prodCogsMap={};
+  (prodData||[]).forEach(p=>{
+    const k=normalizeProductName(p.product||"");
+    if(!prodCogsMap[k]) prodCogsMap[k]={cogs:0,doz:0};
+    prodCogsMap[k].cogs+=+p.mat_cogs||0;
+    prodCogsMap[k].doz+=+p.dozen||0;
+  });
+  const tc=(salesData||[]).reduce((a,r)=>{
+    const cogs=+r.cogs||0;
+    if(cogs>0) return a+cogs;
+    const pc=prodCogsMap[normalizeProductName(r.product||"")];
+    return a+(pc&&pc.doz>0?(pc.cogs/pc.doz)*(+r.dozen||0):0);
+  },0);
   const gp=ts-tc;
   const tw=(prodData||[]).reduce((a,r)=>a+(+r.total_wage||0),0);
   const np=gp-tw;
@@ -4154,8 +4178,6 @@ async function submitCollectPay(){
   const amount=Math.round(+(document.getElementById("cp-amount")?.value)||0);
   if(amount<=0){if(msg)msg.innerHTML='<div class="ib err">مبلغ پرداختی باید بیشتر از صفر باشد</div>';return;}
   const date=document.getElementById("cp-date")?.value||today();
-  const receipt=(document.getElementById("cp-receipt")?.value||"").trim();
-  const notes=(document.getElementById("cp-notes")?.value||"").trim();
 
   if(btn){btn.disabled=true;btn.textContent="در حال ذخیره...";}
   window._lastSBError=null;
@@ -4178,11 +4200,9 @@ async function submitCollectPay(){
     left-=pay;
   }
 
-  // ۲) ثبت ورودی در صندوق افغانی
-  const desc="وصول از "+_cpCust.n+" ("+_cpCust.p+")"+
-    (receipt?" | رسید "+receipt:"")+(notes?" | "+notes:"");
+  // ۲) ثبت ورودی در صندوق افغانی — type دسته است و description فقط نام مشتری
   const cash=await sbPost("cash_ledger",{
-    date,category:"in",type:"وصول از مشتری",description:desc,
+    date,category:"in",type:"وصول از مشتری",description:_cpCust.n,
     amount_in:amount,amount_out:0
   });
 
@@ -4436,7 +4456,7 @@ async function renderCash(){
     return`<tr>
       <td style="color:var(--t3)">${i+1}</td><td>${r.date}</td>
       <td><span class="bb ${r.category==="in"?"bg2":"br2"}">${r.category==="in"?"ورودی":"خروجی"}</span></td>
-      <td style="font-size:11px;color:var(--t2)">${r.type}</td>
+      <td style="font-size:11px;color:var(--t2)">${r.description||r.type||"—"}</td>
       <td class="tdr" style="color:var(--gr)">${r.category==="in"?afn(r.amount_in):""}</td>
       <td class="tdr" style="color:var(--rd)">${r.category==="out"?afn(r.amount_out):""}</td>
       <td class="tdr" style="font-weight:700;color:${run>=0?"var(--gd)":"var(--rd)"}">${afn(run)}</td>
@@ -5277,8 +5297,9 @@ function calcSaleWage(){
       
     const itemRem = Math.max(0, tot - itemPaid);
     
-    // محاسبه هزینه تولید (COGS) و سود
-    const cg = calcCOGS(it.prod, it.doz);
+    // محاسبه هزینه تولید واقعی (COGS) از مجموع mat_cogs تولیدات همان محصول و سود
+    const cogsPerDozen = await getRealCogsPerDozen(it.prod);
+    const cg = cogsPerDozen * it.doz;
     const gp = tot - cg;
 
     // ⚠️ ارسال دقیقاً با نام ستون‌های دیتابیس شما
@@ -5859,8 +5880,9 @@ async function submitProd(){
   const wage=doz*wRate,paid=+(document.getElementById("p-paid").value)||0;
   const matCostPerDoz=+(document.getElementById("p-mat-cost").value)||0;
   const overheadPerDoz=+(document.getElementById("p-overhead").value)||0;
-  // بهای تمام‌شده کل = درجن × (اجرت + هزینه مواد + هزینه سرباری) فی درجن
-  const totalCogs=doz*(wRate+matCostPerDoz+overheadPerDoz);
+  // بهای تمام‌شده کل (TOTAL برای کل بچ) = اجرت کل + هزینه مواد کل + سرباری کل
+  // همین مبلغ به صورت TOTAL در ستون mat_cogs جدول production ذخیره می‌شود
+  const totalCogs=wage+(doz*matCostPerDoz)+(doz*overheadPerDoz);
   const scrap=scrapData();
   // ضایعات بیشتر از تولید مجاز نیست (با درجن صحیح مقایسه می‌شود)
   const scrapDoz=Math.max(0,+scrap.dozen||0);
@@ -6169,7 +6191,7 @@ async function submitCashInflow(date,amt,desc,setMsg){
     date,
     category:"in",
     type:cashType,
-    description:desc||cashType,
+    description:desc,
     amount_in:amt,
     amount_out:0
   });
@@ -6217,7 +6239,7 @@ async function submitCashOutflow(date,amt,desc,setMsg){
   window._lastSBError=null;
   const cashRes=await sbPost("cash_ledger",{
     date,category:"out",type:cashType,
-    description:desc||cashType,
+    description:desc,
     amount_in:0,amount_out:amt
   });
   if(!cashRes){setMsg(sbErrorHTML("خطا در ثبت خروجی صندوق"));return;}
@@ -6241,7 +6263,7 @@ async function submitCashOutflow(date,amt,desc,setMsg){
     window._lastSBError=null;
     const r=await sbPost("employee_payments",{
       employee_id:+personId,employee_name:personName,
-      date,amount_afn:amt,type:empKind,notes:desc||cashType
+      date,payment_date:date,amount_afn:amt,type:empKind,notes:desc||cashType
     });
     if(!r){ok=false;extraErr=window._lastSBError||"";}
   }
@@ -6466,8 +6488,17 @@ async function submitExpense(){
   if(btn){btn.disabled=false;btn.textContent="ثبت مصرف ✓";}
   if(!res){ if(msg) msg.innerHTML=sbErrorHTML("خطا در ثبت مصرف"); return; }
 
+  // ثبت خروجی صندوق — type دسته («مصرف شرکت») و description فقط یادداشت یا دسته مصرف است
+  const cashDate=parsed.fa||_expFaDate(parsed.iso||dateRaw);
+  const cashRes=await sbPost("cash_ledger",{
+    date:cashDate,category:"out",type:"مصرف شرکت",
+    description:desc||cat,
+    amount_in:0,amount_out:amt
+  });
+
   if(msg) msg.innerHTML='<div class="ib ok">✅ مصرف ثبت شد</div>'+
-    (catSaved?'':'<div class="ib warn" style="margin-top:6px;font-size:10.5px">⚠️ موضوع جدید در جدول expense_categories ذخیره نشد — ولی در همین مصرف ثبت گردید.</div>');
+    (catSaved?'':'<div class="ib warn" style="margin-top:6px;font-size:10.5px">⚠️ موضوع جدید در جدول expense_categories ذخیره نشد — ولی در همین مصرف ثبت گردید.</div>')+
+    (cashRes?'':'<div class="ib warn" style="margin-top:6px;font-size:10.5px">⚠️ مصرف ثبت شد ولی در دفتر صندوق ثبت نشد.</div>');
   showSaved();
   renderExpenses();
   setTimeout(()=>closeModal("modalExpense"),catSaved?800:2600);
@@ -7018,20 +7049,38 @@ async function saveEmpPay(){
   const empId=+(document.getElementById("ep-empid").value);
   const empName=document.getElementById("ep-empname").value;
   const amt=+(document.getElementById("ep-amt").value)||0;
+  const payDate=(document.getElementById("ep-date").value||"").trim()||today();
+  const payType=document.getElementById("ep-type").value;
   if(!amt){document.getElementById("ep-msg").innerHTML='<div class="ib err">مبلغ الزامی</div>';return;}
   document.getElementById("ep-btn").disabled=true;document.getElementById("ep-btn").textContent="در حال ذخیره...";
+  window._lastSBError=null;
+  // payment_date در دیتابیس NOT NULL است — همراه با date همان تاریخ ارسال می‌شود
   const res=await sbPost("employee_payments",{
     employee_id:empId,employee_name:empName,
-    date:document.getElementById("ep-date").value,
+    date:payDate,
+    payment_date:payDate,
     amount_afn:amt,
-    type:document.getElementById("ep-type").value,
+    type:payType,
     notes:document.getElementById("ep-notes").value
   });
   document.getElementById("ep-btn").disabled=false;document.getElementById("ep-btn").textContent="ثبت پرداخت ✓";
-  if(res){
-    document.getElementById("ep-msg").innerHTML='<div class="ib ok">✅ ثبت شد!</div>';
-    showSaved();setTimeout(()=>{closeModal("modalEmpPay");renderEmp();},1000);
-  } else document.getElementById("ep-msg").innerHTML='<div class="ib err">خطا!</div>';
+  if(!res){
+    document.getElementById("ep-msg").innerHTML='<div class="ib err">خطا!</div>';
+    return;
+  }
+  // ثبت خروجی صندوق — type دسته («پرداخت معاش») و description فقط نام کارمند است
+  // «کسر» پول نقد نیست، پس برای آن تراکنش صندوق ثبت نمی‌شود
+  let cashOk=true;
+  if(payType!=="deduction"){
+    const cash=await sbPost("cash_ledger",{
+      date:payDate,category:"out",type:"پرداخت معاش",description:empName,
+      amount_in:0,amount_out:amt
+    });
+    cashOk=!!cash;
+  }
+  document.getElementById("ep-msg").innerHTML='<div class="ib ok">✅ ثبت شد!</div>'+
+    (cashOk?'':'<div class="ib warn" style="margin-top:6px;font-size:10.5px">⚠️ پرداخت ثبت شد ولی در دفتر صندوق ثبت نشد.</div>');
+  showSaved();setTimeout(()=>{closeModal("modalEmpPay");renderEmp();},1000);
 }
 async function showEmpPays(id,name){
   const pays=await sbGet("employee_payments",`?employee_id=eq.${id}&order=id.desc`)||[];
@@ -8459,7 +8508,6 @@ function openSuppPay(suppId,suppName){
 async function submitSuppPay(){
   const amt=+(document.getElementById("sp-amt").value)||0;
   const currency=document.getElementById("sp-currency").value;
-  const desc=document.getElementById("sp-desc").value||("پرداخت به "+_suppPayName);
   const date=document.getElementById("sp-date").value||today();
   if(!amt){document.getElementById("sp-msg").innerHTML='<div class="ib err">مبلغ الزامی است</div>';return;}
   document.getElementById("sp-btn").disabled=true;document.getElementById("sp-btn").textContent="در حال ذخیره...";
@@ -8468,11 +8516,11 @@ async function submitSuppPay(){
   if(isAfn){
     const newAfn=Math.max(0,(curBal.balAfn||0)-amt);
     await sbPatch("supplier_balances",{balance_afn:newAfn,updated_at:new Date().toISOString()},`?supplier_id=eq.${_suppPayId}`);
-    await sbPost("cash_ledger",{date,category:"out",type:"پرداخت به تامین‌کننده",description:desc,amount_in:0,amount_out:amt});
+    await sbPost("cash_ledger",{date,category:"out",type:"پرداخت به تامین‌کننده",description:_suppPayName,amount_in:0,amount_out:amt});
   } else {
     const newUsd=Math.max(0,(curBal.bal||0)-amt);
     await sbPatch("supplier_balances",{balance_usd:newUsd,updated_at:new Date().toISOString()},`?supplier_id=eq.${_suppPayId}`);
-    await sbPost("cash_ledger",{date,category:"out",type:"پرداخت به تامین‌کننده",description:desc,amount_in:0,amount_out:amt*S.usdRate});
+    await sbPost("cash_ledger",{date,category:"out",type:"پرداخت به تامین‌کننده",description:_suppPayName,amount_in:0,amount_out:amt*S.usdRate});
     // کم کردن از موجودی دالر صندوق
     const usdRow=await sbGet("settings","?key=eq.usd_cash_balance")||[];
     const curUsdBal=usdRow.length>0?(+usdRow[0].value||0):0;
