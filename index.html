@@ -1841,6 +1841,8 @@ notify pgrst, 'reload schema';</pre>
           <option value="employee_pay">👷 معاش/پیش‌پرداخت کارمند</option>
           <option value="loan_out">🏦 قرض داده شده</option>
           <option value="other_out">📋 سایر</option>
+          <option value="supplier_prepay">🏭 پیش‌پرداخت به تامین‌کننده</option>
+          <option value="employee_prepay">👷 پیش‌پرداخت به کارمند</option>
         </select>
       </div>
       <div class="fg" id="c-expcat-wrap" style="display:none">
@@ -1867,6 +1869,8 @@ notify pgrst, 'reload schema';</pre>
         <input id="c-custom-type" placeholder="مثال: حواله، کمک، تعمیرات..." oninput="syncCustomType()"/>
       </div>
       <div id="c-cust-wrap" style="display:none; margin-bottom:10px;"><label class="lbl">انتخاب مشتری</label><select id="c-cust-sel" class="inp"></select></div>
+      <div id="c-supp-wrap" style="display:none; margin-bottom:10px;"><label class="lbl">انتخاب تامین‌کننده</label><select id="c-supp-sel" class="inp"></select></div>
+      <div id="c-emp-wrap" style="display:none; margin-bottom:10px;"><label class="lbl">انتخاب کارمند</label><select id="c-emp-sel" class="inp"></select></div>
       <div class="fg"><label>شرح / توضیح</label>
         <input id="c-desc" placeholder="مثال: موجودی افتتاحیه، حواله از غزنی..."/>
       </div>
@@ -3545,7 +3549,18 @@ const RECIPES={
   ویژه:[{m:"دی‌اوپی (DOP)",q:0.9},{m:"ریزن",q:0.35},{m:"تیتانیوم",q:0.06},{m:"ای سی (AC)",q:0.12},{m:"کرش سیاه",q:0.25}],
   کودکانه:[{m:"دی‌اوپی (DOP)",q:0.6},{m:"ریزن",q:0.2},{m:"تیتانیوم",q:0.04},{m:"ای سی (AC)",q:0.08},{m:"کرش سیاه",q:0.15}],
 };
-const CASH_IN=["وصول از مشتری","سرمایه شریک","قرض دریافتی","سایر ورودی"];
+const CASH_IN=["وصول از مشتری","پیش‌پرداخت از مشتری","سرمایه شریک","قرض دریافتی","سایر ورودی"];
+// انواع پایه خروجی صندوق — منوی «نوع پرداخت» از همین فهرست ساخته می‌شود
+const CASH_OUT_KIND=[
+  {value:"company_expense",label:"مصرف شرکت",icon:"💸"},
+  {value:"partner_withdraw",label:"برداشت شریک",icon:"🤝"},
+  {value:"employee_pay",label:"معاش/پیش‌پرداخت کارمند",icon:"👷"},
+  {value:"loan_out",label:"قرض داده شده",icon:"🏦"},
+  {value:"other_out",label:"سایر",icon:"📋"},
+  {value:"supplier_prepay",label:"پیش‌پرداخت به تامین‌کننده",icon:"🏭"},
+  {value:"employee_prepay",label:"پیش‌پرداخت به کارمند",icon:"👷"},
+];
+const CASH_OUT=CASH_OUT_KIND.map(k=>k.label);
 // نرخ مرجع (استاندارد) سرباری فی درجن — برای مقایسه با مصرف واقعی فی درجن
 const STANDARD_OVERHEAD_PER_DOZ=150;
 
@@ -4065,8 +4080,9 @@ function collectDebtOf(cust,salesRows){
   return Math.max(0,(+cust?.ob||0)+rem);
 }
 function collectPayments(cashRows){
+  // وصول نقدی و پیش‌پرداخت مشتری هر دو پول دریافتی‌اند و در تاریخچه وصول نمایش داده می‌شوند
   return (cashRows||[]).filter(r=>r.category==="in"&&
-    (String(r.type||"").includes("وصول")||String(r.description||"").includes("وصول")));
+    (String(r.type||"").includes("وصول")||String(r.type||"").includes("پیش‌پرداخت")||String(r.description||"").includes("وصول")));
 }
 function collectPayInfo(r){
   // هم ردیف cash_ledger قبول می‌شود هم متن توضیحات
@@ -6124,6 +6140,10 @@ function initCashModal(){
   set("c-custom-type","");
   const custSel=document.getElementById("c-cust-sel"); if(custSel){custSel.innerHTML="";custSel.value="";}
   const custWrap=document.getElementById("c-cust-wrap"); if(custWrap) custWrap.style.display="none";
+  ["c-supp-sel","c-emp-sel"].forEach(id=>{const el=document.getElementById(id); if(el){el.innerHTML="";el.value="";}});
+  ["c-supp-wrap","c-emp-wrap"].forEach(id=>{const el=document.getElementById(id); if(el) el.style.display="none";});
+  fillCashSupplierSelect();
+  fillCashEmployeeSelect();
   set("c-expcat-new","");
   set("c-paykind","company_expense");
   set("c-empkind","salary");
@@ -6135,10 +6155,12 @@ function initCashModal(){
   // بارگذاری دسته‌های مصرف و اشخاص از Supabase
   Promise.all([getExpenseCategories(), loadCashPersons()]).then(()=>{
     if(document.getElementById("c-cat")?.value==="out") updateCashOutFields();
+    else { updateCashCustomerField(); updateCashPrepayFields(); }
   });
 }
 
 function updateCashTypes(){
+  ensureCashOutKindOptions();
   const cat=document.getElementById("c-cat")?.value||"in";
   const typeWrap=document.getElementById("c-type-wrap");
   const payWrap=document.getElementById("c-paykind-wrap");
@@ -6197,8 +6219,11 @@ function updateCashOutFields(){
       kind==="partner_withdraw"?"💡 این مبلغ از صندوق کسر شده و در حساب شریک به عنوان «برداشت» ثبت می‌شود.":
       kind==="employee_pay"?"💡 این مبلغ از صندوق کسر شده و در پرداخت‌های کارمند ثبت می‌شود.":
       kind==="loan_out"?"💡 این مبلغ فقط در صندوق به عنوان «قرض داده شده» ثبت می‌شود.":
+      kind==="supplier_prepay"?"💡 این مبلغ از صندوق کسر شده و از بدهی تامین‌کننده کم می‌شود (منفی = اعتبار ما نزد او).":
+      kind==="employee_prepay"?"💡 این مبلغ از صندوق کسر شده و در پرداخت‌های کارمند به عنوان «پیش‌پرداخت» ثبت می‌شود.":
       "💡 این مبلغ فقط در صندوق به عنوان خروجی «سایر» ثبت می‌شود.";
   }
+  updateCashPrepayFields();
 }
 
 function checkCustomCashType(){
@@ -6206,6 +6231,7 @@ function checkCustomCashType(){
   const wrap=document.getElementById("c-custom-wrap");
   if(wrap) wrap.style.display=val==="__custom__"?"block":"none";
   updateCashCustomerField();
+  updateCashPrepayFields();
 }
 
 // فیلد «انتخاب مشتری» فقط وقتی نوع عملیات شامل «مشتری» باشد نمایش داده می‌شود
@@ -6223,6 +6249,52 @@ function updateCashCustomerField(){
     ? CUSTOMERS.map(c=>`<option value="${escHTML(String(c.id))}">${escHTML(c.n||"—")}${c.p?" — "+escHTML(c.p):""}</option>`).join("")
     : '<option value="">— هیچ مشتری ثبت نشده —</option>';
   if(cur&&CUSTOMERS.some(c=>String(c.id)===String(cur))) sel.value=cur;
+}
+
+// منوی «نوع پرداخت» خروجی — گزینه‌های پیش‌پرداخت همیشه تضمین می‌شوند
+function ensureCashOutKindOptions(){
+  const sel=document.getElementById("c-paykind");
+  if(!sel) return;
+  const cur=sel.value;
+  sel.innerHTML=CASH_OUT_KIND.map(k=>`<option value="${escHTML(k.value)}">${k.icon} ${escHTML(k.label)}</option>`).join("");
+  if(cur&&CASH_OUT_KIND.some(k=>k.value===cur)) sel.value=cur;
+}
+
+// نمایش/پنهان کردن انتخاب‌کننده تامین‌کننده و کارمند برای پیش‌پرداخت‌ها
+// در خروجی، «نوع پرداخت» و در ورودی، «موضوع عملیات» تعیین‌کننده است
+function updateCashPrepayFields(){
+  const cat=document.getElementById("c-cat")?.value||"in";
+  const isOut=cat==="out";
+  const typeVal=String(document.getElementById("c-type")?.value||"");
+  const kind=document.getElementById("c-paykind")?.value||"";
+  const suppOn=isOut ? kind==="supplier_prepay" : typeVal.includes("تامین‌کننده");
+  const empOn=isOut ? kind==="employee_prepay" : typeVal.includes("کارمند");
+  const suppWrap=document.getElementById("c-supp-wrap");
+  const empWrap=document.getElementById("c-emp-wrap");
+  if(suppWrap) suppWrap.style.display=suppOn?"block":"none";
+  if(empWrap) empWrap.style.display=empOn?"block":"none";
+  if(suppOn) fillCashSupplierSelect();
+  if(empOn) fillCashEmployeeSelect();
+}
+
+function fillCashSupplierSelect(){
+  const sel=document.getElementById("c-supp-sel");
+  if(!sel) return;
+  const cur=sel.value;
+  const list=(typeof SUPPLIERS!=="undefined"&&Array.isArray(SUPPLIERS))?SUPPLIERS:[];
+  if(!list.length){sel.innerHTML='<option value="">— هیچ تامین‌کننده‌ای ثبت نشده —</option>';return;}
+  sel.innerHTML=list.map(s=>`<option value="${escHTML(String(s.id))}">${escHTML(s.n||"—")}</option>`).join("");
+  if(cur&&list.some(s=>String(s.id)===cur)) sel.value=cur;
+}
+
+function fillCashEmployeeSelect(){
+  const sel=document.getElementById("c-emp-sel");
+  if(!sel) return;
+  const cur=sel.value;
+  const list=(_cashEmps&&_cashEmps.length)?_cashEmps:((typeof _empList!=="undefined"&&Array.isArray(_empList))?_empList:[]);
+  if(!list.length){sel.innerHTML='<option value="">— هیچ کارمندی ثبت نشده —</option>';return;}
+  sel.innerHTML=list.map(x=>`<option value="${escHTML(String(x.id))}">${escHTML(_cashPersonName(x))}</option>`).join("");
+  if(cur&&list.some(x=>String(x.id)===cur)) sel.value=cur;
 }
 
 // آیا ردیف فروش به این مشتری تعلق دارد؟ (اول شناسه، اگر خالی بود نام مشتری)
@@ -6320,10 +6392,33 @@ async function submitCash(){
     const descEl=document.getElementById("c-desc"); if(descEl) descEl.value=desc;
   }
 
+  // حالت‌های پیش‌پرداخت خروجی — انتخاب تامین‌کننده / کارمند
+  let selectedSupp=null, selectedEmp=null;
+  if(cat==="out"){
+    const suppWrap=document.getElementById("c-supp-wrap");
+    const empWrap=document.getElementById("c-emp-wrap");
+    const suppMode=!!suppWrap&&suppWrap.style.display!=="none";
+    const empMode=!!empWrap&&empWrap.style.display!=="none";
+    if(suppMode){
+      const suppId=document.getElementById("c-supp-sel")?.value||"";
+      selectedSupp=SUPPLIERS.find(s=>String(s.id)===String(suppId))||null;
+      if(!selectedSupp){setMsg('<div class="ib err">تامین‌کننده را انتخاب کن!</div>');return;}
+      desc=selectedSupp.n;
+      const descEl=document.getElementById("c-desc"); if(descEl) descEl.value=desc;
+    }else if(empMode){
+      const empId=document.getElementById("c-emp-sel")?.value||"";
+      const empList=(_cashEmps&&_cashEmps.length)?_cashEmps:_empList;
+      selectedEmp=empList.find(x=>String(x.id)===String(empId))||null;
+      if(!selectedEmp){setMsg('<div class="ib err">کارمند را انتخاب کن!</div>');return;}
+      desc=_cashPersonName(selectedEmp);
+      const descEl=document.getElementById("c-desc"); if(descEl) descEl.value=desc;
+    }
+  }
+
   const btn=document.getElementById("cash-btn");
   if(btn){btn.disabled=true;btn.textContent="در حال ذخیره...";}
   try{
-    if(cat==="out") await submitCashOutflow(date,amt,desc,setMsg);
+    if(cat==="out") await submitCashOutflow(date,amt,desc,setMsg,selectedSupp,selectedEmp);
     else await submitCashInflow(date,amt,desc,setMsg,selectedCust);
   }catch(e){
     setMsg(sbErrorHTML("خطای غیرمنتظره"));
@@ -6338,8 +6433,8 @@ async function submitCashInflow(date,amt,desc,setMsg,cust){
   const typeVal=typeEl?.value||"";
   let cashType=typeVal;
   if(cust){
-    // وصول از مشتری — نوع ثابت و شرح دقیقاً نام مشتری
-    cashType="وصول از مشتری";
+    // وصول / پیش‌پرداخت از مشتری — نوع ثابت و شرح دقیقاً نام مشتری
+    cashType=String(typeVal).includes("پیش‌پرداخت")?"پیش‌پرداخت از مشتری":"وصول از مشتری";
     desc=cust.n;
   }else if(typeVal==="__custom__"){
     cashType=(document.getElementById("c-custom-type")?.value||"").trim();
@@ -6392,7 +6487,7 @@ async function submitCashInflow(date,amt,desc,setMsg,cust){
 }
 
 // خروجی صندوق — با مسیردهی به دفتر مربوطه
-async function submitCashOutflow(date,amt,desc,setMsg){
+async function submitCashOutflow(date,amt,desc,setMsg,supp,emp){
   const kind=document.getElementById("c-paykind")?.value||"company_expense";
   let cashType="", expCat=null, personId="", personName="", empKind="salary", expenseIso=null;
 
@@ -6419,6 +6514,12 @@ async function submitCashOutflow(date,amt,desc,setMsg){
     cashType=(empKind==="advance"?"پیش‌پرداخت معاش — ":"معاش — ")+personName;
   }else if(kind==="loan_out"){
     cashType="قرض داده شده";
+  }else if(kind==="supplier_prepay"){
+    if(!supp){setMsg('<div class="ib err">تامین‌کننده را انتخاب کن!</div>');return;}
+    cashType="پیش‌پرداخت به تامین‌کننده — "+(supp.n||"");
+  }else if(kind==="employee_prepay"){
+    if(!emp){setMsg('<div class="ib err">کارمند را انتخاب کن!</div>');return;}
+    cashType="پیش‌پرداخت به کارمند — "+_cashPersonName(emp);
   }else{
     const custom=(document.getElementById("c-custom-type")?.value||"").trim();
     cashType=custom||"سایر خروجی";
@@ -6455,6 +6556,18 @@ async function submitCashOutflow(date,amt,desc,setMsg){
       date,payment_date:date,amount_afn:amt,type:empKind,notes:desc||cashType
     });
     if(!r){ok=false;extraErr=window._lastSBError||"";}
+  }else if(kind==="supplier_prepay"){
+    // مانده تامین‌کننده کم می‌شود؛ منفی شدن یعنی ما نزد او اعتبار داریم
+    window._lastSBError=null;
+    const r=await applySupplierPrepayment(supp,amt);
+    if(!r){ok=false;extraErr=window._lastSBError||"خطا در بروزرسانی بدهی تامین‌کننده";}
+  }else if(kind==="employee_prepay"){
+    window._lastSBError=null;
+    const r=await sbPost("employee_payments",{
+      employee_id:+emp.id,employee_name:_cashPersonName(emp),
+      date,payment_date:date,amount_afn:amt,type:"advance",notes:desc||cashType
+    });
+    if(!r){ok=false;extraErr=window._lastSBError||"";}
   }
 
   // ۳) اگر ثبت دفتر مربوطه شکست خورد، تراکنش صندوق برگشت داده می‌شود
@@ -6472,6 +6585,39 @@ async function submitCashOutflow(date,amt,desc,setMsg){
   if(document.getElementById("page-expenses")?.classList.contains("active")) renderExpenses();
   if(document.getElementById("page-partners")?.classList.contains("active")) renderPartners();
   if(document.getElementById("page-emp")?.classList.contains("active")) renderEmp();
+  if(kind==="supplier_prepay"){
+    if(document.getElementById("page-supp")?.classList.contains("active")) renderSupp();
+    else await refreshSuppMap();
+  }
+}
+
+// پیش‌پرداخت به تامین‌کننده — از بدهی او در supplier_balances کم می‌شود.
+// مبلغ صندوق افغانی است؛ اگر بدهی فقط دالری باشد با نرخ دالر تبدیل می‌شود.
+// هیچ‌جا روی صفر بسته نمی‌شود: مانده منفی = اعتبار ما نزد تامین‌کننده.
+async function applySupplierPrepayment(supp,amt){
+  if(!supp) return false;
+  const sid=String(supp.id||"");
+  if(!sid) return false;
+  const rows=await sbGet("supplier_balances","?supplier_id=eq."+encodeURIComponent(sid));
+  if(rows===null) return false;
+  const cur=rows[0]||null;
+  const rate=+S.usdRate||68;
+  const balUsd=+(cur?.balance_usd||0), balAfn=+(cur?.balance_afn||0);
+  const stamp=new Date().toISOString();
+  let body;
+  // اگر فقط مانده دالری وجود داشته باشد (حتی منفی) همان ستون کم می‌شود؛ در غیر این صورت افغانی
+  if(cur&&balUsd!==0&&balAfn===0){
+    body={balance_usd:+((balUsd-amt/rate).toFixed(2)),updated_at:stamp};
+  }else{
+    body={balance_afn:+((balAfn-amt).toFixed(2)),updated_at:stamp};
+  }
+  const res=cur
+    ? await sbPatch("supplier_balances",body,`?supplier_id=eq.${encodeURIComponent(sid)}`)
+    : await sbPost("supplier_balances",{
+        supplier_id:sid,supplier_name:supp.n||"",
+        balance_usd:0,balance_afn:body.balance_afn,updated_at:stamp
+      });
+  return res!==null;
 }
 
 
@@ -6977,6 +7123,7 @@ async function renderSupp(){
     const bUsd=S.suppMap[s.id]?.bal||0;
     const bAfn=S.suppMap[s.id]?.balAfn||0;
     const hasDebt=bUsd>0||bAfn>0;
+    const hasCredit=bUsd<0||bAfn<0;
     // نوع تامین‌کننده — دالری یا افغانی
     const typeTag=bAfn>0&&bUsd<=0
       ?'<span class="bb bog">؋ افغانی</span>'
@@ -6989,12 +7136,12 @@ async function renderSupp(){
       <td style="color:var(--t3)">${i+1}</td>
       <td style="font-weight:700">${s.n}<br><span style="font-size:10px">${typeTag}</span></td>
       <td class="tdr">
-        ${bUsd>0?`<div style="color:var(--bl);font-weight:700">${usd(bUsd)}</div><div style="font-size:10px;color:var(--t3)">≈ ${afn(bUsd*S.usdRate)}</div>`:'<span style="color:var(--t3)">—</span>'}
+        ${bUsd!==0?`<div style="color:${bUsd>0?'var(--bl)':'var(--gr)'};font-weight:700">${usd(Math.abs(bUsd))}</div><div style="font-size:10px;color:var(--t3)">${bUsd>0?'≈ '+afn(bUsd*S.usdRate):'اعتبار ما نزد تامین‌کننده'}</div>`:'<span style="color:var(--t3)">—</span>'}
       </td>
       <td class="tdr">
-        ${bAfn>0?`<div style="color:var(--og);font-weight:700">${afn(bAfn)}</div><div style="font-size:10px;color:var(--t3)">≈ ${usd(bAfn/S.usdRate)}</div>`:'<span style="color:var(--t3)">—</span>'}
+        ${bAfn!==0?`<div style="color:${bAfn>0?'var(--og)':'var(--gr)'};font-weight:700">${afn(Math.abs(bAfn))}</div><div style="font-size:10px;color:var(--t3)">${bAfn>0?'≈ '+usd(bAfn/S.usdRate):'اعتبار ما نزد تامین‌کننده'}</div>`:'<span style="color:var(--t3)">—</span>'}
       </td>
-      <td>${hasDebt?'<span class="bb br2">بدهکار</span>':'<span class="bb bg2">تسویه</span>'}</td>
+      <td>${hasDebt?'<span class="bb br2">بدهکار</span>':hasCredit?'<span class="bb bg2">بستانکار</span>':'<span class="bb bg2">تسویه</span>'}</td>
       <td style="display:flex;gap:4px;flex-wrap:wrap">
         <button onclick="openPersonStatement('supp','${s.id}','${s.n.replace(/'/g,"\\'")}')"
           style="background:rgba(91,138,245,.12);border:1px solid rgba(91,138,245,.3);color:var(--bl);border-radius:6px;padding:3px 9px;cursor:pointer;font-size:10px;font-family:inherit">📊 تاریخچه</button>
