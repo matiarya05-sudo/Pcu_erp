@@ -260,8 +260,8 @@ tr:hover td{background:rgba(212,168,67,.03)}
 
 /* ── Form ── */
 .fg{margin-bottom:10px}
-.fg label{display:block;font-size:11px;color:var(--t2);margin-bottom:4px;font-weight:600}
-.fg input,.fg select{
+.fg label,.lbl{display:block;font-size:11px;color:var(--t2);margin-bottom:4px;font-weight:600}
+.fg input,.fg select,.inp{
   width:100%;padding:10px 12px;
   background:rgba(255,255,255,.04);
   border:1px solid rgba(255,255,255,.1);
@@ -269,7 +269,7 @@ tr:hover td{background:rgba(212,168,67,.03)}
   font-family:inherit;outline:none;-webkit-appearance:none;
   transition:border-color .2s,background .2s;
 }
-.fg input:focus,.fg select:focus{border-color:var(--gd);background:rgba(212,168,67,.05)}
+.fg input:focus,.fg select:focus,.inp:focus{border-color:var(--gd);background:rgba(212,168,67,.05)}
 .fg input[readonly]{color:var(--g2);font-weight:700;background:rgba(212,168,67,.06)}
 select option{background:#1a1820}
 .row2{display:flex;gap:8px}.row2 .fg{flex:1}
@@ -1866,6 +1866,7 @@ notify pgrst, 'reload schema';</pre>
         <label>موضوع جدید را بنویس</label>
         <input id="c-custom-type" placeholder="مثال: حواله، کمک، تعمیرات..." oninput="syncCustomType()"/>
       </div>
+      <div id="c-cust-wrap" style="display:none; margin-bottom:10px;"><label class="lbl">انتخاب مشتری</label><select id="c-cust-sel" class="inp"></select></div>
       <div class="fg"><label>شرح / توضیح</label>
         <input id="c-desc" placeholder="مثال: موجودی افتتاحیه، حواله از غزنی..."/>
       </div>
@@ -6121,6 +6122,8 @@ function initCashModal(){
   set("c-desc","");
   set("c-amt","");
   set("c-custom-type","");
+  const custSel=document.getElementById("c-cust-sel"); if(custSel){custSel.innerHTML="";custSel.value="";}
+  const custWrap=document.getElementById("c-cust-wrap"); if(custWrap) custWrap.style.display="none";
   set("c-expcat-new","");
   set("c-paykind","company_expense");
   set("c-empkind","salary");
@@ -6142,6 +6145,7 @@ function updateCashTypes(){
   if(typeWrap) typeWrap.style.display=cat==="out"?"none":"block";
   if(payWrap) payWrap.style.display=cat==="out"?"block":"none";
   if(cat==="out"){
+    updateCashCustomerField();
     updateCashOutFields();
     return;
   }
@@ -6201,6 +6205,41 @@ function checkCustomCashType(){
   const val=document.getElementById("c-type")?.value;
   const wrap=document.getElementById("c-custom-wrap");
   if(wrap) wrap.style.display=val==="__custom__"?"block":"none";
+  updateCashCustomerField();
+}
+
+// فیلد «انتخاب مشتری» فقط وقتی نوع عملیات شامل «مشتری» باشد نمایش داده می‌شود
+function updateCashCustomerField(){
+  const cat=document.getElementById("c-cat")?.value||"in";
+  const typeVal=document.getElementById("c-type")?.value||"";
+  const wrap=document.getElementById("c-cust-wrap");
+  const sel=document.getElementById("c-cust-sel");
+  const isCust=cat!=="out"&&String(typeVal).includes("مشتری");
+  if(wrap) wrap.style.display=isCust?"block":"none";
+  if(!sel) return;
+  if(!isCust){sel.innerHTML="";return;}
+  const cur=sel.value;
+  sel.innerHTML=CUSTOMERS.length
+    ? CUSTOMERS.map(c=>`<option value="${escHTML(String(c.id))}">${escHTML(c.n||"—")}${c.p?" — "+escHTML(c.p):""}</option>`).join("")
+    : '<option value="">— هیچ مشتری ثبت نشده —</option>';
+  if(cur&&CUSTOMERS.some(c=>String(c.id)===String(cur))) sel.value=cur;
+}
+
+// آیا ردیف فروش به این مشتری تعلق دارد؟ (اول شناسه، اگر خالی بود نام مشتری)
+function _cashSaleOfCust(s,cust){
+  if(!s||!cust) return false;
+  const sid=(s.cust_id===null||s.cust_id===undefined)?"":String(s.cust_id).trim();
+  const cid=String(cust.id??"").trim();
+  if(sid&&cid) return sid===cid;
+  return String(s.cust_name||"").trim()===String(cust.n||"").trim();
+}
+
+// باقی‌مانده واقعی فاکتور — اگر ستون remaining خالی بود از total − paid محاسبه می‌شود
+function _cashSaleRemaining(s){
+  if(!s) return 0;
+  return (s.remaining!==null&&s.remaining!==undefined&&s.remaining!=="")
+    ? Math.max(0,+s.remaining||0)
+    : Math.max(0,(+s.total||0)-(+s.paid||0));
 }
 
 function syncCustomType(){
@@ -6263,17 +6302,29 @@ async function submitCash(){
   const cat=document.getElementById("c-cat").value;
   const amt=+(document.getElementById("c-amt").value)||0;
   const date=(document.getElementById("c-date").value||"").trim()||today();
-  const desc=(document.getElementById("c-desc")?.value||"").trim();
+  let desc=(document.getElementById("c-desc")?.value||"").trim();
   const msg=document.getElementById("cash-msg");
   const setMsg=html=>{if(msg) msg.innerHTML=html;};
   setMsg("");
   if(!(amt>0)){alert("مبلغ را درست بنویس!");return;}
 
+  // حالت «وصول از مشتری» — مشتری انتخاب‌شده تعیین‌کننده نوع و شرح است
+  const custWrap=document.getElementById("c-cust-wrap");
+  const custMode=cat!=="out"&&!!custWrap&&custWrap.style.display!=="none";
+  let selectedCust=null;
+  if(custMode){
+    const custId=document.getElementById("c-cust-sel")?.value||"";
+    selectedCust=CUSTOMERS.find(c=>String(c.id)===String(custId))||null;
+    if(!selectedCust){setMsg('<div class="ib err">مشتری را انتخاب کن!</div>');return;}
+    desc=selectedCust.n;
+    const descEl=document.getElementById("c-desc"); if(descEl) descEl.value=desc;
+  }
+
   const btn=document.getElementById("cash-btn");
   if(btn){btn.disabled=true;btn.textContent="در حال ذخیره...";}
   try{
     if(cat==="out") await submitCashOutflow(date,amt,desc,setMsg);
-    else await submitCashInflow(date,amt,desc,setMsg);
+    else await submitCashInflow(date,amt,desc,setMsg,selectedCust);
   }catch(e){
     setMsg(sbErrorHTML("خطای غیرمنتظره"));
   }finally{
@@ -6281,12 +6332,16 @@ async function submitCash(){
   }
 }
 
-// ورودی صندوق — همان مسیر قبلی
-async function submitCashInflow(date,amt,desc,setMsg){
+// ورودی صندوق — همان مسیر قبلی (+ وصول از مشتری)
+async function submitCashInflow(date,amt,desc,setMsg,cust){
   const typeEl=document.getElementById("c-type");
   const typeVal=typeEl?.value||"";
   let cashType=typeVal;
-  if(typeVal==="__custom__"){
+  if(cust){
+    // وصول از مشتری — نوع ثابت و شرح دقیقاً نام مشتری
+    cashType="وصول از مشتری";
+    desc=cust.n;
+  }else if(typeVal==="__custom__"){
     cashType=(document.getElementById("c-custom-type")?.value||"").trim();
     if(!cashType){setMsg('<div class="ib err">موضوع جدید را بنویس!</div>');return;}
     if(!CASH_IN.includes(cashType)) CASH_IN.push(cashType);
@@ -6303,9 +6358,37 @@ async function submitCashInflow(date,amt,desc,setMsg){
   });
   if(!res){setMsg(sbErrorHTML("خطا در ثبت ورودی صندوق"));return;}
 
+  // وصول از مشتری — کسر مبلغ از فاکتورهای پرداخت‌نشده (قدیمی‌ترین اول)
+  // دقیقاً مثل submitCollectPay: به paid اضافه و از remaining کم می‌شود
+  let salesErr="";
+  if(cust){
+    const sales=await sbGet("sales","?select=id,cust_id,cust_name,total,paid,remaining,date&order=date.asc,id.asc");
+    const rows=(sales||[]).filter(s=>_cashSaleOfCust(s,cust)&&_cashSaleRemaining(s)>0);
+    let left=amt;
+    for(const s of rows){
+      if(left<=0) break;
+      const rem=_cashSaleRemaining(s);
+      if(!(rem>0)) continue;
+      const pay=Math.min(rem,left);
+      const newPaid=+((+s.paid||0)+pay).toFixed(2);
+      // باقی‌مانده از همان مقدار فعلی کسر می‌شود تا رکوردهای قدیمی با total ناهماهنگ خراب نشوند
+      const newRem=Math.max(0,+((rem-pay).toFixed(2)));
+      window._lastSBError=null;
+      const ok=(await sbPatch("sales",{paid:newPaid,remaining:newRem},"?id=eq."+s.id))!==null;
+      if(!ok){salesErr=window._lastSBError||"خطا در بروزرسانی جدول فروش";break;}
+      left-=pay;
+    }
+  }
+
   showSaved();
   closeModal("modalCash");
   renderCash();
+  if(cust){
+    if(document.getElementById("page-collect")?.classList.contains("active")) renderCollect();
+    if(document.getElementById("page-cust")?.classList.contains("active")) renderCust();
+    if(document.getElementById("page-sales")?.classList.contains("active")) renderSales();
+  }
+  if(salesErr) alert("⚠️ ورودی صندوق ثبت شد ولی بروزرسانی فروش انجام نشد:\n"+salesErr);
 }
 
 // خروجی صندوق — با مسیردهی به دفتر مربوطه
