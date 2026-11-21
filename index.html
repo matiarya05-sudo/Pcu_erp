@@ -1768,7 +1768,7 @@ notify pgrst, 'reload schema';</pre>
           <span>🧪 مواد اولیه تولید</span>
           <span id="prod-raw-total" style="font-size:11px;color:var(--tl)">؋ 0</span>
         </div>
-        <div class="pm-sub">از گدام مواد خام (mat_stock) کسر می‌شود — کیلو دقیق</div>
+        <div class="pm-sub">از گدام مواد خام (mat_stock) کسر می‌شود — به واحد خود ماده</div>
         <button type="button" class="btn bsec btn-full" style="margin-bottom:8px" onclick="addProdMatRow('raw')">+ اضافه کردن ماده اولیه</button>
         <div id="prod-mats-raw-list"></div>
       </div>
@@ -1951,6 +1951,7 @@ notify pgrst, 'reload schema';</pre>
             <option value="kg">کیلو</option>
             <option value="piece">دانه</option>
             <option value="meter">متر</option>
+            <option value="yard">پا</option>
           </select>
         </div>
         <div style="display:flex;gap:8px;margin-bottom:10px">
@@ -5502,11 +5503,11 @@ function buyMatOptions(selected){
   return buyMatList().map(m=>`<option value="${escHTML(m)}"${m===selected?" selected":""}>${escHTML(m)}</option>`).join("");
 }
 // برچسب فارسی واحدها — منبع واحد برای همه فرم‌ها (خرید / تولید / انبار)
-const UNIT_LABELS={kg:"کیلو",piece:"دانه",meter:"متر"};
-const UNIT_STEPS={kg:"0.1",piece:"1",meter:"0.1"};
+const UNIT_LABELS={kg:"کیلو",piece:"دانه",meter:"متر",yard:"پا"};
+const UNIT_STEPS={kg:"0.1",piece:"1",meter:"0.1",yard:"0.1"};
 function unitLabelFa(unit){return UNIT_LABELS[unit]||UNIT_LABELS.kg;}
 function isKnownUnit(unit){return Object.prototype.hasOwnProperty.call(UNIT_LABELS,unit);}
-// واحد هر ماده از جدول mat_stock گرفته می‌شود (کیلو / دانه / متر)
+// واحد هر ماده از جدول mat_stock گرفته می‌شود (کیلو / دانه / متر / پا)
 function buyItemUnit(mat){
   const u=S.stockMap[mat]?.unit||"kg";
   return isKnownUnit(u)?u:"kg";
@@ -5835,19 +5836,34 @@ function prodMatOptions(kind,selected){
     return `<option value="${m}"${m===selected?" selected":""}>${m} — ${(+st.kg||0).toFixed(2)} ${uLbl} | ${afn(st.avgCost)}/${uLbl}</option>`;
   }).join("");
 }
+// واحد نمایشی هر ماده در فرم تولید — از S.stockMap خوانده می‌شود
+// piece → دانه ، meter → متر ، yard → پا ، در غیر این صورت → کیلو
+function prodMatUnit(mat){
+  const u=S.stockMap[mat]?.unit;
+  return isKnownUnit(u)?u:"kg";
+}
+function prodMatUnitLabel(mat){return unitLabelFa(prodMatUnit(mat));}
 function renderProdMats(){
   ["raw","pack"].forEach(kind=>{
     const box=document.getElementById(`prod-mats-${kind}-list`);
     if(!box) return;
     const rows=_prodMats.filter(r=>r.kind===kind);
-    box.innerHTML=rows.map(r=>`<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+    box.innerHTML=rows.map(r=>{
+      // واحد همین ردیف از ماده انتخاب‌شده خوانده می‌شود (کیلو / دانه / متر / پا)
+      const unit=prodMatUnit(r.m);
+      const unitLbl=unitLabelFa(unit);
+      return `<div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
       <select id="pm-mat-${r.id}" onchange="updateProdMatRow(${r.id},'m',this.value)"
         style="flex:2;width:auto;min-width:0;padding:8px 10px;background:var(--b4);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-size:12px;font-family:inherit">${prodMatOptions(kind,r.m)}</select>
-      <input type="number" id="pm-kg-${r.id}" value="${r.kg||""}" min="0" step="0.01" placeholder="${unitLabelFa(S.stockMap[r.m]?.unit)}" inputmode="decimal" oninput="updateProdMatRow(${r.id},'kg',this.value)"
-        style="flex:1;width:auto;min-width:0;padding:8px 10px;background:var(--b4);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-size:12px;font-family:inherit;direction:ltr"/>
+      <div style="flex:1;display:flex;align-items:center;gap:4px;min-width:0">
+        <input type="number" id="pm-kg-${r.id}" value="${r.kg||""}" min="0" step="${UNIT_STEPS[unit]||"0.1"}" placeholder="0" inputmode="decimal" oninput="updateProdMatRow(${r.id},'kg',this.value)"
+          style="flex:1;width:auto;min-width:0;padding:8px 10px;background:var(--b4);border:1px solid var(--bd2);border-radius:8px;color:var(--tx);font-size:12px;font-family:inherit;direction:ltr"/>
+        <span id="pm-unit-${r.id}" style="font-size:11px;font-weight:700;color:var(--t2);flex-shrink:0;min-width:22px;text-align:center">${unitLbl}</span>
+      </div>
       <button type="button" onclick="removeProdMatRow(${r.id})" title="حذف"
         style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:8px;padding:8px 10px;font-size:12px;cursor:pointer;flex-shrink:0">✕</button>
-    </div>`).join("");
+    </div>`;
+    }).join("");
   });
   refreshProdMatsTotal();
 }
@@ -5861,7 +5877,15 @@ function addProdMatRow(kind="raw"){
 function updateProdMatRow(id,field,val){
   const r=_prodMats.find(x=>x.id===id);
   if(!r) return;
-  if(field==="m") r.m=val;
+  if(field==="m"){
+    r.m=val;
+    // واحد همان ماده فوراً در همان ردیف عوض می‌شود — مقدار واردشده تبدیل نمی‌شود
+    const unit=prodMatUnit(val);
+    const lbl=document.getElementById(`pm-unit-${id}`);
+    if(lbl) lbl.textContent=unitLabelFa(unit);
+    const inp=document.getElementById(`pm-kg-${id}`);
+    if(inp) inp.step=UNIT_STEPS[unit]||"0.1";
+  }
   else r.kg=+val||0;
   refreshProdMatsTotal();
   calcProd();
@@ -6033,7 +6057,8 @@ async function submitProd(){
   Object.keys(usedByMat).forEach(m=>{
     const have=+(S.stockMap[m]?.kg||0);
     const need=usedByMat[m];
-    if(need-have>0.0001) short.push(`${m}: لازم ${need.toFixed(2)}kg — موجود ${have.toFixed(2)}kg`);
+    const uLbl=prodMatUnitLabel(m);
+    if(need-have>0.0001) short.push(`${m}: لازم ${need.toFixed(2)} ${uLbl} — موجود ${have.toFixed(2)} ${uLbl}`);
   });
   if(short.length && !confirm("⚠️ موجودی این مواد کافی نیست:\n\n"+short.join("\n")+"\n\nادامه بدهی؟ موجودی صفر ثبت می‌شود.")) return;
 
@@ -6079,11 +6104,13 @@ async function submitProd(){
   }
 
   // ۶) کسر مواد اولیه + بسته‌بندی از گدام مواد (mat_stock)
+  // دقیقاً همان عددی که کاربر وارد کرده کسر می‌شود — هیچ تبدیل واحدی انجام نمی‌شود
+  // (کیلو / دانه / متر / پا هر کدام در واحد خودشان از موجودی کم می‌شوند)
   const matErrors=[];
   for(const mat of Object.keys(usedByMat)){
     const need=usedByMat[mat];
     const ok=await adjustMatStock(mat,-need);
-    if(!ok) matErrors.push(`${mat} (${need.toFixed(2)}kg)`);
+    if(!ok) matErrors.push(`${mat} (${need.toFixed(2)} ${prodMatUnitLabel(mat)})`);
   }
 
   // ۷) انتقال تولید خالص (تولید − ضایعات) به گدام جنس تولیدشده
@@ -6112,7 +6139,7 @@ async function submitProd(){
 
   // ۸) گزارش شفاف به کاربر
   const matList=Object.keys(usedByMat).length
-    ? Object.keys(usedByMat).map(m=>`${m}: ${usedByMat[m].toFixed(2)}kg`).join(" • ")
+    ? Object.keys(usedByMat).map(m=>`${m}: ${usedByMat[m].toFixed(2)} ${prodMatUnitLabel(m)}`).join(" • ")
     : "بدون کسر مواد (رسپی خالی)";
   msgEl.innerHTML=
     `<div class="ib ok">✅ تولید ثبت شد | حواله: <b>${voucher}</b><br>`+
@@ -8407,6 +8434,7 @@ function renderEditStockList(MATS_LIST,allMats,stockMap){
             <option value="kg" ${unit==='kg'?'selected':''}>کیلو</option>
             <option value="piece" ${unit==='piece'?'selected':''}>دانه</option>
             <option value="meter" ${unit==='meter'?'selected':''}>متر</option>
+            <option value="yard" ${unit==='yard'?'selected':''}>پا</option>
           </select>
         </div>
         <button onclick="deleteExtraMat(window._stockIdxMap&&window._stockIdxMap['${key}']||'','${key}')" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:6px 8px;font-size:13px;cursor:pointer;flex-shrink:0" title="حذف / صفر کردن">🗑️</button>
