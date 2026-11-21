@@ -5505,12 +5505,16 @@ function buyMatOptions(selected){
 // برچسب فارسی واحدها — منبع واحد برای همه فرم‌ها (خرید / تولید / انبار)
 const UNIT_LABELS={kg:"کیلو",piece:"دانه",meter:"متر",yard:"پا"};
 const UNIT_STEPS={kg:"0.1",piece:"1",meter:"0.1",yard:"0.1"};
-function unitLabelFa(unit){return UNIT_LABELS[unit]||UNIT_LABELS.kg;}
+// کلید واحد را نرمال می‌کند: «Piece» / « piece » → «piece» — مقدار ناشناخته → «» (خالی)
+function normalizeUnitKey(unit){
+  const u=String(unit??"").trim().toLowerCase();
+  return Object.prototype.hasOwnProperty.call(UNIT_LABELS,u)?u:"";
+}
+function unitLabelFa(unit){return UNIT_LABELS[normalizeUnitKey(unit)]||UNIT_LABELS.kg;}
 function isKnownUnit(unit){return Object.prototype.hasOwnProperty.call(UNIT_LABELS,unit);}
 // واحد هر ماده از جدول mat_stock گرفته می‌شود (کیلو / دانه / متر / پا)
 function buyItemUnit(mat){
-  const u=S.stockMap[mat]?.unit||"kg";
-  return isKnownUnit(u)?u:"kg";
+  return normalizeUnitKey(S.stockMap[mat]?.unit)||"kg";
 }
 function buyCurrencyRate(){
   const rate=+(document.getElementById("b-rate")?.value)||+S.usdRate||68;
@@ -5839,8 +5843,7 @@ function prodMatOptions(kind,selected){
 // واحد نمایشی هر ماده در فرم تولید — از S.stockMap خوانده می‌شود
 // piece → دانه ، meter → متر ، yard → پا ، در غیر این صورت → کیلو
 function prodMatUnit(mat){
-  const u=S.stockMap[mat]?.unit;
-  return isKnownUnit(u)?u:"kg";
+  return normalizeUnitKey(S.stockMap?.[mat]?.unit)||"kg";
 }
 function prodMatUnitLabel(mat){return unitLabelFa(prodMatUnit(mat));}
 function renderProdMats(){
@@ -5923,11 +5926,12 @@ function updateScrapUI(){
 }
 
 // ── تنظیم موجودی یک ماده (PATCH و اگر رکورد نبود POST) ──
-// delta منفی = کسر، مثبت = افزودن
+// delta منفی = کسر، مثبت = افزودن — بدون هیچ تبدیل واحدی
 async function adjustMatStock(mat,deltaKg){
   const cur=S.stockMap[mat]||{kg:0,avgCost:0};
   const avgCost=+cur.avgCost||0;
-  const newKg=Math.max(0,(+cur.kg||0)+deltaKg);
+  // فقط گرد کردن خطای اعشاری شناور (مثل 0.30000000000000004) — نه تبدیل واحد
+  const newKg=Math.max(0,+(((+cur.kg||0)+deltaKg).toFixed(6)));
   const newVal=newKg*avgCost;
   const body={total_kg:newKg,total_value_afn:newVal,avg_cost:avgCost,updated_at:new Date().toISOString()};
   const res=await sbPatch("mat_stock",body,`?material=eq.${encodeURIComponent(mat)}`);
@@ -6047,9 +6051,10 @@ async function submitProd(){
     recipe.forEach(r=>{usedByMat[r.m]=(usedByMat[r.m]||0)+(+r.q||0)*doz;});
   }
   // حذف مواد با مقدار صفر/منفی تا موجودی اشتباه کسر نشود
+  // مقدار دقیقاً همان عددی است که کاربر وارد کرده — هیچ تبدیلی انجام نمی‌شود
   Object.keys(usedByMat).forEach(m=>{
     const q=usedByMat[m];
-    if(!(q>0)) delete usedByMat[m]; else usedByMat[m]=+q.toFixed(4);
+    if(!(q>0)) delete usedByMat[m]; else usedByMat[m]=q;
   });
 
   // ۲) کنترول موجودی — قبل از هر نوشتنی، تا هیچ رکورد نصفه ثبت نشود
@@ -8383,7 +8388,7 @@ async function renderStock(){
   window._allStockMats=allStockMats;
   document.getElementById('stock-tbody').innerHTML=allStockMats.map((m,i)=>{
     const st=S.stockMap[m]||{kg:0,avgCost:0,unit:'kg'};
-    const isPiece=st.unit==='piece';
+    const isPiece=normalizeUnitKey(st.unit)==='piece';
     const unitLbl=unitLabelFa(st.unit);
     const threshold=isPiece?10:5;
     const qty=isPiece?Math.round(+st.kg||0):(+st.kg||0).toFixed(2);
@@ -8417,7 +8422,7 @@ function renderEditStockList(MATS_LIST,allMats,stockMap){
     const r=stockMap[mat]||{material:mat,total_kg:0,avg_cost:0,unit:'kg'};
     const key='idx'+idx;
     const isExtra=!MATS_LIST.includes(mat);
-    const unit=r.unit||'kg';
+    const unit=normalizeUnitKey(r.unit)||'kg';
     const unitLabel=unitLabelFa(unit);
     const costLabel=`قیمت/${unitLabel} (؋)`;
     return`<div id="row_${key}" style="margin-bottom:10px;padding:10px;background:var(--b3);border-radius:8px;border:1px solid var(--bd)">
