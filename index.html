@@ -819,10 +819,20 @@ pre.sql-box{direction:ltr;text-align:left;background:#0b0a10;border:1px solid va
     <!-- SALES -->
     <div id="page-sales" class="page">
       <div class="ib info">☁️ داده‌ها روی Supabase Cloud ذخیره می‌شوند | ۱۲۴ مشتری | فروش به درجن</div>
+      <div class="kg k3" style="margin-bottom:12px">
+        <div class="kc gd"><div class="kl">همه فروشات</div><div class="kv" id="sales-sum-all-total">—</div><div class="ks" id="sales-sum-all-sub">—</div></div>
+        <div class="kc gr"><div class="kl">💵 فروش نقدی</div><div class="kv" id="sales-sum-cash-total">—</div><div class="ks" id="sales-sum-cash-sub">—</div></div>
+        <div class="kc rd"><div class="kl">📋 فروش قرضه / طلب</div><div class="kv" id="sales-sum-credit-total">—</div><div class="ks" id="sales-sum-credit-sub">—</div></div>
+      </div>
       <div class="card">
         <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
           <div class="ct" style="margin-bottom:0;flex:1">🛒 دفتر فروش | <span id="sales-count" style="color:var(--gd)">—</span></div>
           <input class="search-bar" style="width:160px;margin:0" placeholder="جستجو..." oninput="filterSales(this.value)" id="sSearch"/>
+        </div>
+        <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+          <button type="button" onclick="setSalesFilter('all')" class="bb by2" id="sf-all" style="cursor:pointer;padding:5px 12px">همه فروشات</button>
+          <button type="button" onclick="setSalesFilter('cash')" class="bb bbl" id="sf-cash" style="cursor:pointer;padding:5px 12px">💵 فروش نقدی</button>
+          <button type="button" onclick="setSalesFilter('credit')" class="bb bbl" id="sf-credit" style="cursor:pointer;padding:5px 12px">📋 فروش قرضه / طلب</button>
         </div>
         <div class="tw"><table>
           <thead><tr><th>#</th><th>تاریخ</th><th>ولایت</th><th>مشتری</th><th>مدل</th><th>درجن</th><th>مبلغ</th><th>وصول</th><th>باقی</th><th>سود</th><th>🖨️</th><th>✏️</th></tr></thead>
@@ -1638,8 +1648,28 @@ notify pgrst, 'reload schema';</pre>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin:8px 0 4px;flex-wrap:wrap;gap:4px">
         <div style="font-size:12px;font-weight:700;color:var(--gd)">📦 اقلام بل</div>
-        <div style="display:flex;gap:5px">
-          <button onclick="addSaleItem()" class="btn bsec" style="padding:5px 12px;font-size:11px">+ اضافه قلم</button>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <button type="button" onclick="openQuickProduct()" class="btn bsec" style="padding:5px 12px;font-size:11px">+ مدل جدید</button>
+          <button type="button" onclick="addSaleItem()" class="btn bsec" style="padding:5px 12px;font-size:11px">+ اضافه قلم</button>
+        </div>
+      </div>
+      <!-- فهرست محصولات برای ورودی جستجوپذیر هر قلم -->
+      <datalist id="salesProductsList"></datalist>
+      <!-- فرم سریع افزودن مدل جدید (از داخل مودال فروش) -->
+      <div id="sale-quick-prod" style="display:none;background:rgba(155,110,245,.07);border:1px solid rgba(155,110,245,.22);border-radius:10px;padding:10px;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:800;color:var(--pp);margin-bottom:8px">➕ مدل جدید — ذخیره در محصولات و انتخاب در همین قلم</div>
+        <div class="row2">
+          <div class="fg" style="margin-bottom:0"><label>نام مدل</label><input id="sqp-model" placeholder="مثال: بوت شیما سیاه"/></div>
+          <div class="fg" style="margin-bottom:0"><label>سایز (اختیاری)</label><input id="sqp-size" placeholder="مثال: 7-10" style="direction:ltr;text-align:right"/></div>
+        </div>
+        <div class="row2" style="margin-top:8px">
+          <div class="fg" style="margin-bottom:0"><label>اجرت جمشید (فی درجن ؋)</label><input type="number" inputmode="decimal" id="sqp-j" min="0" value="22"/></div>
+          <div class="fg" style="margin-bottom:0"><label>اجرت دفتر (فی درجن ؋)</label><input type="number" inputmode="decimal" id="sqp-s" min="0" value="25"/></div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;margin-top:10px;flex-wrap:wrap">
+          <button type="button" class="btn bpri" id="sqp-btn" onclick="saveQuickProduct()" style="font-size:11px;padding:7px 14px">ذخیره و انتخاب ✓</button>
+          <button type="button" class="btn bsec" onclick="closeQuickProduct()" style="font-size:11px;padding:7px 12px">انصراف</button>
+          <div id="sqp-msg" style="flex:1;min-width:120px;font-size:11px"></div>
         </div>
       </div>
       <div id="sale-items-list"></div>
@@ -3345,6 +3375,18 @@ async function sbDelete(table,params){ return sb(table,"DELETE",null,params); }
 function escHTML(v){
   return String(v??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 }
+// استخراج متن واقعی message از پاسخ JSON خطای Supabase (برای نمایش به کاربر)
+function sbErrorText(){
+  const raw=window._lastSBError||"خطای نامشخص از سرور";
+  try{
+    const m=String(raw).match(/\{[\s\S]*\}/);
+    if(m){
+      const j=JSON.parse(m[0]);
+      if(j&&j.message) return j.message+(j.details?" — "+j.details:"");
+    }
+  }catch(e){}
+  return raw;
+}
 // نمایش کامل خطای Supabase: HTTP status، جدول، متد و متن پاسخ سرور
 function sbErrorHTML(prefix="خطا در ذخیره"){
   const detail=window._lastSBError||"خطای نامشخص از سرور";
@@ -4034,19 +4076,68 @@ function waCustReminder(custId){
 
 // ── SALES ──
 let allSales=[];
+let _salesFilter="all";
+let _salesQuery="";
+function salesRemaining(s){
+  const raw=s?.remaining;
+  if(raw!==null&&raw!==undefined&&raw!=="") return +raw||0;
+  return Math.max(0,(+s?.total||0)-(+s?.paid||0));
+}
+// فروش نقدی = پولی رسیده و باقی صفر | هر فروش دیگری (قرضه یا پرداخت جزئی) در دفتر طلب می‌ماند
+function saleIsCash(s){ return (+s?.paid||0)>0 && salesRemaining(s)<=0; }
+function salesBucket(kind){
+  if(kind==="cash") return allSales.filter(saleIsCash);
+  if(kind==="credit") return allSales.filter(s=>!saleIsCash(s));
+  return allSales.slice();
+}
+function syncSalesTabs(){
+  ["all","cash","credit"].forEach(k=>{
+    const b=document.getElementById("sf-"+k);
+    if(b) b.className="bb "+(k===_salesFilter?"by2":"bbl");
+  });
+}
+function currentSalesRows(){
+  let list=salesBucket(_salesFilter);
+  const q=(_salesQuery||"").trim();
+  if(q) list=list.filter(s=>(s.cust_name||"").includes(q)||(s.province||"").includes(q)||String(s.bill||"").includes(q)||(s.product||"").includes(q));
+  return list;
+}
+function renderSalesSummary(){
+  syncSalesTabs();
+  const sum=list=>({
+    count:list.length,
+    total:list.reduce((a,s)=>a+(+s.total||0),0),
+    paid:list.reduce((a,s)=>a+(+s.paid||0),0),
+    rem:list.reduce((a,s)=>a+salesRemaining(s),0)
+  });
+  const map={all:sum(allSales),cash:sum(salesBucket("cash")),credit:sum(salesBucket("credit"))};
+  ["all","cash","credit"].forEach(k=>{
+    const t=document.getElementById("sales-sum-"+k+"-total");
+    const sub=document.getElementById("sales-sum-"+k+"-sub");
+    if(t) t.textContent=afn(map[k].total);
+    if(sub) sub.textContent=`${map[k].count} فاکتور | وصول: ${afn(map[k].paid)} | باقی: ${afn(map[k].rem)}`;
+  });
+}
 async function renderSales(){
-  document.getElementById("sales-tbody").innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr>';
+  document.getElementById("sales-tbody").innerHTML='<tr><td colspan="12" style="text-align:center;padding:20px"><div class="spinner" style="margin:auto"></div></td></tr>';
   allSales=await sbGet("sales","?order=id.desc")||[];
-  document.getElementById("sales-count").textContent=allSales.length+" فاکتور";
-  renderSalesRows(allSales);
+  renderSalesSummary();
+  renderSalesRows(currentSalesRows());
+}
+function setSalesFilter(kind){
+  _salesFilter=(kind==="cash"||kind==="credit")?kind:"all";
+  syncSalesTabs();
+  renderSalesRows(currentSalesRows());
 }
 function filterSales(q){
-  const f=allSales.filter(s=>!q||s.cust_name?.includes(q)||s.province?.includes(q)||s.bill?.includes(q));
-  renderSalesRows(f);
+  _salesQuery=q||"";
+  renderSalesRows(currentSalesRows());
 }
 function renderSalesRows(list){
   const tb=document.getElementById("sales-tbody");
-  if(!list.length){tb.innerHTML='<tr><td colspan="12" style="text-align:center;color:var(--t3);padding:18px">هنوز فروشی ثبت نشده</td></tr>';return;}
+  const cnt=document.getElementById("sales-count");
+  if(cnt) cnt.textContent=list.length+" فاکتور";
+  if(!list.length){tb.innerHTML='<tr><td colspan="12" style="text-align:center;color:var(--t3);padding:18px">فروشی در این فیلتر ثبت نشده</td></tr>';return;}
   tb.innerHTML=list.map((s,i)=>`<tr>
     <td style="color:var(--t3)">${i+1}</td><td>${s.date}</td>
     <td><span class="bb bbl">${s.province}</span></td>
@@ -4055,7 +4146,7 @@ function renderSalesRows(list){
     <td style="font-weight:700;color:var(--gd)">${s.dozen}</td>
     <td class="tdr" style="font-weight:700">${afn(s.total)}</td>
     <td class="tdr" style="color:var(--gr)">${afn(s.paid)}</td>
-    <td>${+s.remaining>0?`<span class="bb br2">${afn(s.remaining)}</span>`:'<span class="bb bg2">تسویه</span>'}</td>
+    <td>${salesRemaining(s)>0?`<span class="bb br2">${afn(salesRemaining(s))}</span>`:'<span class="bb bg2">تسویه</span>'}</td>
     <td class="tdr" style="color:var(--gr)">${afn(s.gross_profit)}</td>
     <td style="display:flex;gap:3px">
       <button onclick="printInvoice(${s.id})" title="چاپ فاکتور" style="${_editBtnStyle('gd')}">🖨️</button>
@@ -5206,13 +5297,17 @@ function initSaleModal(){
   document.getElementById("cust-sel").style.display="none";
   _selCust=null;
   _saleItems=[];_saleItemIdx=0;
+  _sqpRowIdx=null;
+  const qp=document.getElementById("sale-quick-prod");
+  if(qp) qp.style.display="none";
+  refreshSalesProductsDatalist();
   addSaleItem();
   calcSaleSummaryOnly();
 }
 function addSaleItem(){
   _saleItemIdx++;
   const idx=_saleItemIdx;
-  _saleItems.push({idx,prod:getProductNames()[0]||"",doz:0,prc:0});
+  _saleItems.push({idx,prod:"",doz:0,prc:0});
   renderSaleItems();
 }
 function removeSaleItem(idx){
@@ -5225,16 +5320,108 @@ function updateSaleItem(idx,field,val){
   it[field]=field==="prod"?val:(+val||0);
   calcSaleSummaryOnly();
 }
+let _sqpRowIdx=null;
+// فهرست محصولات برای datalist مودال فروش — هر بار از کش تازه products ساخته می‌شود
+function refreshSalesProductsDatalist(){
+  const dl=document.getElementById("salesProductsList");
+  if(!dl) return;
+  dl.innerHTML=getProductNames().map(p=>'<option value="'+escHTML(p)+'"></option>').join("");
+}
+// ذخیره نرخ‌های اجرت در settings (همان کلید wage_rates که بقیه صفحه‌ها می‌خوانند)
+async function persistWageRates(){
+  const val=JSON.stringify(WAGE_RATES);
+  window._lastSBError=null;
+  const existing=await sbGet("settings","?key=eq.wage_rates");
+  const res=(existing&&existing.length>0)
+    ? await sbPatch("settings",{value:val,updated_at:new Date().toISOString()},"?key=eq.wage_rates")
+    : await sbPost("settings",{key:"wage_rates",value:val});
+  return res!==null;
+}
+// باز کردن فرم سریع مدل جدید — idx قلمی است که مدل تازه در آن انتخاب می‌شود
+function openQuickProduct(idx){
+  if(idx===undefined||idx===null){
+    const empty=_saleItems.find(it=>!(it.prod||"").trim());
+    idx=(empty||_saleItems[_saleItems.length-1]||{}).idx;
+  }
+  if(idx===undefined||idx===null){ addSaleItem(); idx=_saleItems[_saleItems.length-1]?.idx; }
+  _sqpRowIdx=idx;
+  const it=_saleItems.find(x=>x.idx===idx);
+  const typed=(it?.prod||"").trim();
+  const exists=getProductNames().some(p=>p===typed);
+  const w=getWageForProduct(typed);
+  const panel=document.getElementById("sale-quick-prod");
+  const modelEl=document.getElementById("sqp-model");
+  if(modelEl) modelEl.value=(typed&&!exists)?typed:"";
+  const sizeEl=document.getElementById("sqp-size");
+  if(sizeEl) sizeEl.value="";
+  const jEl=document.getElementById("sqp-j");
+  if(jEl) jEl.value=w.j||22;
+  const sEl=document.getElementById("sqp-s");
+  if(sEl) sEl.value=w.s||25;
+  const msg=document.getElementById("sqp-msg");
+  if(msg) msg.innerHTML="";
+  if(panel) panel.style.display="block";
+  modelEl?.focus();
+}
+function closeQuickProduct(){
+  const panel=document.getElementById("sale-quick-prod");
+  if(panel) panel.style.display="none";
+  _sqpRowIdx=null;
+}
+async function saveQuickProduct(){
+  const msg=document.getElementById("sqp-msg");
+  const btn=document.getElementById("sqp-btn");
+  const model=_normTidy(toEnDigits((document.getElementById("sqp-model")?.value||"").trim()));
+  const size=normalizeSize((document.getElementById("sqp-size")?.value||"").trim());
+  const j=+(document.getElementById("sqp-j")?.value)||0;
+  const s=+(document.getElementById("sqp-s")?.value)||0;
+  if(!model){
+    if(msg) msg.innerHTML='<span style="color:var(--rd)">نام مدل را وارد کن</span>';
+    document.getElementById("sqp-model")?.focus();
+    return;
+  }
+  const label=productLabel({model,size});
+  const rowIdx=_sqpRowIdx;
+  const alreadyInDb=_productsDb.some(p=>productLabel(p)===label);
+  if(!alreadyInDb){
+    if(btn){btn.disabled=true;btn.textContent="در حال ذخیره...";}
+    window._lastSBError=null;
+    const res=await sbPost("products",{model,size});
+    if(btn){btn.disabled=false;btn.textContent="ذخیره و انتخاب ✓";}
+    if(res===null){
+      if(msg) msg.innerHTML='<span style="color:var(--rd);direction:ltr;text-align:left;display:block">خطا در ذخیره: '+escHTML(sbErrorText())+'</span>';
+      return;
+    }
+  }
+  // نرخ اجرت مدل جدید (یا به‌روزرسانی مدل موجود)
+  WAGE_RATES[label]={j,s};
+  const wagesOk=await persistWageRates();
+  await loadProductsFromDb();
+  refreshSalesProductsDatalist();
+  // انتخاب اتوماتیک مدل در همان قلمی که دکمه از آن باز شد
+  if(rowIdx!==undefined&&rowIdx!==null){
+    const it=_saleItems.find(x=>x.idx===rowIdx);
+    if(it) it.prod=label;
+    const inp=document.getElementById("sale-item-prod-"+rowIdx);
+    if(inp) inp.value=label;
+    renderSaleItems();
+    calcSaleSummaryOnly();
+  }
+  if(msg) msg.innerHTML='<span style="color:var(--gr)">✅ «'+escHTML(label)+'» انتخاب شد'+
+    (wagesOk?'':' — ⚠️ نرخ اجرت ذخیره نشد')+'</span>';
+  showSaved();
+  setTimeout(()=>{ if(_sqpRowIdx===rowIdx) closeQuickProduct(); },900);
+}
 function renderSaleItems(){
   const el=document.getElementById("sale-items-list");
+  refreshSalesProductsDatalist();
   if(!_saleItems.length){el.innerHTML='<div style="text-align:center;color:var(--t3);font-size:12px;padding:8px">+ یک جنس اضافه کن</div>';return;}
   el.innerHTML=_saleItems.map(it=>
     '<div style="background:var(--b3);border:1px solid var(--bd);border-radius:8px;padding:8px;margin-bottom:8px">'+
     '<div style="display:flex;gap:6px;margin-bottom:6px;align-items:center">'+
-    '<select onchange="updateSaleItem('+it.idx+',&quot;prod&quot;,this.value)" style="flex:1;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-family:inherit;font-size:11px">'+
-    getProductNames().map(p=>'<option value="'+p+'" '+(p===it.prod?"selected":"")+'>'+p+'</option>').join("")+
-    '</select>'+
-    '<button onclick="removeSaleItem('+it.idx+')" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:5px 8px;cursor:pointer;font-size:12px;flex-shrink:0">🗑</button></div>'+
+    '<input id="sale-item-prod-'+it.idx+'" list="salesProductsList" value="'+escHTML(it.prod||"")+'" placeholder="محصول را انتخاب یا تایپ کن..." autocomplete="off" oninput="updateSaleItem('+it.idx+',&quot;prod&quot;,this.value)" style="flex:1;min-width:0;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--tx);font-family:inherit;font-size:11px"/>'+
+    '<button type="button" onclick="openQuickProduct('+it.idx+')" title="افزودن مدل جدید" style="background:rgba(155,110,245,.12);border:1px solid rgba(155,110,245,.3);color:var(--pp);border-radius:6px;padding:5px 7px;cursor:pointer;font-size:11px;flex-shrink:0">➕</button>'+
+    '<button type="button" onclick="removeSaleItem('+it.idx+')" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:6px;padding:5px 8px;cursor:pointer;font-size:12px;flex-shrink:0">🗑</button></div>'+
     '<div style="display:flex;gap:6px">'+
     '<div style="flex:1"><div style="font-size:10px;color:var(--t2);margin-bottom:2px">درجن</div>'+
     '<input type="number" inputmode="numeric" value="'+( it.doz||"")+'" min="0" step="1" placeholder="0" oninput="updateSaleItem('+it.idx+',&quot;doz&quot;,this.value)" style="width:100%;padding:7px;background:var(--b4);border:1px solid var(--bd2);border-radius:6px;color:var(--gd);font-weight:700;font-family:inherit;font-size:13px"/></div>'+
@@ -5357,6 +5544,11 @@ function calcSaleWage(){
     saleMsg.innerHTML='<div class="ib err">حداقل یک قلم جنس با درجن و قیمت اضافه کن</div>';
     return;
   }
+  // نام محصول می‌تواند از لیست انتخاب شود یا مستقیماً تایپ شود — خالی مجاز نیست
+  if(validItems.some(it=>!(it.prod||"").trim())){
+    saleMsg.innerHTML='<div class="ib err">نام محصول هر قلم را انتخاب یا تایپ کن</div>';
+    return;
+  }
   
   // مشتری: اگر از لیست انتخاب شده باشد از همان، وگرنه مشتری هم‌نام با متن تایپ‌شده
   const _custTyped=(document.getElementById("s-csrch").value||"").trim();
@@ -5437,6 +5629,32 @@ function calcSaleWage(){
     // متن فاکتور برای واتساپ — چند خطی تا مشتری راحت بخواند
     const waMoney=v=>afn(Math.round(+v||0));
     const waBillNo=billNo||(savedRows[0]&&(savedRows[0].bill||savedRows[0].id))||"—";
+    // 💵 هر پولی که رسیده باشد، اتومات به صندوق افغانی (cash_ledger) به‌عنوان ورودی ثبت می‌شود
+    let cashNote="";
+    if(paid>0){
+      const fullyPaid=paid>=totAll;
+      const cashType=fullyPaid?"فروش نقدی":"دریافت از فروش";
+      const cashDesc=`${cashType} - بل شماره ${waBillNo} - مشتری: ${custName}`+
+        (fullyPaid?"":` (باقی طلب: ${afn(Math.max(0,totAll-paid))})`);
+      window._lastSBError=null;
+      const cashRes=await sbPost("cash_ledger",{
+        date:saleDate,
+        category:"in",
+        type:cashType,
+        description:cashDesc,
+        amount_in:paid,
+        amount_out:0
+      });
+      if(cashRes===null){
+        cashNote=`<div class="ib warn" style="margin-top:8px;flex-direction:column;align-items:flex-start;gap:4px">
+          <div style="font-weight:800">⚠️ بل ثبت شد ولی ورود پول به صندوق افغانی ناکام ماند</div>
+          <pre style="margin:0;white-space:pre-wrap;word-break:break-word;direction:ltr;text-align:left;font-size:10px;line-height:1.45;width:100%;max-height:160px;overflow:auto">${escHTML(sbErrorText())}</pre>
+        </div>`;
+      } else {
+        cashNote=`<div class="ib ok" style="margin-top:8px;font-size:11px">💵 ${afn(paid)} به صندوق افغانی (ورودی) ثبت شد</div>`;
+        if(currentPage()==="cash") renderCash();
+      }
+    }
     const waMsg=[
       "🧾 فاکتور فروش — فابریکه حیات‌زاده",
       "شماره بل: "+waBillNo,
@@ -5454,6 +5672,7 @@ function calcSaleWage(){
     ].join("\n");
     const waUrl=getWhatsAppUrl(findCustPhone(custName,_custIdRaw,custProv),waMsg);
     document.getElementById("sale-msg").innerHTML=`<div class="ib ok">✅ بل با ${validItems.length} قلم ثبت شد! | جمع: ${afn(totAll)}</div>`+
+      cashNote+
       (waUrl
         ?`<div style="margin-top:8px"><a href="${waUrl}" target="_blank" style="display:inline-block;background:rgba(37,211,102,.15);border:1px solid rgba(37,211,102,.3);color:#25d366;border-radius:8px;padding:7px 12px;text-decoration:none;font-weight:700;font-size:11px">💬 ارسال فاکتور با واتساپ</a></div>`
         :`<div class="ib warn" style="margin-top:8px;font-size:10.5px">⚠️ شماره واتساپ این مشتری ثبت نشده — فاکتور ذخیره شد.</div>`);
@@ -7366,7 +7585,7 @@ async function renderEmp(){
         <button onclick="openEmpPay(${e.id},'${e.name_fa||e.name||""}')" style="background:var(--gr2);border:1px solid rgba(34,197,94,.3);color:var(--gr);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit">💵</button>
         <button onclick="showEmpPays(${e.id},'${e.name_fa||e.name||""}')" style="background:var(--bl2);border:1px solid rgba(59,158,255,.3);color:var(--bl);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit">📋</button>
         <button onclick="openEditEmp(${e.id})" style="background:var(--g3);border:1px solid rgba(212,168,67,.3);color:var(--gd);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit">✏️</button>
-        <button onclick="deleteRecord('employees',${e.id},'renderEmp')" style="background:var(--r2);border:1px solid rgba(239,68,68,.3);color:var(--rd);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit">🗑️</button>
+        <button onclick="deleteEmployee(${e.id})" style="background:var(--r2);border:1px solid rgba(239,68,68,.3);color:var(--rd);border-radius:6px;padding:3px 8px;cursor:pointer;font-size:10px;font-family:inherit">🗑️</button>
       </td>
     </tr>`;
   }).join(""):'<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--t3)">هنوز کارمندی ثبت نشده — از دکمه + اضافه کن</td></tr>';
@@ -8809,11 +9028,41 @@ function _editBtnStyle(color){
 
 // ── حذف رکورد ──
 async function deleteRecord(table,id,refreshFn){
+  // کارمند فرزند دارد (پرداخت معاش و تولید) — مسیر مخصوص خودش را دارد
+  if(table==="employees") return deleteEmployee(id,refreshFn);
   const names={sales:"فاکتور فروش",purchases:"خرید مواد",production:"رکورد تولید",cash_ledger:"تراکنش صندوق",employee_payments:"پرداخت معاش",partner_transactions:"تراکنش شریک"};
   if(!confirm(`آیا مطمئنی؟\n${names[table]||"رکورد"} #${id} حذف شود؟`)) return;
-  const res=await fetch(`${SB_URL}/rest/v1/${table}?id=eq.${id}`,{method:"DELETE",headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY}});
-  if(res.ok){showSaved();if(window[refreshFn]) window[refreshFn]();}
-  else alert("خطا در حذف!");
+  window._lastSBError=null;
+  const res=await sbDelete(table,"?id=eq."+encodeURIComponent(id));
+  if(res===null){ alert("خطا در حذف!\n"+sbErrorText()); return; }
+  showSaved();
+  if(refreshFn&&typeof window[refreshFn]==="function") window[refreshFn]();
+}
+
+// ── حذف کارمند ──
+// جدول‌های employee_payments و production با کلید خارجی به employees وصل‌اند؛
+// اول رکوردهای فرزند پاک/آزاد می‌شوند تا حذف کارمند با خطای 23503 متوقف نشود.
+async function deleteEmployee(id,refreshFn){
+  const emp=(_allEmps||[]).find(x=>String(x.id)===String(id))||(_empList||[]).find(x=>String(x.id)===String(id));
+  const nm=emp?(emp.name_fa||emp.name||("کارمند #"+id)):("کارمند #"+id);
+  if(!confirm(`آیا مطمئنی؟\nکارمند «${nm}» #${id} حذف شود؟\nپرداخت‌های معاش او هم پاک می‌شوند و رکوردهای تولید از کارمند جدا می‌شوند.`)) return;
+  window._lastSBError=null;
+  // ۱) پرداخت‌های معاش — فرزند مستقیم کارمند
+  const payRes=await sbDelete("employee_payments","?employee_id=eq."+encodeURIComponent(id));
+  if(payRes===null){ alert("خطا در حذف پرداخت‌های معاش:\n"+sbErrorText()); return; }
+  // ۲) رکوردهای تولید — فقط ارجاع کارمند خالی می‌شود تا تاریخچه تولید حفظ بماند
+  const prodRes=await sbPatch("production",{employee_id:null},"?employee_id=eq."+encodeURIComponent(id));
+  if(prodRes===null){ alert("خطا در جدا کردن رکوردهای تولید:\n"+sbErrorText()); return; }
+  // ۳) حذف خود کارمند
+  const res=await sbDelete("employees","?id=eq."+encodeURIComponent(id));
+  if(res===null){ alert("خطا در حذف!\n"+sbErrorText()); return; }
+  showSaved();
+  _allEmps=(_allEmps||[]).filter(x=>String(x.id)!==String(id));
+  _empList=(_empList||[]).filter(x=>String(x.id)!==String(id));
+  if(String(_editEmpId)===String(id)) _editEmpId=null;
+  const fn=refreshFn||"renderEmp";
+  if(typeof window[fn]==="function") window[fn]();
+  else renderEmp();
 }
 
 // ── ویرایش رکورد ──
