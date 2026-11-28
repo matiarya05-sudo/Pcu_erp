@@ -798,9 +798,9 @@ pre.sql-box{direction:ltr;text-align:left;background:#0b0a10;border:1px solid va
       <button class="ni" onclick="goPage('cust')" data-page="cust" data-roles="admin,staff"><span class="em">👥</span>مشتریان</button>
       <button class="ni" onclick="goPage('collect')" data-page="collect" data-roles="admin,staff"><span class="em">💰</span>وصول مطالبات</button>
       <button class="ni" onclick="goPage('supp')" data-page="supp" data-roles="admin,staff"><span class="em">🏭</span>تامین‌کنندگان</button>
-      <button class="ni" onclick="goPage('cash')" data-page="cash" data-roles="admin"><span class="em">💵</span>صندوق افغانی</button>
+      <button class="ni" onclick="goPage('cash')" data-page="cash" data-roles="admin"><span class="em">💵</span>صندوق چندارزی</button>
       <button class="ni" onclick="goPage('expenses')" data-page="expenses" data-roles="admin"><span class="em">💸</span>مصارف شرکت</button>
-      <button class="ni" onclick="goPage('cheque')" data-page="cheque" data-roles="admin"><span class="em">🏦</span>چک و اقساط</button>
+      <button class="ni" onclick="goPage('cheque')" data-page="cheque" data-roles="admin"><span class="em">🏦</span>قرض حسنه</button>
       <div class="nsec">منابع انسانی</div>
       <button class="ni" onclick="goPage('emp')" data-page="emp" data-roles="admin"><span class="em">👨‍💼</span>کارمندان و شاگردان</button>
       <button class="ni" onclick="goPage('partners')" data-page="partners" data-roles="admin"><span class="em">🤝</span>شریکان / سهام‌داران</button>
@@ -1263,32 +1263,47 @@ notify pgrst, 'reload schema';</pre>
     <!-- CASH -->
     <div id="page-cash" class="page">
       <div class="kg k4">
-        <div class="kc gr"><div class="kl">ورودی کل</div><div class="kv" id="cash-in-kpi">—</div></div>
-        <div class="kc rd"><div class="kl">خروجی کل</div><div class="kv" id="cash-out-kpi">—</div></div>
+        <div class="kc gr"><div class="kl">ورودی کل (افغانی)</div><div class="kv" id="cash-in-kpi">—</div></div>
+        <div class="kc rd"><div class="kl">خروجی کل (افغانی)</div><div class="kv" id="cash-out-kpi">—</div></div>
         <div class="kc gd"><div class="kl">موجودی افغانی</div><div class="kv" id="cash-bal-kpi">—</div><div style="font-size:10px;color:var(--t3);margin-top:2px" id="cash-bal-usd-equiv">—</div></div>
         <div class="kc bl"><div class="kl">موجودی دالری</div><div class="kv" id="cash-usd-kpi">—</div><div style="font-size:10px;color:var(--t3);margin-top:2px" id="cash-usd-afn-equiv">—</div></div>
       </div>
-      <!-- موجودی دالری -->
+      <!-- موجودی چندارزی -->
       <div class="card">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div class="ct" style="margin-bottom:0">💵 موجودی دالری صندوق</div>
-          <button class="btn bpri" onclick="openEditUsdBalance()" style="font-size:11px;padding:6px 14px">✏️ ادیت</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;gap:8px;flex-wrap:wrap">
+          <div class="ct" style="margin-bottom:0">💱 موجودی چندارزی صندوق</div>
+          <button class="btn bpri" onclick="openEditCashBalances()" style="font-size:11px;padding:6px 14px">✏️ ادیت موجودی</button>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div style="background:var(--bl2);border:1px solid rgba(91,138,245,.25);border-radius:12px;padding:14px;text-align:center">
-            <div style="font-size:10px;color:var(--t2);margin-bottom:4px">موجودی دالر</div>
-            <div style="font-size:20px;font-weight:800;color:var(--bl)" id="usd-bal-display">—</div>
+          <div style="background:var(--g3);border:1px solid rgba(212,168,67,.25);border-radius:12px;padding:12px;text-align:center">
+            <div style="font-size:10px;color:var(--t2);margin-bottom:4px">افغانی — AFN ؋</div>
+            <div style="font-size:19px;font-weight:800;color:var(--gd)" id="mc-bal-afn">—</div>
+            <div style="font-size:9.5px;color:var(--t3);margin-top:3px" id="mc-base-afn">—</div>
           </div>
-          <div style="background:var(--g3);border:1px solid rgba(212,168,67,.25);border-radius:12px;padding:14px;text-align:center">
-            <div style="font-size:10px;color:var(--t2);margin-bottom:4px">معادل افغانی (نرخ روز)</div>
-            <div style="font-size:20px;font-weight:800;color:var(--gd)" id="usd-bal-afn-display">—</div>
+          <div style="background:var(--bl2);border:1px solid rgba(91,138,245,.25);border-radius:12px;padding:12px;text-align:center">
+            <div style="font-size:10px;color:var(--t2);margin-bottom:4px">دالر — USD $</div>
+            <div style="font-size:19px;font-weight:800;color:var(--bl)" id="usd-bal-display">—</div>
+            <div style="font-size:9.5px;color:var(--t3);margin-top:3px" id="usd-bal-afn-display">—</div>
           </div>
+          <div style="background:rgba(46,204,122,.09);border:1px solid rgba(46,204,122,.25);border-radius:12px;padding:12px;text-align:center">
+            <div style="font-size:10px;color:var(--t2);margin-bottom:4px">کلدار — PKR Rs</div>
+            <div style="font-size:19px;font-weight:800;color:var(--gr)" id="mc-bal-pkr">—</div>
+            <div style="font-size:9.5px;color:var(--t3);margin-top:3px" id="mc-base-pkr">—</div>
+          </div>
+          <div style="background:rgba(240,168,67,.09);border:1px solid rgba(240,168,67,.25);border-radius:12px;padding:12px;text-align:center">
+            <div style="font-size:10px;color:var(--t2);margin-bottom:4px">تومان — IRT</div>
+            <div style="font-size:19px;font-weight:800;color:var(--og)" id="mc-bal-irt">—</div>
+            <div style="font-size:9.5px;color:var(--t3);margin-top:3px" id="mc-base-irt">—</div>
+          </div>
+        </div>
+        <div class="ib info" style="font-size:10.5px;margin-top:10px;line-height:1.7">
+          💡 موجودی هر ارز = موجودی دستی/افتتاحیه + گردش ثبت‌شده همان ارز. عملیات غیرافغانی فقط در صندوق همان ارز ثبت می‌شود و به دفاتر افغانی وصل نمی‌شود.
         </div>
       </div>
       <div class="card">
-        <div class="ct">💵 صندوق افغانی</div>
+        <div class="ct">💵 دفتر صندوق (چندارزی)</div>
         <div class="tw"><table>
-          <thead><tr><th>#</th><th>تاریخ</th><th>نوع</th><th>شرح</th><th>ورودی</th><th>خروجی</th><th>مانده</th><th>✏️</th></tr></thead>
+          <thead><tr><th>#</th><th>تاریخ</th><th>ارز</th><th>نوع</th><th>شرح</th><th>ورودی</th><th>خروجی</th><th>مانده</th><th>✏️</th></tr></thead>
           <tbody id="cash-tbody"></tbody>
         </table></div>
       </div>
@@ -1402,12 +1417,14 @@ notify pgrst, 'reload schema';</pre>
         <button class="btn bsec" onclick="filterCheque('pending')" id="cf-pending">⏳ باقی</button>
         <button class="btn bsec" onclick="filterCheque('cleared')" id="cf-cleared">✅ برگشت شد</button>
         <button class="btn bsec" onclick="filterCheque('bounced')" id="cf-bounced">❌ پس نداد</button>
+        <button class="btn bsec" onclick="filterCheque('due')" id="cf-due">📅 سررسید این هفته</button>
+        <button class="btn bsec" onclick="filterCheque('overdue')" id="cf-overdue">⚠️ معوق</button>
       </div>
       <div class="card">
         <div class="ct">💚 دفتر قرض‌های حسنه</div>
         <div class="tw"><table>
-          <thead><tr><th>#</th><th>تاریخ ثبت</th><th>سررسید</th><th>نوع</th><th>شخص</th><th>شرح</th><th>مبلغ (؋)</th><th>وضعیت</th><th>عملیات</th></tr></thead>
-          <tbody id="chq-tbody"><tr><td colspan="9" style="text-align:center;padding:20px;color:var(--t3)">هنوز قرضی ثبت نشده</td></tr></tbody>
+          <thead><tr><th>#</th><th>تاریخ ثبت</th><th>سررسید</th><th>نوع</th><th>شخص</th><th>شرح</th><th>مبلغ</th><th>ارز</th><th>وضعیت</th><th>عملیات</th></tr></thead>
+          <tbody id="chq-tbody"><tr><td colspan="10" style="text-align:center;padding:20px;color:var(--t3)">هنوز قرضی ثبت نشده — از دکمه «ثبت قرض جدید» شروع کن</td></tr></tbody>
         </table></div>
       </div>
     </div>
@@ -1567,12 +1584,13 @@ notify pgrst, 'reload schema';</pre>
       <div class="card" style="border:1px solid rgba(239,68,68,.35)">
         <div class="ct" style="color:var(--rd)">🧹 پاکسازی داده‌های آزمایشی</div>
         <div class="ib warn" style="font-size:10.5px;margin-bottom:10px;line-height:1.7">
-          ⚠️ این عملیات فروش‌ها، خریدها، تولید، تراکنش‌های صندوق، مصارف، پرداخت معاش، فرمایشات و وصولی‌ها را پاک می‌کند
-          و انبار مواد، گدام جنس و بدهی تامین‌کنندگان را صفر می‌کند. موجودی افتتاحیه مشتریان هم صفر می‌شود.
+          ⚠️ این عملیات فروش‌ها، خریدها، تولید، تراکنش‌های صندوق، مصارف، پرداخت معاش/سرکاری، قرض‌های حسنه، فرمایشات و وصولی‌ها را پاک می‌کند
+          و انبار مواد، گدام جنس، بدهی تامین‌کنندگان و <b>موجودی هر چهار ارز صندوق (AFN/USD/PKR/IRT)</b> را صفر می‌کند. موجودی افتتاحیه مشتریان هم صفر می‌شود.
           <br>❌ برگشت‌پذیر نیست — فقط برای پاک کردن داده‌های آزمایشی استفاده کن.
         </div>
         <div class="fg"><label>پسورد مالک برای تایید</label><input type="password" id="wipe-pass" placeholder="پسورد مالک..."/></div>
-        <button class="btn bsec btn-full" id="wipe-btn" style="border-color:rgba(239,68,68,.45);color:var(--rd);justify-content:center" onclick="wipeTestData()">🗑️ پاکسازی کامل و بازنشانی KPI</button>
+        <button class="btn bsec btn-full" id="wipe-btn" style="background:rgba(239,68,68,.18);border:1px solid rgba(239,68,68,.6);color:#fff;font-weight:800;justify-content:center" onclick="wipeTestData()">🗑️ پاکسازی کامل تستی و صفر کردن داشبورد</button>
+        <button class="btn bsec btn-full" id="wipe-tx-btn" style="margin-top:8px;background:rgba(239,68,68,.28);border:1px solid rgba(239,68,68,.85);color:#fff;font-weight:800;justify-content:center" onclick="wipeTestData('transactions')">پاکسازی کامل تراکنش‌های آزمایشی (صفر کردن داشبورد)</button>
         <div id="wipe-msg" style="margin-top:8px"></div>
       </div>
 
@@ -1881,6 +1899,14 @@ notify pgrst, 'reload schema';</pre>
     <div class="modal-head"><h3>💵 ثبت عملیات نقدی</h3><button class="close-btn" onclick="closeModal('modalCash')">✕</button></div>
     <div class="modal-body">
       <div id="cash-msg"></div>
+      <div class="fg"><label>ارز عملیات</label>
+        <select id="c-currency" onchange="updateCashCurrencyHint()">
+          <option value="AFN">افغانی — AFN (؋)</option>
+          <option value="USD">دالر — USD ($)</option>
+          <option value="PKR">کلدار — PKR (Rs)</option>
+          <option value="IRT">تومان — IRT (تومان)</option>
+        </select>
+      </div>
       <div class="fg"><label>تاریخ</label><input id="c-date"/></div>
       <div class="fg"><label>نوع</label>
         <select id="c-cat" onchange="updateCashTypes()">
@@ -1932,9 +1958,10 @@ notify pgrst, 'reload schema';</pre>
       <div class="fg"><label>شرح / توضیح</label>
         <input id="c-desc" placeholder="مثال: موجودی افتتاحیه، حواله از غزنی..."/>
       </div>
-      <div class="fg"><label>مبلغ (؋)</label>
+      <div class="fg"><label id="c-amt-label">مبلغ (؋)</label>
         <input type="number" inputmode="decimal" id="c-amt" min="0" placeholder="0"/>
       </div>
+      <div id="c-currency-hint" class="ib info" style="font-size:10.5px;margin-top:0"></div>
       <div id="c-out-hint" class="ib info" style="display:none;font-size:10.5px;margin-top:4px"></div>
     </div>
     <div class="modal-foot">
@@ -1943,6 +1970,34 @@ notify pgrst, 'reload schema';</pre>
     </div>
   </div>
 </div>
+<!-- ══ MODAL موجودی چندارزی صندوق ══ -->
+<div class="modal-overlay" id="modalCashBalances">
+  <div class="modal">
+    <div class="modal-head"><h3>💱 ادیت موجودی چندارزی صندوق</h3><button class="close-btn" onclick="closeModal('modalCashBalances')">✕</button></div>
+    <div class="modal-body">
+      <div id="cash-bal-msg"></div>
+      <div class="ib info" style="font-size:10.5px;line-height:1.7">
+        این مبلغ <b>موجودی دستی / افتتاحیه</b> هر ارز است. گردش‌های ثبت‌شده در دفتر صندوق به صورت خودکار روی آن جمع/کسر می‌شوند.
+      </div>
+      <div class="row2">
+        <div class="fg"><label>افغانی (؋)</label><input type="number" inputmode="decimal" step="0.01" id="cb-afn" placeholder="0"/></div>
+        <div class="fg"><label>دالر ($)</label><input type="number" inputmode="decimal" step="0.01" id="cb-usd" placeholder="0"/></div>
+      </div>
+      <div class="row2">
+        <div class="fg"><label>کلدار (Rs)</label><input type="number" inputmode="decimal" step="0.01" id="cb-pkr" placeholder="0"/></div>
+        <div class="fg"><label>تومان (IRT)</label><input type="number" inputmode="decimal" step="1" id="cb-irt" placeholder="0"/></div>
+      </div>
+      <div class="ib info" style="font-size:10.5px;line-height:1.7">
+        📌 موجودی زنده هر ارز بعد از ذخیره در کارت‌های صندوق نمایش داده می‌شود.
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn bsec" onclick="closeModal('modalCashBalances')">انصراف</button>
+      <button class="btn bpri" onclick="saveCashBalances()" id="cash-bal-btn">ذخیره ✓</button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ MODAL دارایی ثابت ══ -->
 <div class="modal-overlay" id="modalAddAsset">
   <div class="modal">
@@ -2377,14 +2432,24 @@ notify pgrst, 'reload schema';</pre>
         </div>
       </div>
       <div class="row2">
-        <div class="fg"><label>تاریخ قرض</label><input id="chq-date"/></div>
-        <div class="fg"><label>تاریخ پرداخت/برگشت</label><input id="chq-due-date" placeholder="۱۴۰۴/۰۱/۳۰"/></div>
+        <div class="fg"><label>تاریخ قرض</label><input id="chq-date" placeholder="۱۴۰۵/۰۹/۰۷"/></div>
+        <div class="fg"><label>تاریخ پرداخت/برگشت</label><input id="chq-due-date" placeholder="۱۴۰۵/۱۲/۳۰"/></div>
       </div>
       <div class="row2">
         <div class="fg"><label>شماره رسید</label><input id="chq-no" placeholder="شماره رسید..."/></div>
         <div class="fg"><label>از /به کی</label><input id="chq-bank" placeholder="بانک ملی / کابل بانک..."/></div>
       </div>
-      <div class="fg"><label>مبلغ (؋)</label><input type="number" inputmode="decimal" id="chq-amt" min="0" inputmode="decimal"/></div>
+      <div class="row2">
+        <div class="fg"><label>مبلغ</label><input type="number" inputmode="decimal" id="chq-amt" min="0" inputmode="decimal"/></div>
+        <div class="fg"><label>ارز</label>
+          <select id="chq-currency">
+            <option value="AFN">افغانی — AFN (؋)</option>
+            <option value="USD">دالر — USD ($)</option>
+            <option value="PKR">کلدار — PKR (Rs)</option>
+            <option value="IRT">تومان — IRT (تومان)</option>
+          </select>
+        </div>
+      </div>
       <div class="fg"><label>شرح</label><input id="chq-desc" placeholder="دلیل قرض..."/></div>
     </div>
     <div class="modal-foot">
@@ -3403,6 +3468,34 @@ async function sbPost(table,body){ return sb(table,"POST",body); }
 async function sbPatch(table,body,params){ return sb(table,"PATCH",body,params); }
 async function sbDelete(table,params){ return sb(table,"DELETE",null,params); }
 
+// ── نسخه‌های «آرام» برای جدول‌های اختیاری ──
+// اگر جدولی در دیتابیس نباشد (مثل collects قدیمی) هیچ خطای کنسولی تولید نمی‌شود.
+async function sbTableExists(table){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/${table}?select=id&limit=1`,{headers:SB_HEADERS});
+    return r.ok;
+  }catch(e){ return false; }
+}
+async function sbGetQuiet(table,params=""){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/${table}${params}`,{headers:SB_HEADERS});
+    if(!r.ok) return null;
+    const t=await r.text();
+    return t?JSON.parse(t):[];
+  }catch(e){ return null; }
+}
+async function sbPostQuiet(table,body){
+  try{
+    const r=await fetch(`${SB_URL}/rest/v1/${table}`,{
+      method:"POST",
+      headers:{"apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Content-Type":"application/json","Prefer":"return=minimal"},
+      body:JSON.stringify(body)
+    });
+    if(!r.ok) console.warn(`اختیاری: ثبت در ${table} ناموفق بود (HTTP ${r.status})`);
+    return r.ok;
+  }catch(e){ return false; }
+}
+
 // فرار دادن متن خطا تا پیام کامل Supabase به‌صورت متن (نه HTML) نمایش داده شود
 function escHTML(v){
   return String(v??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
@@ -3838,7 +3931,7 @@ function normalizeProductName(name,size){
 
 // ── Navigation ──
 const PAGE_TITLES={dash:"داشبورد",sales:"فروش",orders:"فرمایشات",products:"مدیریت محصولات",buy:"خرید مواد",prod:"تولید",
-  stock:"انبار مواد",cust:"مشتریان",supp:"تامین‌کنندگان",cash:"صندوق افغانی",
+  stock:"انبار مواد",cust:"مشتریان",supp:"تامین‌کنندگان",cash:"صندوق چندارزی",
   assets:"دارایی‌های ثابت",report:"گزارشات & سود و زیان",settings:"تنظیمات"};
 
 function goPage(id){
@@ -3846,7 +3939,7 @@ function goPage(id){
   if(adminOnlyPages.includes(id)&&currentUser?.role!=="admin"){goPage("dash");return;}
   // عنوان صفحه باید قبل از هر return به‌روز شود تا هیچ‌وقت خالی نماند
   const allTitles={dash:"داشبورد",sales:"فروش",orders:"فرمایشات",products:"مدیریت محصولات",buy:"خرید مواد",prod:"تولید",
-    stock:"انبار مواد",cust:"مشتریان",supp:"تامین‌کنندگان",cash:"صندوق افغانی",
+    stock:"انبار مواد",cust:"مشتریان",supp:"تامین‌کنندگان",cash:"صندوق چندارزی",
     report:"گزارشات & سود و زیان",reports_more:"گزارش‌های تفصیلی",expenses:"مصارف شرکت",
     emp:"کارمندان و شاگردان",tax:"مالیات",collect:"وصول مطالبات",cheque:"💚 قرض حسنه",
     partners:"شریکان / سهام‌داران",settings:"تنظیمات",batch:"مکسچر و تولید",assets:"دارایی‌های ثابت"};
@@ -3957,12 +4050,13 @@ async function renderDash(){
   }
 
   // ── داشبورد Admin — همه اطلاعات مالی ──
-  const [salesData,prodData,cashData,suppRows,expRows]=await Promise.all([
+  const [salesData,prodData,cashData,suppRows,expRows,cashBalRows]=await Promise.all([
     sbGet("sales","?select=total,remaining,cogs,dozen,product,province"),
     sbGet("production","?select=product,dozen,mat_cogs,total_wage"),
-    sbGet("cash_ledger","?select=category,amount_in,amount_out"),
+    sbGet("cash_ledger","?select=category,amount_in,amount_out,currency"),
     sbGet("supplier_balances","?select=balance_usd"),
     sbGet("expenses","?select=amount"),
+    sbGet("cash_balances","?select=afn&order=id.asc&limit=1"),
   ]);
   // فقط اگر همه null برگشت → واقعاً قطع است
   if(salesData===null && prodData===null && cashData===null){setSyncOff();return;}
@@ -3987,9 +4081,13 @@ async function renderDash(){
   const tw=(prodData||[]).reduce((a,r)=>a+(+r.total_wage||0),0);
   // ⚠️ COGS شامل اجرت/مواد/سرباری است (mat_cogs تولید) → اجرت دوباره کسر نمی‌شود
   const np=gp;
-  const cashIn=(cashData||[]).filter(r=>r.category==="in").reduce((a,r)=>a+(+r.amount_in||0),0);
-  const cashOut=(cashData||[]).filter(r=>r.category==="out").reduce((a,r)=>a+(+r.amount_out||0),0);
-  const cash=cashIn-cashOut;
+  // KPI «موجودی نقد» فقط افغانی است؛ ارزهای دیگر در کارت‌های صندوق نمایش داده می‌شوند
+  const afnCashRows=(cashData||[]).filter(r=>!r.currency||r.currency==="AFN");
+  const cashIn=afnCashRows.filter(r=>r.category==="in").reduce((a,r)=>a+(+r.amount_in||0),0);
+  const cashOut=afnCashRows.filter(r=>r.category==="out").reduce((a,r)=>a+(+r.amount_out||0),0);
+  // موجودی افتتاحیه/دستی افغانی + گردش افغانی دفتر صندوق
+  const afnBase=+(cashBalRows?.[0]?.afn||0)||0;
+  const cash=afnBase+cashIn-cashOut;
   const custOB=CUSTOMERS.reduce((a,c)=>a+(c.ob||0),0);
   const custNew=(salesData||[]).reduce((a,r)=>a+(+r.remaining||0),0);
   const suppUSD=(suppRows||[]).reduce((a,r)=>a+(+r.balance_usd||0),0);
@@ -3997,7 +4095,7 @@ async function renderDash(){
   const expTotal=(expRows||[]).reduce((a,r)=>a+(+r.amount||0),0);
 
   let alerts="";
-  const hasCashData=(cashData||[]).length>0;
+  const hasCashData=afnCashRows.length>0||afnBase>0;
   if(hasCashData && cash<50000) alerts+=`<div class="ib warn">💵 موجودی نقد ${afn(cash)} — کمبود نقدینگی!</div>`;
   if(suppUSD>20000) alerts+=`<div class="ib warn">🏭 بدهی تامین‌کنندگان ${usd(suppUSD)} — برنامه پرداخت!</div>`;
   document.getElementById("dash-alerts").innerHTML=alerts;
@@ -4332,7 +4430,8 @@ function collectDebtOf(cust,salesRows){
 }
 function collectPayments(cashRows){
   // وصول نقدی و پیش‌پرداخت مشتری هر دو پول دریافتی‌اند و در تاریخچه وصول نمایش داده می‌شوند
-  return (cashRows||[]).filter(r=>r.category==="in"&&
+  // فقط افغانی؛ وصول/پیش‌پرداخت ارزهای دیگر به فاکتورهای افغانی وصل نمی‌شود
+  return (cashRows||[]).filter(r=>r.category==="in"&&(!r.currency||r.currency==="AFN")&&
     (String(r.type||"").includes("وصول")||String(r.type||"").includes("پیش‌پرداخت")||String(r.description||"").includes("وصول")));
 }
 function collectPayInfo(r){
@@ -4776,32 +4875,108 @@ async function renderProd(){
 // ── STOCK ──
 // ── CASH ──
 let allCash=[];
+const CASH_CURRENCIES=["AFN","USD","PKR","IRT"];
+const CASH_META={
+  AFN:{label:"افغانی",sym:"؋",cls:"bog"},
+  USD:{label:"دالر",sym:"$",cls:"bbl"},
+  PKR:{label:"کلدار",sym:"Rs",cls:"bg2"},
+  IRT:{label:"تومان",sym:"تومان",cls:"by2"}
+};
+function _cashCurrencyOf(r){
+  const c=String(r?.currency||"AFN").toUpperCase();
+  return CASH_CURRENCIES.includes(c)?c:"AFN";
+}
+// رکوردهای قدیمی ممکن است ستون currency نداشته باشند؛ null هم مثل AFN حساب می‌شود
+const CASH_AFN_Q="&or=(currency.eq.AFN,currency.is.null)";
+function _cashFmt(code,n){
+  const v=+(n||0);
+  if(code==="USD") return usd(v);
+  if(code==="PKR") return "Rs "+v.toLocaleString("en-US",{maximumFractionDigits:2});
+  if(code==="IRT") return Math.round(v).toLocaleString("en-US")+" تومان";
+  return afn(v);
+}
+function _cashSet(id,text,color){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.textContent=text;
+  if(color) el.style.color=color;
+}
+// ذخیره/به‌روزرسانی یک کلید settings (برای سازگاری با نسخه قدیمی موجودی دالر)
+async function upsertSetting(key,value){
+  const rows=await sbGet("settings","?select=key&key=eq."+encodeURIComponent(key));
+  if(rows&&rows.length) return await sbPatch("settings",{value:String(value),updated_at:new Date().toISOString()},"?key=eq."+encodeURIComponent(key));
+  return await sbPost("settings",{key,value:String(value)});
+}
+// موجودی دستی/افتتاحیه هر ارز (یک ردیف در cash_balances)
+async function loadCashBase(){
+  const base={id:null,AFN:0,USD:0,PKR:0,IRT:0};
+  const rows=await sbGet("cash_balances","?select=id,afn,usd,pkr,irt&order=id.asc&limit=1");
+  if(rows&&rows[0]){
+    base.id=rows[0].id;
+    base.AFN=+rows[0].afn||0;
+    base.USD=+rows[0].usd||0;
+    base.PKR=+rows[0].pkr||0;
+    base.IRT=+rows[0].irt||0;
+  } else {
+    // اگر جدول موجودی چندارزی هنوز ردیف ندارد، موجودی قدیمی دالر از settings خوانده می‌شود
+    const usdRow=await sbGet("settings","?key=eq.usd_cash_balance")||[];
+    base.USD=+(usdRow[0]?.value||0)||0;
+  }
+  return base;
+}
+// موجودی زنده = موجودی دستی + گردش دفتر صندوق همان ارز
+function _cashLive(base){
+  const live={AFN:+(base.AFN||0),USD:+(base.USD||0),PKR:+(base.PKR||0),IRT:+(base.IRT||0)};
+  allCash.forEach(r=>{
+    const c=_cashCurrencyOf(r);
+    const amt=r.category==="in"?(+r.amount_in||0):(+r.amount_out||0);
+    live[c]+=r.category==="in"?amt:-amt;
+  });
+  return live;
+}
 async function renderCash(){
-  allCash=await sbGet("cash_ledger","?order=id.asc")||[];
-  const inT=allCash.filter(r=>r.category==="in").reduce((a,r)=>a+(+r.amount_in||0),0);
-  const outT=allCash.filter(r=>r.category==="out").reduce((a,r)=>a+(+r.amount_out||0),0);
-  const afnBal=inT-outT;
-  document.getElementById("cash-in-kpi").textContent=afn(inT);
-  document.getElementById("cash-out-kpi").textContent=afn(outT);
-  document.getElementById("cash-bal-kpi").textContent=afn(afnBal);
-  document.getElementById("cash-bal-usd-equiv").textContent="≈ "+usd(afnBal/S.usdRate);
-  // لود موجودی دالر
-  const usdRow=await sbGet("settings","?key=eq.usd_cash_balance")||[];
-  const usdBal=usdRow.length>0?(+usdRow[0].value||0):0;
-  document.getElementById("cash-usd-kpi").textContent=usd(usdBal);
-  document.getElementById("cash-usd-afn-equiv").textContent="≈ "+afn(usdBal*S.usdRate);
-  document.getElementById("usd-bal-display").textContent=usd(usdBal);
-  document.getElementById("usd-bal-afn-display").textContent=afn(usdBal*S.usdRate);
-  let run=0;
-  document.getElementById("cash-tbody").innerHTML=allCash.map((r,i)=>{
-    run+=r.category==="in"?(+r.amount_in||0):-(+r.amount_out||0);
+  allCash=await sbGet("cash_ledger","?select=*&order=id.asc")||[];
+  const base=await loadCashBase();
+  const live=_cashLive(base);
+  // KPIهای افغانی فقط گردش ارز AFN را نشان می‌دهند
+  const afnIn=allCash.filter(r=>r.category==="in"&&_cashCurrencyOf(r)==="AFN").reduce((a,r)=>a+(+r.amount_in||0),0);
+  const afnOut=allCash.filter(r=>r.category==="out"&&_cashCurrencyOf(r)==="AFN").reduce((a,r)=>a+(+r.amount_out||0),0);
+  _cashSet("cash-in-kpi",afn(afnIn));
+  _cashSet("cash-out-kpi",afn(afnOut));
+  _cashSet("cash-bal-kpi",afn(live.AFN),live.AFN<0?"var(--rd)":"");
+  _cashSet("cash-bal-usd-equiv","≈ "+usd(live.AFN/(S.usdRate||1)));
+  _cashSet("cash-usd-kpi",usd(live.USD),live.USD<0?"var(--rd)":"");
+  _cashSet("cash-usd-afn-equiv","≈ "+afn(live.USD*(S.usdRate||1)));
+  // کارت‌های چهارارزی
+  _cashSet("usd-bal-display",usd(live.USD),live.USD<0?"var(--rd)":"");
+  _cashSet("usd-bal-afn-display","معادل: "+afn(live.USD*(S.usdRate||1)));
+  _cashSet("mc-bal-afn",afn(live.AFN),live.AFN<0?"var(--rd)":"");
+  _cashSet("mc-base-afn","دستی: "+afn(base.AFN));
+  _cashSet("mc-bal-pkr","Rs "+live.PKR.toLocaleString("en-US",{maximumFractionDigits:2}),live.PKR<0?"var(--rd)":"");
+  _cashSet("mc-base-pkr","دستی: Rs "+base.PKR.toLocaleString("en-US",{maximumFractionDigits:2}));
+  _cashSet("mc-bal-irt",Math.round(live.IRT).toLocaleString("en-US")+" تومان",live.IRT<0?"var(--rd)":"");
+  _cashSet("mc-base-irt","دستی: "+Math.round(base.IRT).toLocaleString("en-US")+" تومان");
+
+  const tb=document.getElementById("cash-tbody");
+  if(!tb) return;
+  if(!allCash.length){
+    tb.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--t3);padding:18px">هنوز عملیات صندوق ثبت نشده — از دکمه «+ عملیات جدید» شروع کن</td></tr>';
+    return;
+  }
+  const run={AFN:+base.AFN||0,USD:+base.USD||0,PKR:+base.PKR||0,IRT:+base.IRT||0};
+  tb.innerHTML=allCash.map((r,i)=>{
+    const c=_cashCurrencyOf(r);
+    const amt=r.category==="in"?(+r.amount_in||0):(+r.amount_out||0);
+    run[c]+=r.category==="in"?amt:-amt;
+    const meta=CASH_META[c]||CASH_META.AFN;
     return`<tr>
-      <td style="color:var(--t3)">${i+1}</td><td>${r.date}</td>
+      <td style="color:var(--t3)">${i+1}</td><td>${r.date||"—"}</td>
+      <td><span class="bb ${meta.cls}" title="${meta.label}">${c}</span></td>
       <td><span class="bb ${r.category==="in"?"bg2":"br2"}">${r.category==="in"?"ورودی":"خروجی"}</span></td>
       <td style="font-size:11px;color:var(--t2)">${r.description||r.type||"—"}</td>
-      <td class="tdr" style="color:var(--gr)">${r.category==="in"?afn(r.amount_in):""}</td>
-      <td class="tdr" style="color:var(--rd)">${r.category==="out"?afn(r.amount_out):""}</td>
-      <td class="tdr" style="font-weight:700;color:${run>=0?"var(--gd)":"var(--rd)"}">${afn(run)}</td>
+      <td class="tdr" style="color:var(--gr)">${r.category==="in"?_cashFmt(c,r.amount_in):""}</td>
+      <td class="tdr" style="color:var(--rd)">${r.category==="out"?_cashFmt(c,r.amount_out):""}</td>
+      <td class="tdr" style="font-weight:700;color:${run[c]>=0?"var(--gd)":"var(--rd)"}">${_cashFmt(c,run[c])}</td>
       <td style="display:flex;gap:3px">
         <button onclick="openEditRecord('cash_ledger',${r.id})" style="${_editBtnStyle('bl')}">✏️</button>
         <button onclick="deleteRecord('cash_ledger',${r.id},'renderCash')" style="${_editBtnStyle('rd')}">🗑️</button>
@@ -4810,22 +4985,49 @@ async function renderCash(){
   }).join("");
 }
 
-// ── USD CASH BALANCE ──
-async function openEditUsdBalance(){
-  const usdRow=await sbGet("settings","?key=eq.usd_cash_balance")||[];
-  const cur=usdRow.length>0?(+usdRow[0].value||0):0;
-  const val=prompt("موجودی دالر صندوق ($):",cur);
-  if(val===null||val==="") return;
-  const num=parseFloat(val);
-  if(isNaN(num)){alert("عدد درست وارد کن");return;}
-  if(usdRow.length>0){
-    await sbPatch("settings",{value:String(num),updated_at:new Date().toISOString()},"?key=eq.usd_cash_balance");
-  } else {
-    await sbPost("settings",{key:"usd_cash_balance",value:String(num)});
-  }
-  showToast("موجودی دالر ذخیره شد ✓");
-  renderCash();
+// ── موجودی چندارزی صندوق (AFN / USD / PKR / IRT) ──
+async function openEditCashBalances(){
+  const msg=document.getElementById("cash-bal-msg");
+  if(msg) msg.innerHTML="";
+  const btn=document.getElementById("cash-bal-btn");
+  if(btn){btn.disabled=false;btn.textContent="ذخیره ✓";}
+  const base=await loadCashBase();
+  const set=(id,v)=>{const el=document.getElementById(id); if(el) el.value=v;};
+  set("cb-afn",base.AFN); set("cb-usd",base.USD); set("cb-pkr",base.PKR); set("cb-irt",base.IRT);
+  openModal("modalCashBalances");
 }
+async function saveCashBalances(){
+  const msg=document.getElementById("cash-bal-msg");
+  const btn=document.getElementById("cash-bal-btn");
+  const num=id=>+(document.getElementById(id)?.value||0)||0;
+  const vals={afn:num("cb-afn"),usd:num("cb-usd"),pkr:num("cb-pkr"),irt:num("cb-irt")};
+  if(Object.values(vals).some(v=>v<0)){
+    if(msg) msg.innerHTML='<div class="ib err">موجودی منفی مجاز نیست</div>';
+    return;
+  }
+  if(btn){btn.disabled=true;btn.textContent="در حال ذخیره...";}
+  const base=await loadCashBase();
+  const res=base.id
+    ? await sbPatch("cash_balances",vals,"?id=eq."+encodeURIComponent(base.id))
+    // جدول یک ردیف ثابت دارد و ستون id متن است (بدون default) — باید صریح فرستاده شود
+    : await sbPost("cash_balances",{id:"1",...vals});
+  if(res===null){
+    if(msg) msg.innerHTML=sbErrorHTML("خطا در ذخیره موجودی چندارزی");
+    if(btn){btn.disabled=false;btn.textContent="ذخیره ✓";}
+    return;
+  }
+  // سازگاری با نسخه قدیمی: موجودی دالر پایه در settings هم نگه داشته می‌شود
+  await upsertSetting("usd_cash_balance",vals.usd);
+  if(msg) msg.innerHTML='<div class="ib ok">✅ موجودی چهار ارز ذخیره شد</div>';
+  showSaved();
+  if(btn) btn.textContent="ذخیره شد ✓";
+  setTimeout(async()=>{
+    closeModal("modalCashBalances");
+    await renderCash();
+  },700);
+}
+// نام قبلی برای سازگاری با دکمه‌های قدیمی
+async function openEditUsdBalance(){ return openEditCashBalances(); }
 
 // ── EDIT PARTNER ──
 let _editPartnerId=null;
@@ -4874,8 +5076,9 @@ async function openPersonStatement(type,id,name){
       credit:+(r.paid_afn||0),
       usd:+(r.amount_usd||0)
     }));
-    // پرداخت‌های صندوق به این تامین‌کننده
-    const pays=await sbGet("cash_ledger",`?description=like.*${encodeURIComponent(name)}*&category=eq.out&order=date.asc`)||[];
+    // پرداخت‌های صندوق به این تامین‌کننده — فقط افغانی در صورت‌حساب افغانی
+    // (پرداخت دالری مانده دالری را کم می‌کند و نباید به عنوان بستانکار AFN نمایش داده شود)
+    const pays=await sbGet("cash_ledger",`?description=like.*${encodeURIComponent(name)}*&category=eq.out&order=date.asc${CASH_AFN_Q}`)||[];
     pays.forEach(r=>rows.push({
       date:r.date||"—",
       type:"پرداخت",
@@ -4998,13 +5201,14 @@ function printStatement(){
 // ── REPORT ──
 async function renderReport(){
   document.getElementById("report-kpis").innerHTML='<div class="loading" style="grid-column:1/-1"><div class="spinner"></div></div>';
-  const [sRows,pRows,cRows,suppRows,expRows,setRows,fgRows,faRows,prRows,ptRows,empRows,payRows]=await Promise.all([
+  const [sRows,pRows,cRows,suppRows,expRows,setRows,balRows,fgRows,faRows,prRows,ptRows,empRows,payRows]=await Promise.all([
     sbGet("sales","?select=total,cogs,remaining"),
     sbGet("production","?select=total_wage,dozen,mat_cogs"),
-    sbGet("cash_ledger","?select=category,amount_in,amount_out"),
+    sbGet("cash_ledger","?select=category,amount_in,amount_out,currency"),
     sbGet("supplier_balances","?select=balance_usd,balance_afn"),
     sbGet("expenses","?select=amount"),
     sbGet("settings","?select=key,value&key=eq.usd_cash_balance"),
+    sbGet("cash_balances","?select=afn,usd,pkr,irt&order=id.asc&limit=1"),
     sbGet("finished_goods","?select=dozen,unit_price,total_value"),
     sbGet("fixed_assets","?select=purchase_price_usd,useful_life_years,salvage_value,purchase_date,status"),
     sbGet("partners","?select=id,initial_capital"),
@@ -5019,9 +5223,12 @@ async function renderReport(){
   // بنابراین اجرت دوباره از سود کسر نمی‌شود (جلوگیری از دوباره‌شماری).
   const tw=(pRows||[]).reduce((a,r)=>a+(+r.total_wage||0),0);
   const np=gp;
-  const inT=(cRows||[]).filter(r=>r.category==="in").reduce((a,r)=>a+(+r.amount_in||0),0);
-  const outT=(cRows||[]).filter(r=>r.category==="out").reduce((a,r)=>a+(+r.amount_out||0),0);
-  const cash=inT-outT;
+  const afnLedger=(cRows||[]).filter(r=>!r.currency||r.currency==="AFN");
+  const inT=afnLedger.filter(r=>r.category==="in").reduce((a,r)=>a+(+r.amount_in||0),0);
+  const outT=afnLedger.filter(r=>r.category==="out").reduce((a,r)=>a+(+r.amount_out||0),0);
+  // موجودی افتتاحیه/دستی افغانی + گردش افغانی دفتر صندوق
+  const afnBase=balRows?.length?(+balRows[0].afn||0):0;
+  const cash=afnBase+inT-outT;
   const custOB=CUSTOMERS.reduce((a,c)=>a+(c.ob||0),0);
   const custNew=(sRows||[]).reduce((a,r)=>a+(+r.remaining||0),0);
   const suppUSD=(suppRows||[]).reduce((a,r)=>a+(+r.balance_usd||0),0);
@@ -5029,7 +5236,10 @@ async function renderReport(){
   const invVal=Object.values(S.stockMap).reduce((a,m)=>a+(m.kg*m.avgCost),0);
   const expTotal=(expRows||[]).reduce((a,r)=>a+(+r.amount||0),0);
   // ── اجزای ترازنامه ──
-  const usdCash=+(setRows?.[0]?.value||0)||0;
+  // موجودی دالر = پایه دستی (cash_balances) + گردش دالری دفتر صندوق
+  const usdBase=balRows?.length?(+balRows[0].usd||0):(+(setRows?.[0]?.value||0)||0);
+  const usdDelta=(cRows||[]).filter(r=>r.currency==="USD").reduce((a,r)=>a+(r.category==="in"?(+r.amount_in||0):-(+r.amount_out||0)),0);
+  const usdCash=usdBase+usdDelta;
   const usdCashAfn=usdCash*S.usdRate;
   const fgVal=(fgRows||[]).reduce((a,r)=>a+(((+r.dozen||0)*(+r.unit_price||0))||(+r.total_value||0)||0),0);
   const faBook=(faRows||[]).filter(r=>String(r.status||"active")!=="inactive").reduce((a,r)=>{
@@ -5124,19 +5334,35 @@ async function renderSettings(){
   // نرخ اجرت
   renderWageRatesTable();
   const pRows=await sbGet("production","?select=worker,total_wage,paid_wage")||[];
-  const staffMap={جمشید:{e:0,p:0},"دفتر":{e:0,p:0}};
-  pRows.forEach(r=>{if(staffMap[r.worker]){staffMap[r.worker].e+=+r.total_wage||0;staffMap[r.worker].p+=+r.paid_wage||0;}});
-  document.getElementById("staff-tbl").innerHTML=`
-    <table><thead><tr><th>نام</th><th>بخش</th><th>جمع اجرت</th><th>پرداخت</th><th>باقی</th></tr></thead>
-    <tbody>${["جمشید","دفتر"].map(w=>{
-      const d=w==="جمشید"?"ماشین‌کار":"بسته‌بندی",s=staffMap[w];
-      return`<tr><td style="font-weight:700;color:var(--gd)">${w}</td>
-        <td><span class="bb bbl">${d}</span></td>
-        <td class="tdr">${afn(s.e)}</td>
-        <td class="tdr" style="color:var(--gr)">${afn(s.p)}</td>
-        <td>${(s.e-s.p)>0?`<span class="bb br2">${afn(s.e-s.p)}</span>`:'<span class="bb bg2">تسویه</span>'}</td>
-      </tr>`;
-    }).join("")}</tbody></table>`;
+  const staff=await sbGet("employees","?select=*&order=id.asc")||[];
+  const paysAll=await sbGet("employee_payments","?select=employee_id,employee_name,amount_afn,type")||[];
+  const wageByName={};
+  pRows.forEach(r=>{if(r.worker) wageByName[r.worker]=(wageByName[r.worker]||0)+(+r.total_wage||0);});
+  const payById={},payByName={};
+  paysAll.forEach(p=>{
+    const v=p.type==="deduction"?-(+p.amount_afn||0):(+p.amount_afn||0);
+    if(p.employee_id!=null) payById[p.employee_id]=(payById[p.employee_id]||0)+v;
+    if(p.employee_name) payByName[p.employee_name]=(payByName[p.employee_name]||0)+v;
+  });
+  const staffRows=staff.map(e=>{
+    const name=e.name_fa||e.name||"—";
+    const salary=+e.salary_amount||0;
+    const wage=wageByName[name]||0;
+    const paid=(payById[e.id]!==undefined?payById[e.id]:(payByName[name]||0));
+    return{id:e.id,name,dept:e.department||e.role||(e.type==="apprentice"?"شاگرد":"کارمند"),salary,wage,paid,rem:salary+wage-paid,active:e.is_active!==false};
+  });
+  document.getElementById("staff-tbl").innerHTML=staffRows.length?`
+    <table><thead><tr><th>نام</th><th>بخش</th><th>معاش ماهانه</th><th>اجرت تولید</th><th>پرداخت</th><th>باقی</th><th></th></tr></thead>
+    <tbody>${staffRows.map(s=>`<tr style="${s.active?"":"opacity:.55"}">
+        <td style="font-weight:700;color:var(--gd)">${escHTML(s.name)}</td>
+        <td><span class="bb bbl">${escHTML(String(s.dept))}</span></td>
+        <td class="tdr">${afn(s.salary)}</td>
+        <td class="tdr" style="color:var(--bl)">${afn(s.wage)}</td>
+        <td class="tdr" style="color:var(--gr)">${afn(s.paid)}</td>
+        <td>${s.rem>0?`<span class="bb br2">${afn(s.rem)}</span>`:'<span class="bb bg2">تسویه</span>'}</td>
+        <td><button onclick="deleteEmployee(${s.id},'renderSettings')" title="حذف کارمند و پرداخت‌ها" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:5px;padding:3px 7px;cursor:pointer;font-size:10px;font-family:inherit">🗑️</button></td>
+      </tr>`).join("")}</tbody></table>`:
+    `<p style="font-size:12px;color:var(--t3);text-align:center;padding:10px">هنوز کارمندی ثبت نشده — از بخش کارمندان اضافه کن</p>`;
   // Rate log from settings
   const rateRows=await sbGet("settings","?key=eq.rate_log")||[];
   const log=rateRows[0]?JSON.parse(rateRows[0].value||"[]"):[];
@@ -5179,6 +5405,7 @@ function initModal(id){
   else if(id==="modalBuy") initBuyModal();
   else if(id==="modalProd") initProdModal();
   else if(id==="modalCash") initCashModal();
+  else if(id==="modalAddCheque") initChequeModal();
   else if(id==="modalAddAsset") initAddAsset();
   else if(id==="modalEditStock") initEditStockModal();
   else if(id==="modalCollectPay") initCollectPayModal();
@@ -6599,6 +6826,8 @@ function initCashModal(){
   set("c-cat","in");
   set("c-desc","");
   set("c-amt","");
+  set("c-currency","AFN");
+  updateCashCurrencyHint();
   set("c-custom-type","");
   const custSel=document.getElementById("c-cust-sel"); if(custSel){custSel.innerHTML="";custSel.value="";}
   const custWrap=document.getElementById("c-cust-wrap"); if(custWrap) custWrap.style.display="none";
@@ -6620,6 +6849,24 @@ function initCashModal(){
     else { updateCashCustomerField(); updateCashPrepayFields(); }
   });
 }
+function updateCashCurrencyHint(){
+  const code=document.getElementById("c-currency")?.value||"AFN";
+  const meta=CASH_META[code]||CASH_META.AFN;
+  const lbl=document.getElementById("c-amt-label");
+  if(lbl) lbl.textContent="مبلغ ("+meta.sym+")";
+  const hint=document.getElementById("c-currency-hint");
+  if(!hint) return;
+  if(code==="AFN"){
+    hint.className="ib info";
+    hint.style.display="";
+    hint.innerHTML="این عملیات در دفتر صندوق افغانی و گزارش‌های افغانی حساب می‌شود.";
+  } else {
+    hint.className="ib warn";
+    hint.style.display="";
+    hint.innerHTML=`⚠️ عملیات به <b>${meta.label} (${code})</b> ثبت می‌شود و فقط روی موجودی همان ارز اثر دارد؛ به حساب‌های افغانی/داشبورد اضافه نمی‌شود.`;
+  }
+}
+
 
 function updateCashTypes(){
   ensureCashOutKindOptions();
@@ -6832,9 +7079,24 @@ function fillCashPersonSelect(kind){
   if(cur&&list.some(x=>String(x.id)===cur)) sel.value=cur;
 }
 
+// آینه کردن عملیات صندوق در جدول cash_transactions (اختیاری — خطا ثبت اصلی را متوقف نمی‌کند)
+// چون جدول ستون ارز ندارد، ارز داخل notes به شکل [[CUR:USD]] نگه داشته می‌شود.
+async function mirrorCashTransaction({cat,amt,desc,type,currency}){
+  if(!(amt>0)) return;
+  const cur=currency||"AFN";
+  await sbPostQuiet("cash_transactions",{
+    type:cat==="in"?"in":"out",
+    amount_in:cat==="in"?amt:0,
+    amount_out:cat==="out"?amt:0,
+    description_fa:String(desc||type||"").slice(0,240),
+    notes:`[[CUR:${cur}]] ${type||""}`.trim()
+  });
+}
+
 async function submitCash(){
   const cat=document.getElementById("c-cat").value;
   const amt=+(document.getElementById("c-amt").value)||0;
+  const currency=document.getElementById("c-currency")?.value||"AFN";
   const date=(document.getElementById("c-date").value||"").trim()||today();
   let desc=(document.getElementById("c-desc")?.value||"").trim();
   const msg=document.getElementById("cash-msg");
@@ -6844,7 +7106,9 @@ async function submitCash(){
 
   // حالت «وصول از مشتری» — مشتری انتخاب‌شده تعیین‌کننده نوع و شرح است
   const custWrap=document.getElementById("c-cust-wrap");
-  const custMode=cat!=="out"&&!!custWrap&&custWrap.style.display!=="none";
+  const typeVal=String(document.getElementById("c-type")?.value||"");
+  // فقط وقتی نوع عملیات واقعاً مربوط به مشتری است (نه صرفاً باقی‌ماندن ظاهر فیلد)
+  const custMode=cat!=="out"&&!!custWrap&&custWrap.style.display!=="none"&&typeVal.includes("مشتری");
   let selectedCust=null;
   if(custMode){
     const custId=document.getElementById("c-cust-sel")?.value||"";
@@ -6880,8 +7144,8 @@ async function submitCash(){
   const btn=document.getElementById("cash-btn");
   if(btn){btn.disabled=true;btn.textContent="در حال ذخیره...";}
   try{
-    if(cat==="out") await submitCashOutflow(date,amt,desc,setMsg,selectedSupp,selectedEmp);
-    else await submitCashInflow(date,amt,desc,setMsg,selectedCust);
+    if(cat==="out") await submitCashOutflow(date,amt,desc,setMsg,selectedSupp,selectedEmp,currency);
+    else await submitCashInflow(date,amt,desc,setMsg,selectedCust,currency);
   }catch(e){
     setMsg(sbErrorHTML("خطای غیرمنتظره"));
   }finally{
@@ -6890,7 +7154,7 @@ async function submitCash(){
 }
 
 // ورودی صندوق — همان مسیر قبلی (+ وصول از مشتری)
-async function submitCashInflow(date,amt,desc,setMsg,cust){
+async function submitCashInflow(date,amt,desc,setMsg,cust,currency="AFN"){
   const typeEl=document.getElementById("c-type");
   const typeVal=typeEl?.value||"";
   let cashType=typeVal;
@@ -6911,9 +7175,19 @@ async function submitCashInflow(date,amt,desc,setMsg,cust){
     type:cashType,
     description:desc,
     amount_in:amt,
-    amount_out:0
+    amount_out:0,
+    currency
   });
   if(!res){setMsg(sbErrorHTML("خطا در ثبت ورودی صندوق"));return;}
+  await mirrorCashTransaction({cat:"in",amt,desc,type:cashType,currency});
+
+  // ارز غیرافغانی فقط در صندوق همان ارز اثر دارد و به فروش/وصولی وصل نمی‌شود
+  if(currency!=="AFN"){
+    showSaved();
+    closeModal("modalCash");
+    await renderCash();
+    return;
+  }
 
   // وصول از مشتری — کسر مبلغ از فاکتورهای پرداخت‌نشده (قدیمی‌ترین اول)
   // دقیقاً مثل submitCollectPay: به paid اضافه و از remaining کم می‌شود
@@ -6949,7 +7223,7 @@ async function submitCashInflow(date,amt,desc,setMsg,cust){
 }
 
 // خروجی صندوق — با مسیردهی به دفتر مربوطه
-async function submitCashOutflow(date,amt,desc,setMsg,supp,emp){
+async function submitCashOutflow(date,amt,desc,setMsg,supp,emp,currency="AFN"){
   const kind=document.getElementById("c-paykind")?.value||"company_expense";
   let cashType="", expCat=null, personId="", personName="", empKind="salary", expenseIso=null;
 
@@ -6992,10 +7266,33 @@ async function submitCashOutflow(date,amt,desc,setMsg,supp,emp){
   const cashRes=await sbPost("cash_ledger",{
     date,category:"out",type:cashType,
     description:desc,
-    amount_in:0,amount_out:amt
+    amount_in:0,amount_out:amt,currency
   });
   if(!cashRes){setMsg(sbErrorHTML("خطا در ثبت خروجی صندوق"));return;}
   const cashId=cashRes[0]?.id;
+  await mirrorCashTransaction({cat:"out",amt,desc,type:cashType,currency});
+
+  // ارز غیرافغانی فقط صندوق همان ارز را کاهش می‌دهد؛ هیچ دفتر افغانی (مصرف/معاش/بدهی AFN) تغییر نمی‌کند
+  if(currency!=="AFN"){
+    // پیش‌پرداخت دالری باید مانده دالری تامین‌کننده را کم کند (نه مانده افغانی)
+    if(kind==="supplier_prepay"){
+      window._lastSBError=null;
+      const r=await applySupplierPrepayment(supp,amt,currency);
+      if(!r){
+        if(cashId) await sbDelete("cash_ledger","?id=eq."+encodeURIComponent(cashId));
+        setMsg('<div class="ib err">خطا در بروزرسانی بدهی تامین‌کننده — تراکنش صندوق برگشت داده شد.</div>');
+        return;
+      }
+    }
+    showSaved();
+    closeModal("modalCash");
+    await renderCash();
+    if(kind==="supplier_prepay"){
+      if(document.getElementById("page-supp")?.classList.contains("active")) renderSupp();
+      else await refreshSuppMap();
+    }
+    return;
+  }
 
   // ۲) ثبت در دفتر مربوطه (در صورت نیاز)
   let ok=true, extraErr="";
@@ -7054,9 +7351,9 @@ async function submitCashOutflow(date,amt,desc,setMsg,supp,emp){
 }
 
 // پیش‌پرداخت به تامین‌کننده — از بدهی او در supplier_balances کم می‌شود.
-// مبلغ صندوق افغانی است؛ اگر بدهی فقط دالری باشد با نرخ دالر تبدیل می‌شود.
+// AFN: اگر بدهی فقط دالری باشد با نرخ دالر تبدیل می‌شود؛ USD: مستقیم از مانده دالری کم می‌شود.
 // هیچ‌جا روی صفر بسته نمی‌شود: مانده منفی = اعتبار ما نزد تامین‌کننده.
-async function applySupplierPrepayment(supp,amt){
+async function applySupplierPrepayment(supp,amt,currency="AFN"){
   if(!supp) return false;
   const sid=String(supp.id||"");
   if(!sid) return false;
@@ -7067,8 +7364,11 @@ async function applySupplierPrepayment(supp,amt){
   const balUsd=+(cur?.balance_usd||0), balAfn=+(cur?.balance_afn||0);
   const stamp=new Date().toISOString();
   let body;
-  // اگر فقط مانده دالری وجود داشته باشد (حتی منفی) همان ستون کم می‌شود؛ در غیر این صورت افغانی
-  if(cur&&balUsd!==0&&balAfn===0){
+  if(currency==="USD"){
+    // پرداخت دالری فقط مانده دالری را کم می‌کند (هیچ تبدیل/اثری روی AFN ندارد)
+    body={balance_usd:+((balUsd-amt).toFixed(2)),updated_at:stamp};
+  }else if(cur&&balUsd!==0&&balAfn===0){
+    // اگر فقط مانده دالری وجود داشته باشد (حتی منفی) همان ستون کم می‌شود؛ در غیر این صورت افغانی
     body={balance_usd:+((balUsd-amt/rate).toFixed(2)),updated_at:stamp};
   }else{
     body={balance_afn:+((balAfn-amt).toFixed(2)),updated_at:stamp};
@@ -7077,7 +7377,7 @@ async function applySupplierPrepayment(supp,amt){
     ? await sbPatch("supplier_balances",body,`?supplier_id=eq.${encodeURIComponent(sid)}`)
     : await sbPost("supplier_balances",{
         supplier_id:sid,supplier_name:supp.n||"",
-        balance_usd:0,balance_afn:body.balance_afn,updated_at:stamp
+        balance_usd:body.balance_usd||0,balance_afn:body.balance_afn||0,updated_at:stamp
       });
   return res!==null;
 }
@@ -8219,73 +8519,184 @@ async function initApp(){
 
 // ── قرض حسنه ──
 let _collectFilter="all";
+// اطلاعات تکمیلی قرض (شخص/رسید/بانک/ارز) در ستون notes به شکل [[META:...]] ذخیره می‌شود
+// چون جدول loans ستون‌های person/currency ندارد؛ رکوردهای قدیمی هم بدون خطا خوانده می‌شوند.
+function _loanMeta(r){
+  const raw=String(r?.notes||"");
+  const m=raw.match(/\[\[META:([^\]]+)\]\]/);
+  if(m){
+    try{
+      const o=JSON.parse(decodeURIComponent(m[1]));
+      return {cur:(o.cur||"AFN"),person:o.person||r.person_name_fa||"",no:o.no||r.receipt_number||"",bank:o.bank||""};
+    }catch(e){}
+  }
+  const c=raw.match(/\[\[CUR:([A-Za-z]{3})\]\]/);
+  return {cur:c?c[1].toUpperCase():"AFN",person:r?.person_name_fa||"",no:r?.receipt_number||"",bank:""};
+}
+function _loanNotes(meta){
+  return "[[META:"+encodeURIComponent(JSON.stringify(meta))+"]]";
+}
+function _loanAmountLabel(rows){
+  const by={};
+  rows.forEach(r=>{
+    const c=_loanMeta(r).cur||"AFN";
+    by[c]=(by[c]||0)+(+r.amount_afn||0);
+  });
+  const parts=Object.keys(by).filter(c=>by[c]).map(c=>_cashFmt(c,by[c]));
+  return parts.length?parts.join(" • "):afn(0);
+}
+let _loanTableOk=null;
 async function renderCheque(){
-  const rows=await sbGet("collects","?order=due_date.asc")||[];
-  const inRows=rows.filter(r=>r.type==="receive");
-  const outRows=rows.filter(r=>r.type==="pay");
-  const inAmt=inRows.reduce((a,r)=>a+(+r.amount||0),0);
-  const outAmt=outRows.reduce((a,r)=>a+(+r.amount||0),0);
+  // جدول اصلی loans است؛ اگر در دیتابیس قدیمی نبود، collects با همان ساختار نمایش داده می‌شود
+  let rows=[];
+  if(_loanTableOk===null) _loanTableOk=await sbTableExists("loans");
+  if(_loanTableOk){
+    rows=(await sbGet("loans","?select=*&order=id.desc"))||[];
+    rows=rows.map(r=>({...r,_table:"loans",loan_type:r.loan_type||"receive",amount_afn:+(r.amount_afn||0),status:r.status||"pending"}));
+  } else if(await sbTableExists("collects")){
+    const old=(await sbGet("collects","?select=*&order=due_date.asc"))||[];
+    rows=old.map(r=>({
+      ...r,_table:"collects",
+      loan_type:r.type||"receive",
+      amount_afn:+(r.amount||0),
+      loan_date:r.date||"",
+      return_date:r.due_date||"",
+      description_fa:r.description||"",
+      status:r.status||"pending",
+      notes:_loanNotes({cur:"AFN",person:r.person||"",no:r.collect_no||"",bank:r.bank||""})
+    }));
+  }
+  const inRows=rows.filter(r=>r.loan_type==="receive");
+  const outRows=rows.filter(r=>r.loan_type==="pay");
   // کلید عددی تاریخ فارسی: امروز، سررسیدهای معوق و سررسید ۷ روز آینده
   const todayKey=_expFaKey(today());
   const p=_expDigits(today()).split(/[^\d]+/).map(Number);
   const dt7=new Date(p[0]+621,p[1]-1,p[2]+7);
   const weekKey=(dt7.getFullYear()-621)*10000+(dt7.getMonth()+1)*100+dt7.getDate();
-  const dueKey=r=>_expFaKey(r.due_date);
-  const isOverdue=r=>r.status==="pending"&&!!r.due_date&&dueKey(r)>0&&dueKey(r)<todayKey;
-  const dueSoon=rows.filter(r=>r.status==="pending"&&r.due_date&&dueKey(r)>0&&dueKey(r)<=weekKey);
+  const dueKey=r=>_expFaKey(r.return_date);
+  const isOverdue=r=>r.status==="pending"&&!!r.return_date&&dueKey(r)>0&&dueKey(r)<todayKey;
+  const dueSoon=rows.filter(r=>r.status==="pending"&&r.return_date&&dueKey(r)>0&&dueKey(r)<=weekKey);
   const overdueCount=rows.filter(isOverdue).length;
   document.getElementById("chq-in-cnt").textContent=inRows.length+" قرض";
-  document.getElementById("chq-in-amt").textContent=afn(inAmt);
+  document.getElementById("chq-in-amt").textContent=_loanAmountLabel(inRows);
   document.getElementById("chq-out-cnt").textContent=outRows.length+" قرض";
-  document.getElementById("chq-out-amt").textContent=afn(outAmt);
+  document.getElementById("chq-out-amt").textContent=_loanAmountLabel(outRows);
   document.getElementById("chq-due").textContent=dueSoon.length+" قرض"+(overdueCount?` (${overdueCount} معوق)`:"");
   let list=rows;
-  if(_collectFilter!=="all") list=rows.filter(r=>_collectFilter==="receive"||_collectFilter==="pay"?r.type===_collectFilter:r.status===_collectFilter);
+  if(_collectFilter==="receive"||_collectFilter==="pay"){
+    list=rows.filter(r=>r.loan_type===_collectFilter);
+  } else if(_collectFilter==="pending"||_collectFilter==="cleared"||_collectFilter==="bounced"){
+    list=rows.filter(r=>(r.status||"pending")===_collectFilter);
+  } else if(_collectFilter==="due"){
+    list=dueSoon;
+  } else if(_collectFilter==="overdue"){
+    list=rows.filter(isOverdue);
+  }
   document.querySelectorAll("[id^='cf-']").forEach(b=>b.className="btn bsec");
   const btn=document.getElementById("cf-"+_collectFilter);
   if(btn) btn.className="btn bpri";
   const STATUS={pending:'<span class="bb bog">⏳ باقی</span>',cleared:'<span class="bb bg2">✅ برگشت شد</span>',bounced:'<span class="bb br2">❌ پس نداد</span>'};
-  document.getElementById("chq-tbody").innerHTML=list.length?list.map((r,i)=>{
-    const od=isOverdue(r), soon=!od&&r.status==="pending"&&r.due_date&&dueKey(r)>0&&dueKey(r)<=weekKey;
+  const tb=document.getElementById("chq-tbody");
+  if(!tb) return;
+  tb.innerHTML=list.length?list.map((r,i)=>{
+    const od=isOverdue(r), soon=!od&&r.status==="pending"&&r.return_date&&dueKey(r)>0&&dueKey(r)<=weekKey;
+    const meta=_loanMeta(r);
+    const cur=meta.cur||"AFN";
+    const person=meta.person||"—";
+    const dateFa=_expFaDate(r.loan_date||r.date||"");
+    const dueFa=_expFaDate(r.return_date||r.due_date||"");
     return`<tr style="${od?"background:rgba(240,90,110,.07)":soon?"background:rgba(240,168,67,.06)":""}">
     <td style="color:var(--t3)">${i+1}</td>
-    <td>${r.date||"—"}</td>
-    <td style="color:${od?"var(--rd)":r.status==="pending"?"var(--og)":"var(--t2)"};font-weight:${r.status==="pending"?700:400};white-space:nowrap">${r.due_date||"—"}${od?' <span class="bb br2">معوق</span>':soon?' <span class="bb bog">این هفته</span>':""}</td>
-    <td><span class="bb ${r.type==="receive"?"bg2":"br2"}">${r.type==="receive"?"دریافتی":"پرداختی"}</span></td>
-    <td style="font-weight:700">${escHTML(r.person||"—")}</td>
-    <td style="color:var(--t2);font-size:11px">${escHTML(r.description||"—")}</td>
-    <td class="tdr" style="font-weight:800;color:var(--gd)">${afn(r.amount)}</td>
-    <td>${STATUS[r.status]||r.status}</td>
-    <td style="display:flex;gap:4px;flex-wrap:wrap">
-      ${r.status==="pending"?`<button onclick="updateCheque(${r.id},'cleared')" style="background:var(--gr2);border:1px solid rgba(34,197,94,.3);color:var(--gr);border-radius:5px;padding:3px 7px;cursor:pointer;font-size:10px;font-family:inherit">✅ وصول</button>
-      <button onclick="updateCheque(${r.id},'bounced')" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:5px;padding:3px 7px;cursor:pointer;font-size:10px;font-family:inherit">❌ برگشت</button>`:""}
-      <button onclick="deleteRecord('collects',${r.id},'renderCheque')" title="حذف" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:5px;padding:3px 7px;cursor:pointer;font-size:10px;font-family:inherit">🗑️</button>
+    <td>${dateFa||"—"}</td>
+    <td style="color:${od?"var(--rd)":r.status==="pending"?"var(--og)":"var(--t2)"};font-weight:${r.status==="pending"?700:400};white-space:nowrap">${dueFa||"—"}${od?' <span class="bb br2">معوق</span>':soon?' <span class="bb bog">این هفته</span>':""}</td>
+    <td><span class="bb ${r.loan_type==="receive"?"bg2":"br2"}">${r.loan_type==="receive"?"دریافتی":"پرداختی"}</span></td>
+    <td style="font-weight:700">${escHTML(person)}</td>
+    <td style="color:var(--t2);font-size:11px">${escHTML(r.description_fa||r.description||"—")}</td>
+    <td class="tdr" style="font-weight:800;color:var(--gd)">${_cashFmt(cur,r.amount_afn)}</td>
+    <td><span class="bb ${cur==="AFN"?"bog":cur==="USD"?"bbl":"bg2"}">${cur}</span></td>
+    <td>
+      <select onchange="updateCheque(${r.id},this.value,'${r._table}')" style="background:var(--b3);border:1px solid var(--b1);color:var(--t1);border-radius:6px;padding:3px 5px;font-size:10px;font-family:inherit;cursor:pointer">
+        <option value="pending" ${r.status==="pending"?"selected":""}>⏳ باقی</option>
+        <option value="cleared" ${r.status==="cleared"?"selected":""}>✅ برگشت شد</option>
+        <option value="bounced" ${r.status==="bounced"?"selected":""}>❌ پس نداد</option>
+      </select>
+      <div style="font-size:9px;color:var(--t3);margin-top:2px">${STATUS[r.status]||""}</div>
     </td>
-  </tr>`;}).join(""):'<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--t3)">هنوز قرضی ثبت نشده</td></tr>';
+    <td style="display:flex;gap:4px;flex-wrap:wrap">
+      ${r.status==="pending"?`<button onclick="updateCheque(${r.id},'cleared','${r._table}')" style="background:var(--gr2);border:1px solid rgba(34,197,94,.3);color:var(--gr);border-radius:5px;padding:3px 7px;cursor:pointer;font-size:10px;font-family:inherit">✅ وصول</button>
+      <button onclick="updateCheque(${r.id},'bounced','${r._table}')" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:5px;padding:3px 7px;cursor:pointer;font-size:10px;font-family:inherit">❌ برگشت</button>`:""}
+      <button onclick="deleteRecord('${r._table}',${r.id},'renderCheque')" title="حذف" style="background:var(--r2);border:1px solid rgba(240,82,82,.3);color:var(--rd);border-radius:5px;padding:3px 7px;cursor:pointer;font-size:10px;font-family:inherit">🗑️</button>
+    </td>
+  </tr>`;}).join(""):'<tr><td colspan="10" style="text-align:center;padding:20px;color:var(--t3)">در این فیلتر قرضی ثبت نشده</td></tr>';
 }
 function filterCheque(f){_collectFilter=f;renderCheque();}
-async function saveCheque(){
-  const amt=+(document.getElementById("chq-amt").value)||0;
-  if(!amt){document.getElementById("chq-msg").innerHTML='<div class="ib err">مبلغ الزامی</div>';return;}
-  document.getElementById("chq-btn").disabled=true;document.getElementById("chq-btn").textContent="در حال ذخیره...";
-  const res=await sbPost("collects",{
-    type:document.getElementById("chq-type").value,
-    person:document.getElementById("chq-person").value,
-    date:document.getElementById("chq-date").value||today(),
-    due_date:document.getElementById("chq-due-date").value,
-    collect_no:document.getElementById("chq-no").value,
-    bank:document.getElementById("chq-bank").value,
-    amount:amt,
-    description:document.getElementById("chq-desc").value,
-    status:"pending"
-  });
-  document.getElementById("chq-btn").disabled=false;document.getElementById("chq-btn").textContent="ثبت قرض ✓";
-  if(res){document.getElementById("chq-msg").innerHTML='<div class="ib ok">✅ قرض ثبت شد!</div>';showSaved();setTimeout(()=>{closeModal("modalAddCheque");renderCheque();},1000);}
-  else document.getElementById("chq-msg").innerHTML='<div class="ib err">خطا — دوباره امتحان کن</div>';
+function initChequeModal(){
+  const set=(id,v)=>{const el=document.getElementById(id); if(el) el.value=v;};
+  set("chq-date",today());
+  set("chq-due-date","");
+  set("chq-person","");
+  set("chq-no","");
+  set("chq-bank","");
+  set("chq-amt","");
+  set("chq-desc","");
+  set("chq-type","receive");
+  set("chq-currency","AFN");
+  const msg=document.getElementById("chq-msg"); if(msg) msg.innerHTML="";
+  const btn=document.getElementById("chq-btn"); if(btn){btn.disabled=false;btn.textContent="ثبت قرض ✓";}
 }
-async function updateCheque(id,status){
-  await sbPatch("collects",{status,updated_at:new Date().toISOString()},`?id=eq.${id}`);
-  showSaved();renderCheque();
+async function saveCheque(){
+  const msg=document.getElementById("chq-msg");
+  const btn=document.getElementById("chq-btn");
+  const amt=+(document.getElementById("chq-amt").value)||0;
+  const person=(document.getElementById("chq-person").value||"").trim();
+  const currency=document.getElementById("chq-currency")?.value||"AFN";
+  const dateRaw=(document.getElementById("chq-date").value||"").trim()||today();
+  const dueRaw=(document.getElementById("chq-due-date").value||"").trim();
+  if(!(amt>0)){if(msg) msg.innerHTML='<div class="ib err">مبلغ را درست وارد کن</div>';return;}
+  if(!person){if(msg) msg.innerHTML='<div class="ib err">نام شخص را وارد کن</div>';return;}
+  const parsed=_expToIso(dateRaw);
+  if(parsed.err){if(msg) msg.innerHTML='<div class="ib err">تاریخ قرض معتبر نیست (مثال ۱۴۰۵/۰۹/۰۷)</div>';return;}
+  let dueIso=null;
+  if(dueRaw){
+    const pd=_expToIso(dueRaw);
+    if(pd.err){if(msg) msg.innerHTML='<div class="ib err">تاریخ سررسید معتبر نیست (مثال ۱۴۰۵/۱۲/۳۰)</div>';return;}
+    dueIso=pd.iso;
+  }
+  if(btn){btn.disabled=true;btn.textContent="در حال ذخیره...";}
+  const meta={
+    cur:currency,
+    person,
+    no:(document.getElementById("chq-no").value||"").trim(),
+    bank:(document.getElementById("chq-bank").value||"").trim()
+  };
+  window._lastSBError=null;
+  const res=await sbPost("loans",{
+    loan_type:document.getElementById("chq-type").value||"receive",
+    amount_afn:amt,
+    loan_date:parsed.iso,
+    return_date:dueIso,
+    status:"pending",
+    person_name_fa:person,
+    receipt_number:(document.getElementById("chq-no").value||"").trim()||null,
+    description_fa:(document.getElementById("chq-desc").value||"").trim(),
+    notes:_loanNotes(meta)
+  });
+  if(btn){btn.disabled=false;btn.textContent="ثبت قرض ✓";}
+  if(res){
+    if(msg) msg.innerHTML='<div class="ib ok">✅ قرض ثبت شد!</div>';
+    showSaved();
+    setTimeout(()=>{closeModal("modalAddCheque");renderCheque();},900);
+  } else if(msg){
+    msg.innerHTML=sbErrorHTML("خطا در ثبت قرض — دوباره امتحان کن");
+  }
+}
+async function updateCheque(id,status,table="loans"){
+  if(!["pending","cleared","bounced"].includes(status)) return;
+  const t=table==="collects"?"collects":"loans";
+  const res=await sbPatch(t,{status},`?id=eq.${encodeURIComponent(id)}`);
+  if(res===null){ alert("خطا در تغییر وضعیت: "+sbErrorText()); return; }
+  showSaved();
+  renderCheque();
 }
 
 // ── گزارش‌های تفصیلی ──
@@ -9467,7 +9878,7 @@ async function _planCascade(table,row){
     const paid=+(row.paid||0);
     const cname=String(row.cust_name||"").trim();
     if(paid>0){
-      let cands=await _cashRows(`?select=id,description,amount_in,date&category=eq.in&amount_in=eq.${paid}&date=eq.${encodeURIComponent(row.date||"")}`);
+      let cands=await _cashRows(`?select=id,description,amount_in,date&category=eq.in&amount_in=eq.${paid}&date=eq.${encodeURIComponent(row.date||"")}${CASH_AFN_Q}`);
       cands=(cands||[]).filter(r=>!cname||String(r.description||"").includes(cname));
       if(cands.length===1) plan.push({kind:"cash",ids:[cands[0].id],label:`تراکنش صندوق «${cands[0].description}» (${afn(paid)}) هم پاک میشود`});
       else if(cands.length>1) plan.push({kind:"note",label:`${cands.length} تراکنش صندوق با همین مبلغ/تاریخ پیدا شد — برای جلوگیری از حذف اشتباه، دستی در صندوق بررسی کن`});
@@ -9487,7 +9898,7 @@ async function _planCascade(table,row){
     const amt=+(row.amount||0);
     const desc=String(row.description_fa||"");
     if(amt>0){
-      let cands=await _cashRows(`?select=id,description&category=eq.out&type=eq.${encodeURIComponent("مصرف شرکت")}&amount_out=eq.${amt}`);
+      let cands=await _cashRows(`?select=id,description&category=eq.out&type=eq.${encodeURIComponent("مصرف شرکت")}&amount_out=eq.${amt}${CASH_AFN_Q}`);
       if(cands.length>1&&desc) cands=cands.filter(r=>String(r.description||"")===desc);
       if(cands.length===1) plan.push({kind:"cash",ids:[cands[0].id],label:`خروجی صندوق «${cands[0].description}» (${afn(amt)}) هم پاک میشود`});
       else if(cands.length>1) plan.push({kind:"note",label:`${cands.length} خروجی صندوق با همین مبلغ هست — دستی بررسی کن`});
@@ -9496,7 +9907,7 @@ async function _planCascade(table,row){
   else if(table==="employee_payments"){
     const amt=+(row.amount_afn||0);
     if(amt>0&&row.type!=="deduction"){
-      let cands=await _cashRows(`?select=id,description&category=eq.out&type=eq.${encodeURIComponent("پرداخت معاش")}&amount_out=eq.${amt}&date=eq.${encodeURIComponent(row.date||"")}`);
+      let cands=await _cashRows(`?select=id,description&category=eq.out&type=eq.${encodeURIComponent("پرداخت معاش")}&amount_out=eq.${amt}&date=eq.${encodeURIComponent(row.date||"")}${CASH_AFN_Q}`);
       if(cands.length>1&&row.employee_name) cands=cands.filter(r=>String(r.description||"").includes(row.employee_name));
       if(cands.length===1) plan.push({kind:"cash",ids:[cands[0].id],label:`خروجی صندوق معاش (${afn(amt)}) هم پاک میشود`});
     }
@@ -9504,13 +9915,14 @@ async function _planCascade(table,row){
   else if(table==="cash_ledger"){
     const type=String(row.type||"");
     const out=+(row.amount_out||0);
-    if(type==="مصرف شرکت"&&out>0){
+    const isAfn=_cashCurrencyOf(row)==="AFN";
+    if(isAfn&&type==="مصرف شرکت"&&out>0){
       let cands=[];
       try{ cands=(await sbGet("expenses",`?select=id,description_fa,amount&amount=eq.${out}`))||[]; }catch(e){}
       if(cands.length>1) cands=cands.filter(r=>String(r.description_fa||"")===String(row.description||""));
       if(cands.length===1) plan.push({kind:"delexp",ids:[cands[0].id],label:`مصرف شرکت «${cands[0].description_fa}» (${afn(cands[0].amount)}) هم پاک میشود`});
     }
-    if(type==="پرداخت معاش"&&out>0){
+    if(isAfn&&type==="پرداخت معاش"&&out>0){
       let cands=[];
       try{ cands=(await sbGet("employee_payments",`?select=id,employee_name,amount_afn&amount_afn=eq.${out}&date=eq.${encodeURIComponent(row.date||"")}`))||[]; }catch(e){}
       if(cands.length>1&&row.description) cands=cands.filter(r=>String(r.employee_name||"")===String(row.description||""));
@@ -9521,7 +9933,7 @@ async function _planCascade(table,row){
     // اگر مالیات پرداخت شده، خروجی صندوق متناظر هم پاک میشود
     const amt=+(row.tax_amount||0);
     if(row.paid&&amt>0){
-      let cands=await _cashRows(`?select=id,description&category=eq.out&type=eq.${encodeURIComponent("مالیات")}&amount_out=eq.${amt}`);
+      let cands=await _cashRows(`?select=id,description&category=eq.out&type=eq.${encodeURIComponent("مالیات")}&amount_out=eq.${amt}${CASH_AFN_Q}`);
       if(cands.length>1) plan.push({kind:"note",label:`${cands.length} خروجی صندوق «مالیات» با همین مبلغ هست — دستی بررسی کن`});
       else if(cands.length===1) plan.push({kind:"cash",ids:[cands[0].id],label:`خروجی صندوق «${cands[0].description||"مالیات"}» (${afn(amt)}) هم پاک میشود`});
     }
@@ -9594,7 +10006,7 @@ async function undoPurchaseStock(mat,kg){
 async function deleteRecord(table,id,refreshFn){
   // کارمند فرزند دارد (پرداخت معاش و تولید) — مسیر مخصوص خودش را دارد
   if(table==="employees") return deleteEmployee(id,refreshFn);
-  const names={sales:"فاکتور فروش",purchases:"خرید مواد",production:"رکورد تولید",cash_ledger:"تراکنش صندوق",employee_payments:"پرداخت معاش",partner_transactions:"تراکنش شریک",expenses:"مصرف شرکت",collects:"قرض حسنه",tax_records:"سابقه مالیات"};
+  const names={sales:"فاکتور فروش",purchases:"خرید مواد",production:"رکورد تولید",cash_ledger:"تراکنش صندوق",employee_payments:"پرداخت معاش",partner_transactions:"تراکنش شریک",expenses:"مصرف شرکت",loans:"قرض حسنه",collects:"قرض حسنه",tax_records:"سابقه مالیات"};
   window._lastSBError=null;
   // ۱) ردیف اصلی را قبل از حذف بخوان تا وابستگی‌ها شناسایی شوند
   let row=null;
@@ -9618,16 +10030,24 @@ async function deleteRecord(table,id,refreshFn){
 // جدول‌های employee_payments و production با کلید خارجی به employees وصل‌اند؛
 // اول رکوردهای فرزند پاک/آزاد می‌شوند تا حذف کارمند با خطای 23503 متوقف نشود.
 async function deleteEmployee(id,refreshFn){
-  const emp=(_allEmps||[]).find(x=>String(x.id)===String(id))||(_empList||[]).find(x=>String(x.id)===String(id));
-  const nm=emp?(emp.name_fa||emp.name||("کارمند #"+id)):("کارمند #"+id);
+  let emp=(_allEmps||[]).find(x=>String(x.id)===String(id))||(_empList||[]).find(x=>String(x.id)===String(id));
+  if(!emp){
+    try{
+      const rows=await sbGet("employees","?select=id,name,name_fa&id=eq."+encodeURIComponent(id));
+      emp=rows&&rows[0]||null;
+    }catch(e){}
+  }
+  const nameVals=[...new Set([emp?.name_fa,emp?.name].map(x=>String(x||"").trim()).filter(Boolean))];
+  const nm=nameVals[0]||("کارمند #"+id);
   // تراکنش‌های صندوقِ پرداخت معاش این کارمند (تا صندوق و سود و زیان با معاش پاک‌شده هم‌خوان بمانند)
   let cashIds=[];
   try{
-    const pays=await sbGet("employee_payments",`?select=id,amount_afn,date,type&employee_id=eq.${encodeURIComponent(id)}`)||[];
+    const orTerms=[`employee_id.eq.${encodeURIComponent(id)}`,...nameVals.map(n=>`employee_name.eq.${encodeURIComponent(n)}`)].join(",");
+    const pays=await sbGet("employee_payments",`?select=id,amount_afn,date,type,employee_name&or=(${orTerms})`)||[];
     for(const p of pays){
       if(p.type==="deduction"||!(+p.amount_afn||0)) continue;
-      const cands=await _cashRows(`?select=id&category=eq.out&type=eq.${encodeURIComponent("پرداخت معاش")}&amount_out=eq.${+p.amount_afn}&date=eq.${encodeURIComponent(p.date||"")}`);
-      const one=cands.filter(r=>String(r.description||"").includes(nm));
+      const cands=await _cashRows(`?select=id&category=eq.out&type=eq.${encodeURIComponent("پرداخت معاش")}&amount_out=eq.${+p.amount_afn}&date=eq.${encodeURIComponent(p.date||"")}${CASH_AFN_Q}`);
+      const one=cands.filter(r=>nameVals.some(n=>String(r.description||"").includes(n))||String(r.description||"")===String(p.employee_name||""));
       if(one.length===1) cashIds.push(one[0].id);
       else if(cands.length===1) cashIds.push(cands[0].id);
     }
@@ -9637,9 +10057,16 @@ async function deleteEmployee(id,refreshFn){
   window._lastSBError=null;
   // ۱) خروجی‌های صندوق مربوط به معاش این کارمند
   if(cashIds.length) await _delCash(cashIds);
-  // ۲) پرداخت‌های معاش — فرزند مستقیم کارمند
+  // ۲) پرداخت‌های معاش — هم با شناسه و هم با نام (رکوردهای قدیمی بدون شناسه)
+  // هر دو مسیر امتحان می‌شوند؛ اگر یکی خطا داد، دیگری هم پاک‌سازی شود.
+  let payErr=null;
   const payRes=await sbDelete("employee_payments","?employee_id=eq."+encodeURIComponent(id));
-  if(payRes===null){ alert("خطا در حذف پرداخت‌های معاش:\n"+sbErrorText()); return; }
+  if(payRes===null) payErr=sbErrorText();
+  for(const nv of nameVals){
+    const payNameRes=await sbDelete("employee_payments","?employee_name=eq."+encodeURIComponent(nv));
+    if(payNameRes===null && !payErr) payErr=sbErrorText();
+  }
+  if(payErr){ alert("خطا در حذف پرداخت‌های معاش:\n"+payErr); return; }
   // ۳) رکوردهای تولید — فقط ارجاع کارمند خالی می‌شود تا تاریخچه تولید حفظ بماند
   const prodRes=await sbPatch("production",{employee_id:null},"?employee_id=eq."+encodeURIComponent(id));
   if(prodRes===null){ alert("خطا در جدا کردن رکوردهای تولید:\n"+sbErrorText()); return; }
@@ -9652,20 +10079,33 @@ async function deleteEmployee(id,refreshFn){
   if(String(_editEmpId)===String(id)) _editEmpId=null;
   // ۵) بازخوانی KPIها (صندوق و سود و زیان هم تازه شوند)
   await refreshAll("delete employee #"+id);
+  // «حساب سرکاریگران» در تنظیمات و سود/زیان داشبورد باید همان لحظه تازه شوند
+  try{ await renderSettings(); }
+  catch(e){ console.warn("renderSettings after employee delete:",e); }
+  try{ await renderDash(); }
+  catch(e){ console.warn("renderDash after employee delete:",e); }
   const fn=refreshFn||"renderEmp";
-  if(typeof window[fn]==="function") window[fn]();
-  else renderEmp();
+  if(fn!=="renderSettings"){
+    if(typeof window[fn]==="function") await window[fn]();
+    else await renderEmp();
+  }
 }
 
 // ── پاکسازی کامل داده‌های آزمایشی + بازنشانی KPI ──
 // پسورد مالک لازم است. ترتیب حذف: صندوق/فروش/خرید/تولید/مصارف/معاش/وصولی/فرمایشات/شریکان
 // سپس انبار مواد، گدام جنس، بدهی تامین‌کنندگان و موجودی افتتاحیه مشتریان صفر می‌شوند.
-async function wipeTestData(){
+async function wipeTestData(scope="all"){
+  const txMode=scope==="transactions";
   const msg=document.getElementById("wipe-msg");
-  const btn=document.getElementById("wipe-btn");
+  const btn=document.getElementById(txMode?"wipe-tx-btn":"wipe-btn");
   const passEl=document.getElementById("wipe-pass");
   const pass=(passEl?.value||"").trim();
   if(!msg||!passEl){ alert("فرم پاکسازی پیدا نشد — صفحه تنظیمات را دوباره باز کن"); return; }
+  if(currentUser?.role!=="admin"){
+    msg.innerHTML='<div class="ib err">فقط مالک (Admin) می‌تواند داده‌های تستی را پاک کند</div>';
+    return;
+  }
+
   if(!pass){ msg.innerHTML='<div class="ib err">پسورد مالک را وارد کن</div>'; return; }
   const oldTxt=btn?btn.textContent:"";
   if(btn){ btn.disabled=true; btn.textContent="در حال بررسی پسورد..."; }
@@ -9679,17 +10119,24 @@ async function wipeTestData(){
     msg.innerHTML='<div class="ib err">❌ پسورد اشتباه است — عملیات لغو شد</div>';
     return;
   }
-  if(!confirm("⚠️ هشدار نهایی\nهمه فروش‌ها، خریدها، تولید، تراکنش‌های صندوق، مصارف، پرداخت معاش، قرض‌های حسنه، سوابق مالیات، فرمایشات و وصولی‌ها پاک می‌شوند.\nانبار مواد، گدام جنس، بدهی تامین‌کنندگان و موجودی دالری صندوق صفر می‌شوند.\n\nاین کار برگشت‌پذیر نیست. مطمئنی؟")){
+  const confirmMsg=txMode
+    ? "⚠️ هشدار نهایی\nهمه ردیف‌های فروش، تولید، خرید، مصارف، صندوق، پرداخت معاش، وصولی‌ها و قرض‌های حسنه پاک می‌شوند.\nبرای صفر شدن کامل داشبورد، انبار مواد، گدام جنس، بدهی تامین‌کنندگان، موجودی چهار صندوق و موجودی افتتاحیه مشتریان هم صفر می‌شوند.\nفرمایشات، مالیات و حساب شریکان دست نمی‌خورند.\n\nاین کار برگشت‌پذیر نیست. مطمئنی؟"
+    : "⚠️ هشدار نهایی\nهمه فروش‌ها، خریدها، تولید، تراکنش‌های صندوق، مصارف، پرداخت معاش، قرض‌های حسنه (loans)، سوابق مالیات، فرمایشات و وصولی‌ها پاک می‌شوند.\nانبار مواد، گدام جنس، بدهی تامین‌کنندگان و موجودی هر چهار صندوق (افغانی/دالر/کلدار/تومان) صفر می‌شوند.\n\nاین کار برگشت‌پذیر نیست. مطمئنی؟";
+  if(!confirm(confirmMsg)){
     if(btn){ btn.disabled=false; btn.textContent=oldTxt; }
     return;
   }
   if(btn) btn.textContent="در حال پاکسازی...";
   msg.innerHTML='<div class="ib warn">⏳ در حال پاکسازی داده‌ها...</div>';
-  const tables=["cash_ledger","sales","purchases","production","expenses","employee_payments","collection_payments","order_items","orders","partner_transactions","collects","tax_records"];
+  // حالت «تراکنش‌ها» فقط ردیف‌های تراکنشی را پاک می‌کند؛ cash_ledger هم برای صفر شدن KPI صندوق اضافه شده است.
+  const txTables=["cash_ledger","sales","production","purchases","expenses","cash_transactions","employee_payments","collection_payments","loans"];
+  const fullTables=["cash_ledger","cash_transactions","sales","purchases","production","expenses","employee_payments","collection_payments","order_items","orders","partner_transactions","loans","collects","tax_records"];
+  const tables=txMode?txTables:fullTables;
   const failed=[];
   let deleted=0;
   for(const t of tables){
     try{
+      if(!(await sbTableExists(t))) continue;
       const before=await sbGet(t,"?select=id");
       const n=Array.isArray(before)?before.length:0;
       window._lastSBError=null;
@@ -9713,7 +10160,22 @@ async function wipeTestData(){
     const sbs=await sbGet("supplier_balances","?select=supplier_id,supplier_name")||[];
     for(const s of sbs) await saveSuppBalance(s.supplier_id,s.supplier_name||"",0,0);
   }catch(e){ failed.push("supplier_balances"); }
-  // موجودی دالری صندوق → صفر
+  // موجودی هر چهار صندوق → صفر (افغانی/دالر/کلدار/تومان)
+  try{
+    const cb=await sbGetQuiet("cash_balances","?select=id");
+    const zero={afn:0,usd:0,pkr:0,irt:0};
+    if(Array.isArray(cb)&&cb.length){
+      for(const row of cb){
+        const r=await sbPatch("cash_balances",zero,"?id=eq."+encodeURIComponent(row.id));
+        if(r===null) throw new Error("cash_balances");
+      }
+    } else if(cb!==null){
+      // id این جدول متنی و بدون default است
+      const ok=await sbPostQuiet("cash_balances",{id:"1",...zero});
+      if(!ok) throw new Error("cash_balances");
+    }
+  }catch(e){ failed.push("cash_balances"); }
+  // موجودی دالری صندوق (تنظیمات قدیمی) → صفر
   try{
     const usdRow=await sbGet("settings","?key=eq.usd_cash_balance");
     if(usdRow&&usdRow.length>0) await sbPatch("settings",{value:"0",updated_at:new Date().toISOString()},"?key=eq.usd_cash_balance");
@@ -9729,6 +10191,11 @@ async function wipeTestData(){
   }catch(e){ failed.push("customers_data"); }
   // همه KPIها از صفر بازخوانی می‌شوند
   await refreshAll("wipe test data");
+  // حساب سرکاریگران و داشبورد (سود و زیان) بلافاصله با داده‌های صفر دوباره ساخته می‌شوند
+  try{ await renderSettings(); }
+  catch(e){ console.warn("renderSettings after wipe:",e); }
+  try{ await renderDash(); }
+  catch(e){ console.warn("renderDash after wipe:",e); }
   if(btn){ btn.disabled=false; btn.textContent=oldTxt; }
   if(passEl) passEl.value="";
   msg.innerHTML='<div class="ib ok">✅ پاکسازی انجام شد — '+deleted+' رکورد حذف و همه KPIها بازنشانی شدند.</div>'+
@@ -9747,14 +10214,14 @@ async function openEditRecord(table,id){
   _editRow=r;
   let fields="";
   if(table==="sales"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>مشتری</label><input id="ef-cust_name" value="${r.cust_name||""}"/></div></div><div class="row2"><div class="fg"><label>درجن</label><input type="number" inputmode="decimal" id="ef-dozen" value="${r.dozen||0}" inputmode="decimal"/></div><div class="fg"><label>قیمت فی درجن</label><input type="number" inputmode="decimal" id="ef-price_per_doz" value="${r.price_per_doz||0}" inputmode="decimal"/></div></div><div class="fg"><label>وصول (؋)</label><input type="number" inputmode="decimal" id="ef-paid" value="${r.paid||0}" inputmode="decimal"/></div>`;}
-  else if(table==="cash_ledger"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>نوع</label><select id="ef-category"><option value="in" ${r.category==="in"?"selected":""}>ورودی</option><option value="out" ${r.category==="out"?"selected":""}>خروجی</option></select></div></div><div class="fg"><label>موضوع</label><input id="ef-type" value="${r.type||""}"/></div><div class="fg"><label>شرح</label><input id="ef-description" value="${r.description||""}"/></div><div class="row2"><div class="fg"><label>مبلغ ورودی</label><input type="number" inputmode="decimal" id="ef-amount_in" value="${r.amount_in||0}" inputmode="decimal"/></div><div class="fg"><label>مبلغ خروجی</label><input type="number" inputmode="decimal" id="ef-amount_out" value="${r.amount_out||0}" inputmode="decimal"/></div></div>`;}
+  else if(table==="cash_ledger"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>نوع</label><select id="ef-category"><option value="in" ${r.category==="in"?"selected":""}>ورودی</option><option value="out" ${r.category==="out"?"selected":""}>خروجی</option></select></div></div><div class="fg"><label>موضوع</label><input id="ef-type" value="${r.type||""}"/></div><div class="fg"><label>شرح</label><input id="ef-description" value="${r.description||""}"/></div><div class="row2"><div class="fg"><label>مبلغ ورودی</label><input type="number" inputmode="decimal" id="ef-amount_in" value="${r.amount_in||0}" inputmode="decimal"/></div><div class="fg"><label>مبلغ خروجی</label><input type="number" inputmode="decimal" id="ef-amount_out" value="${r.amount_out||0}" inputmode="decimal"/></div></div><div class="fg"><label>ارز</label><select id="ef-currency"><option value="AFN" ${_cashCurrencyOf(r)==="AFN"?"selected":""}>افغانی AFN</option><option value="USD" ${_cashCurrencyOf(r)==="USD"?"selected":""}>دالر USD</option><option value="PKR" ${_cashCurrencyOf(r)==="PKR"?"selected":""}>کلدار PKR</option><option value="IRT" ${_cashCurrencyOf(r)==="IRT"?"selected":""}>تومان IRT</option></select></div>`;}
   else if(table==="purchases"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>تامین‌کننده</label><input id="ef-supplier_name" value="${r.supplier_name||""}"/></div></div><div class="row2"><div class="fg"><label>جنس</label><input id="ef-material" value="${r.material||""}"/></div><div class="fg"><label>مقدار</label><input type="number" inputmode="decimal" id="ef-kg" value="${r.kg||0}"/></div></div><div class="row2"><div class="fg"><label>مبلغ ($)</label><input type="number" inputmode="decimal" id="ef-amount_usd" value="${r.amount_usd||0}"/></div><div class="fg"><label>نرخ دالر</label><input type="number" inputmode="decimal" id="ef-usd_rate" value="${r.usd_rate||68}"/></div></div><div class="row2"><div class="fg"><label>پرداختی (؋)</label><input type="number" inputmode="decimal" id="ef-paid_afn" value="${r.paid_afn||0}"/></div><div class="fg"><label>شماره حواله</label><input id="ef-voucher_no" value="${r.voucher_no||""}"/></div></div>`;}
   else if(table==="production"){fields=`<div class="row2"><div class="fg"><label>تاریخ</label><input id="ef-date" value="${r.date||""}"/></div><div class="fg"><label>سرکاریگر</label><input id="ef-worker" value="${r.worker||""}"/></div></div><div class="row2"><div class="fg"><label>درجن</label><input type="number" inputmode="decimal" id="ef-dozen" value="${r.dozen||0}" inputmode="decimal"/></div><div class="fg"><label>اجرت کل</label><input type="number" inputmode="decimal" id="ef-total_wage" value="${r.total_wage||0}" inputmode="decimal"/></div></div><div class="fg"><label>پرداختی</label><input type="number" inputmode="decimal" id="ef-paid_wage" value="${r.paid_wage||0}" inputmode="decimal"/></div><div class="row2"><div class="fg"><label>شماره حواله</label><input id="ef-voucher_no" value="${r.voucher_no||""}"/></div><div class="fg"><label>ضایعات (درجن)</label><input type="number" inputmode="decimal" id="ef-scrap_dozen" value="${r.scrap_dozen||0}" inputmode="decimal"/></div></div>`;}
   else if(table==="expenses"){
     // خروجی صندوق مرتبط (اگر یکتا باشد) برای همگام‌سازی نگه داشته می‌شود
     let cashId=null;
     try{
-      const cands=await _cashRows(`?select=id,description&category=eq.out&type=eq.${encodeURIComponent("مصرف شرکت")}&amount_out=eq.${+(r.amount||0)}`);
+      const cands=await _cashRows(`?select=id,description&category=eq.out&type=eq.${encodeURIComponent("مصرف شرکت")}&amount_out=eq.${+(r.amount||0)}${CASH_AFN_Q}`);
       const one=cands.filter(c=>String(c.description||"")===String(r.description_fa||""))[0];
       if(one) cashId=one.id;
       else if(cands.length===1) cashId=cands[0].id;
@@ -9768,7 +10235,7 @@ async function openEditRecord(table,id){
     let cashId=null;
     if(r.type!=="deduction"){
       try{
-        const cands=await _cashRows(`?select=id&category=eq.out&type=eq.${encodeURIComponent("پرداخت معاش")}&amount_out=eq.${+(r.amount_afn||0)}&date=eq.${encodeURIComponent(r.date||"")}`);
+        const cands=await _cashRows(`?select=id&category=eq.out&type=eq.${encodeURIComponent("پرداخت معاش")}&amount_out=eq.${+(r.amount_afn||0)}&date=eq.${encodeURIComponent(r.date||"")}${CASH_AFN_Q}`);
         const one=cands.filter(c=>String(c.description||"").includes(String(r.employee_name||"")))[0];
         if(one) cashId=one.id; else if(cands.length===1) cashId=cands[0].id;
       }catch(e){}
@@ -9931,18 +10398,12 @@ async function submitSuppPay(){
   if(isAfn){
     const newAfn=Math.max(0,+((+curBal.balAfn||0)-amt).toFixed(2));
     await saveSuppBalance(_suppPayId,_suppPayName,(+curBal.bal||0),newAfn);
-    await sbPost("cash_ledger",{date,category:"out",type:"پرداخت به تامین‌کننده",description:desc,amount_in:0,amount_out:amt});
+    await sbPost("cash_ledger",{date,category:"out",type:"پرداخت به تامین‌کننده",description:desc,amount_in:0,amount_out:amt,currency:"AFN"});
   } else {
-    const rate=_suppPayRate();
     const newUsd=Math.max(0,+((+curBal.bal||0)-amt).toFixed(2));
     await saveSuppBalance(_suppPayId,_suppPayName,newUsd,(+curBal.balAfn||0));
-    await sbPost("cash_ledger",{date,category:"out",type:"پرداخت به تامین‌کننده",description:desc,amount_in:0,amount_out:+(amt*rate).toFixed(2)});
-    // کم کردن از موجودی دالر صندوق
-    const usdRow=await sbGet("settings","?key=eq.usd_cash_balance")||[];
-    const curUsdBal=usdRow.length>0?(+usdRow[0].value||0):0;
-    const newUsdBal=Math.max(0,curUsdBal-amt);
-    if(usdRow.length>0) await sbPatch("settings",{value:String(newUsdBal),updated_at:new Date().toISOString()},"?key=eq.usd_cash_balance");
-    else await sbPost("settings",{key:"usd_cash_balance",value:String(newUsdBal)});
+    // پرداخت دالری فقط صندوق دالر را کم می‌کند (نه صندوق افغانی)
+    await sbPost("cash_ledger",{date,category:"out",type:"پرداخت به تامین‌کننده",description:desc,amount_in:0,amount_out:amt,currency:"USD"});
   }
   // شماره واتساپ تامین‌کننده ذخیره می‌شود تا دکمه‌های ارسال سریع کار کنند
   const ph=(document.getElementById("sp-phone")?.value||"").trim();
